@@ -17,6 +17,8 @@ _global_script_class_icons={
 
 config/name="coa"
 run/main_scene="res://main.tscn"
+boot_splash/use_filter=false
+boot_splash/bg_color=Color( 0.141176, 0.141176, 0.141176, 1 )
 
 [rendering]
 
