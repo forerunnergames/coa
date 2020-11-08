@@ -20,6 +20,13 @@ run/main_scene="res://main.tscn"
 boot_splash/use_filter=false
 boot_splash/bg_color=Color( 0.141176, 0.141176, 0.141176, 1 )
 
+[display]
+
+window/size/width=640
+window/size/height=480
+
 [rendering]
 
+quality/intended_usage/framebuffer_allocation=1
+quality/intended_usage/framebuffer_allocation.mobile=1
 environment/default_environment="res://default_env.tres"
