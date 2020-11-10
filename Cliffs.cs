@@ -2,16 +2,16 @@ using Godot;
 
 public class Cliffs : Area2D
 {
-  [Export] public string PlayerColliderName;
+  private Area2D _playerArea;
   private Rect2 _playerRect;
   private Rect2 _cliffsRect;
-  private bool _isPlayerIntersectingCliffs;
-  private Area2D _playerArea;
   private Vector2 _playerExtents;
   private Vector2 _cliffsExtents;
   private Vector2 _playerPosition;
   private Vector2 _cliffsPosition;
   private CollisionShape2D _cliffsCollider;
+  private bool _isPlayerIntersectingCliffs;
+  private bool _isPlayerFullyIntersectingCliffs;
 
   public override void _Ready()
   {
@@ -22,7 +22,7 @@ public class Cliffs : Area2D
   // ReSharper disable once UnusedMember.Global
   public void _on_cliffs_area_entered (Area2D area)
   {
-    if (area.Name != PlayerColliderName) return;
+    if (!area.IsInGroup ("Player")) return;
 
     _playerArea = area;
     _isPlayerIntersectingCliffs = true;
@@ -31,7 +31,7 @@ public class Cliffs : Area2D
   // ReSharper disable once UnusedMember.Global
   public void _on_cliffs_area_exited (Area2D area)
   {
-    if (area.Name != PlayerColliderName) return;
+    if (!area.IsInGroup ("Player")) return;
 
     _playerArea = area;
     _isPlayerIntersectingCliffs = false;
@@ -53,11 +53,14 @@ public class Cliffs : Area2D
     _cliffsRect.Position = _cliffsPosition - _cliffsExtents;
     _cliffsRect.Size = _cliffsExtents * 2;
 
-    GetNode <KinematicBody2D> ("../Player")
-      .Set ("IsClimbingCliffs", _isPlayerIntersectingCliffs && _cliffsRect.Encloses (_playerRect));
+    _isPlayerFullyIntersectingCliffs = _isPlayerIntersectingCliffs && _cliffsRect.Encloses (_playerRect);
+
+    var player = GetNode <KinematicBody2D> ("../Player");
+    player.Set ("IsIntersectingCliffs", _isPlayerIntersectingCliffs);
+    player.Set ("IsFullyIntersectingCliffs", _isPlayerFullyIntersectingCliffs);
   }
 
-  private Vector2 GetExtents (Area2D area)
+  private static Vector2 GetExtents (Area2D area)
   {
     var collisionShape = area.GetNode <CollisionShape2D> ("CollisionShape2D");
     var collisionRect = collisionShape.Shape as RectangleShape2D;
