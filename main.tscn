@@ -169,28 +169,28 @@ extents = Vector2( 960, 64 )
 [sub_resource type="RectangleShape2D" id=33]
 extents = Vector2( 960, 64 )
 
-[sub_resource type="RectangleShape2D" id=38]
+[sub_resource type="RectangleShape2D" id=34]
 extents = Vector2( 960, 1920 )
 
-[sub_resource type="RectangleShape2D" id=39]
+[sub_resource type="RectangleShape2D" id=35]
 extents = Vector2( 960, 64 )
+
+[sub_resource type="RectangleShape2D" id=36]
+extents = Vector2( 960, 64 )
+
+[sub_resource type="RectangleShape2D" id=37]
+extents = Vector2( 960, 64 )
+
+[sub_resource type="RectangleShape2D" id=38]
+extents = Vector2( 960, 64 )
+
+[sub_resource type="RectangleShape2D" id=39]
+extents = Vector2( 64, 4288 )
 
 [sub_resource type="RectangleShape2D" id=40]
-extents = Vector2( 960, 64 )
+extents = Vector2( 64, 4288 )
 
 [sub_resource type="RectangleShape2D" id=41]
-extents = Vector2( 960, 64 )
-
-[sub_resource type="RectangleShape2D" id=42]
-extents = Vector2( 960, 64 )
-
-[sub_resource type="RectangleShape2D" id=43]
-extents = Vector2( 64, 4288 )
-
-[sub_resource type="RectangleShape2D" id=44]
-extents = Vector2( 64, 4288 )
-
-[sub_resource type="RectangleShape2D" id=45]
 extents = Vector2( 63.9966, 960 )
 
 [node name="Main Scene" type="Node2D"]
@@ -216,7 +216,7 @@ __meta__ = {
 scale = Vector2( 8, 8 )
 frames = SubResource( 26 )
 animation = "player_idle_left"
-frame = 3
+frame = 2
 playing = true
 
 [node name="Camera2D" type="Camera2D" parent="Player" groups=[
@@ -412,7 +412,7 @@ tile_data = PoolIntArray( -3735549, 2, 0, 131072, 23, 0, 131073, 22, 0, 131074, 
 ]]
 visible = false
 position = Vector2( 960, 2176 )
-shape = SubResource( 38 )
+shape = SubResource( 34 )
 
 [node name="Lower Cliffs Top Ground Static Collider" type="StaticBody2D" parent="Lower Cliffs" groups=[
 "Cliffs",
@@ -430,7 +430,7 @@ collision_mask = 29
 "Ground",
 ]]
 position = Vector2( 0, -1856 )
-shape = SubResource( 39 )
+shape = SubResource( 35 )
 one_way_collision = true
 
 [node name="Lower Cliffs Top Ground Area Collider" type="Area2D" parent="Lower Cliffs" groups=[
@@ -446,7 +446,7 @@ collision_mask = 29
 "Ground",
 ]]
 position = Vector2( 960, 320 )
-shape = SubResource( 40 )
+shape = SubResource( 36 )
 
 [node name="Lower Cliffs Bottom Ground Static Collider" type="StaticBody2D" parent="Lower Cliffs" groups=[
 "Cliffs",
@@ -462,7 +462,7 @@ collision_mask = 29
 "Ground",
 ]]
 position = Vector2( 960, 4032 )
-shape = SubResource( 41 )
+shape = SubResource( 37 )
 one_way_collision = true
 
 [node name="Lower Cliffs Bottom Ground Area Collider" type="Area2D" parent="Lower Cliffs" groups=[
@@ -478,7 +478,7 @@ collision_mask = 29
 "Ground",
 ]]
 position = Vector2( 960, 4160 )
-shape = SubResource( 42 )
+shape = SubResource( 38 )
 
 [node name="Scene Boundary - Left" type="StaticBody2D" parent="."]
 visible = false
@@ -492,7 +492,7 @@ __meta__ = {
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Left"]
 position = Vector2( 128, -192 )
-shape = SubResource( 43 )
+shape = SubResource( 39 )
 
 [node name="Scene Boundary - Right" type="StaticBody2D" parent="."]
 visible = false
@@ -505,7 +505,7 @@ __meta__ = {
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Right"]
 position = Vector2( 1984, -64 )
-shape = SubResource( 44 )
+shape = SubResource( 40 )
 
 [node name="Scene Boundary - Top" type="StaticBody2D" parent="."]
 visible = false
@@ -519,7 +519,7 @@ __meta__ = {
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Top"]
 position = Vector2( 960, -4288 )
 rotation = 1.5708
-shape = SubResource( 45 )
+shape = SubResource( 41 )
 [connection signal="timeout" from="Player/ClimbingReadyTimer" to="Player" method="_OnClimbingReadyTimerTimeout"]
 [connection signal="area_entered" from="Upper Cliffs" to="Upper Cliffs" method="_on_cliffs_area_entered"]
 [connection signal="area_exited" from="Upper Cliffs" to="Upper Cliffs" method="_on_cliffs_area_exited"]
