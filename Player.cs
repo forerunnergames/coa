@@ -1,78 +1,535 @@
+using System.Collections.Generic;
 using Godot;
+using static Tools;
 
+// Climbing terminology:
+// Traversing: Climbing horizontally
+// Scraping: Using pickaxe to slow a cliff fall
+// Cliffhanging: Attached to a cliff above the ground, not moving
+// TODO Use ray tracing to fix IsFullyIntersectingCliffs bug, where IsOnFloor is true and IsFullyIntersectingCliffs
+// TODO   should be true, but is false, even when standing fully in front of cliffs.
 public class Player : KinematicBody2D
 {
-  [Export] public int HorizontalSpeed = 800;
-  [Export] public int VerticalSpeed = 800;
-  [Export] public int HorizontalCliffClimbingSpeed = 200;
-  [Export] public int VerticalCliffClimbingSpeed = 200;
+  // Godot-configurable options
+  [Export] public float HorizontalRunningSpeed = 50.0f;
+  [Export] public float HorizontalClimbingSpeed = 200.0f;
+  [Export] public float VerticalClimbingSpeed = 200.0f;
+  [Export] public float HorizontalRunJumpFriction = 0.9f;
+  [Export] public float HorizontalRunJumpStoppingFriction = 0.6f;
+  [Export] public float HorizontalClimbFriction = 0.9f;
+  [Export] public float HorizontalClimbStoppingFriction = 0.6f;
+  [Export] public float CliffScrapingSpeed = 40.0f;
+  [Export] public float CliffScrapingActivationVelocity = 800.0f;
+  [Export] public float VelocityEpsilon = 100.0f;
+  [Export] public float JumpPower = 800.0f;
+  [Export] public float Gravity_ = 30.0f;
+  [Export] public string IdleLeftAnimation = "player_idle_left";
+  [Export] public string PreparingToClimbUpAnimation = "player_idle_back";
+  [Export] public string FallingAnimation = "player_falling";
+  [Export] public string ClimbingUpAnimation = "player_climbing_up";
+  [Export] public string CliffHangingAnimation = "player_cliff_hanging";
+  [Export] public string ClimbingHorizontallyAnimation = "player_climbing_horizontally";
+  [Export] public string ScrapingAnimation = "player_scraping";
+  [Export] public string RunAnimation = "player_running";
 
-  // ReSharper disable once UnusedMember.Global
+  // Field must be publicly accessible from Cliffs.cs
   // ReSharper disable once MemberCanBePrivate.Global
   // ReSharper disable once UnassignedField.Global
-  public bool IsClimbingCliffs // Field is assigned from Cliffs.cs
-  {
-    get { return _isClimbingCliffs; }
-    set
-    {
-      _wasClimbingCliffs = _isClimbingCliffs && !value;
-      _wasNotClimbingCliffs = !_isClimbingCliffs && value;
-      _isClimbingCliffs = value;
-    }
-  }
+  public bool IsIntersectingCliffs;
 
-  private bool _isClimbingCliffs;
-  private bool _wasClimbingCliffs;
-  private bool _wasNotClimbingCliffs;
+  // Field must be publicly accessible from Cliffs.cs
+  // ReSharper disable once MemberCanBePrivate.Global
+  // ReSharper disable once UnassignedField.Global
+  public bool IsFullyIntersectingCliffs;
 
   private Vector2 _velocity;
-  private int _oldVerticalSpeed;
-  private int _oldHorizontalSpeed;
+  private RichTextLabel _label;
+  private AnimatedSprite _sprite;
+  private Timer _preparingToClimbUpTimer;
+  private bool _isFlippedHorizontally;
+  private readonly List <string> _printLines = new List <string>();
 
-  private void GetInput()
+  // TODO State machine
+  private bool _isRunning;
+  private bool _isJumping;
+  private bool _isPreparingToClimbUp;
+  private bool _isPreparedToClimbUp;
+  private bool _isClimbingUp;
+  private bool _isScrapingCliff;
+  private bool _isCliffHanging;
+  private bool _isClimbingHorizontally;
+  private bool _isClimbingLeft;
+  private bool _isClimbingRight; // TODO Remove if not needed
+
+  public override void _Ready()
   {
-    _velocity = new Vector2();
-
-    if (Input.IsActionPressed ("ui_right"))
-    {
-      _velocity.x += 1;
-    }
-    else if (Input.IsActionPressed ("ui_left"))
-    {
-      _velocity.x -= 1;
-    }
-    else if (Input.IsActionPressed ("ui_up"))
-    {
-      _velocity.y -= 1;
-    }
-    else if (Input.IsActionPressed ("ui_down"))
-    {
-      _velocity.y += 1;
-    }
-
-    _velocity = _velocity.Normalized();
-    _velocity.x *= HorizontalSpeed;
-    _velocity.y *= VerticalSpeed;
+    _sprite = GetNode <AnimatedSprite> ("AnimatedSprite");
+    _label = GetNode <RichTextLabel> ("DebuggingText");
+    _preparingToClimbUpTimer = GetNode <Timer> ("ClimbingReadyTimer");
+    _sprite.Animation = IdleLeftAnimation;
   }
 
   public override void _PhysicsProcess (float delta)
   {
-    GetInput();
-    MoveAndCollide (_velocity * delta);
+    Run();
+    Jump();
+    Climb();
+    Friction();
+    Gravity();
+    PostGravity();
+    _velocity = MoveAndSlide (_velocity, Vector2.Up);
+    Animations();
 
-    if (_wasNotClimbingCliffs && IsClimbingCliffs)
+    PrintLine ("IsRightArrowPressed(): " + IsRightArrowPressed() + "\nIsLeftArrowPressed(): " + IsLeftArrowPressed());
+    PrintLine ("IsInMotion(): " + IsInMotion());
+    PrintLine ("IsFalling(): " + IsFalling());
+    PrintLine ("_velocity: " + _velocity);
+    Print();
+  }
+
+  // Godot Timer callback
+  // ReSharper disable once UnusedMember.Global
+  public void _OnClimbingReadyTimerTimeout()
+  {
+    if (!_isPreparingToClimbUp) return;
+
+    _isPreparedToClimbUp = true;
+    _isPreparingToClimbUp = false;
+  }
+
+  private void Run()
+  {
+    PrintLine ("IsAnyHorizontalArrowPressed(): " + IsAnyHorizontalArrowPressed());
+    PrintLine ("IsAnyVerticalArrowPressed(): " + IsAnyVerticalArrowPressed());
+    PrintLine ("_isRunning: " + _isRunning);
+    PrintLine ("shouldRun(): " + ShouldRun());
+
+    if (!IsInMotionHorizontally() || !IsOnFloor()) _isRunning = false;
+
+    if (!ShouldRun()) return;
+    if (ShouldRunRight()) RunRight();
+    else if (ShouldRunLeft()) RunLeft();
+
+    _isRunning = true;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isScrapingCliff = false;
+    _isCliffHanging = false;
+  }
+
+  private bool ShouldRun()
+  {
+    return IsExclusivelyActiveUnless (InputType.Horizontal, _isRunning) && !ShouldClimbHorizontally();
+  }
+
+  private static bool ShouldRunRight()
+  {
+    return IsRightArrowPressed() && !IsLeftArrowPressed();
+  }
+
+  private void RunRight()
+  {
+    _velocity.x += HorizontalRunningSpeed;
+    FlipHorizontally (true);
+  }
+
+  private static bool ShouldRunLeft()
+  {
+    return IsLeftArrowPressed() && !IsRightArrowPressed();
+  }
+
+  private void RunLeft()
+  {
+    _velocity.x -= HorizontalRunningSpeed;
+    FlipHorizontally (false);
+  }
+
+  // Flips everything except RichTextLabel
+  private void FlipHorizontally (bool flip)
+  {
+    if (_isFlippedHorizontally == flip) return;
+
+    _isFlippedHorizontally = flip;
+
+    // Flip entire parent node and all children.
+    var scale = Scale;
+    scale.x = -scale.x;
+    Scale = scale;
+
+    // Bugfix: Undo inadvertent label flip (reverses text).
+    var labelRectScale = _label.RectScale;
+    labelRectScale.x = -labelRectScale.x;
+    _label.RectScale = labelRectScale;
+
+    // Bugfix: Move label over instead of reversing text.
+    var labelRectPosition = _label.RectPosition;
+    labelRectPosition.x += _isFlippedHorizontally ? 160 : -160;
+    _label.RectPosition = labelRectPosition;
+  }
+
+  private void Jump()
+  {
+    if (IsOnFloor()) _isJumping = false;
+
+    if (Input.IsActionJustPressed ("jump") && IsOnFloor())
     {
-      _oldVerticalSpeed = VerticalSpeed;
-      _oldHorizontalSpeed = HorizontalSpeed;
-      VerticalSpeed = VerticalCliffClimbingSpeed;
-      HorizontalSpeed = HorizontalCliffClimbingSpeed;
-      _wasNotClimbingCliffs = false;
+      _isJumping = true;
+      _isRunning = false;
+      _isPreparingToClimbUp = false;
+      _isPreparedToClimbUp = false;
+      _isClimbingUp = false;
+      _isClimbingHorizontally = false;
+      _isClimbingLeft = false;
+      _isClimbingRight = false;
+      _isScrapingCliff = false;
+      _isCliffHanging = false;
+      _velocity.y -= JumpPower;
     }
-    else if (_wasClimbingCliffs && !IsClimbingCliffs)
+
+    // Make jumps less high when releasing jump button early.
+    // (Holding down jump continuously allows gravity to take over.)
+    if (Input.IsActionJustReleased ("jump") && _isJumping && IsMovingUp()) _velocity.y = 0.0f;
+
+    PrintLine ("_isJumping: " + _isJumping);
+  }
+
+  // TODO Test adding && !_isJumping
+  // TODO Differentiate between jump-falling (landing) and other falling.
+  private bool IsFalling()
+  {
+    return _velocity.y - VelocityEpsilon > 0.0f;
+  }
+
+  private bool IsMovingUp()
+  {
+    return _velocity.y + VelocityEpsilon < 0.0f;
+  }
+
+  public override void _UnhandledInput (InputEvent @event)
+  {
+    if (!(@event is InputEventKey eventKey) || !eventKey.IsActionReleased ("use_item")) return;
+    _isScrapingCliff = false;
+  }
+
+  private void Climb()
+  {
+    if (ShouldPrepareToClimbUp()) PrepareToClimbUp();
+    else if (ShouldScrapeCliff()) ScrapeCliff();
+    else if (ShouldCliffHang()) CliffHang();
+    else if (ShouldClimbHorizontally()) ClimbHorizontally();
+    else if (_isClimbingHorizontally) CliffHang();
+    else if (ShouldClimbUp()) ClimbUp();
+    else if (_isClimbingUp) DropFromCliff();
+    else if (ShouldClimbDownFromFloor()) ClimbDownFromFloor();
+    else if (ShouldDropFromCliff()) DropFromCliff();
+
+    // @formatter:off
+    PrintLine ("_isPreparingToClimbUp: " + _isPreparingToClimbUp +
+               "\n_isPreparedToClimbUp: " + _isPreparedToClimbUp +
+               "\nShouldClimbUp(): " + ShouldClimbUp() +
+               "\n_isClimbingUp: " + _isClimbingUp +
+               "\nIsFalling(): " + IsFalling() +
+               "\nIsMovingUp(): " + IsMovingUp() +
+               "\n_isScrapingCliff: " + _isScrapingCliff +
+               "\nShouldScrapeCliff(): " + ShouldScrapeCliff() +
+               "\nIsOnFloor(): " + IsOnFloor() +
+               "\nIsIntersectingCliffs: " + IsIntersectingCliffs +
+               "\nIsFullyIntersectingCliffs: " + IsFullyIntersectingCliffs +
+               "\n_isClimbingHorizontally: " + _isClimbingHorizontally +
+               "\n_isCliffHanging: " + _isCliffHanging +
+               "\nShouldClimbHorizontally(): " + ShouldClimbHorizontally());
+    // @formatter:on
+  }
+
+  // TODO Test ignore input exclusion condition _isReadyToClimbUp
+  // TODO Use IsFullyIntersectingCliffs after using ray tracing to fix errors.
+  // Currently, the running state is allowed to transition instantly to the getting ready to climb state.
+  // Otherwise, !IsInMotion() would need to be a condition here.
+  private bool ShouldPrepareToClimbUp()
+  {
+    return IsIntersectingCliffs && !_isPreparingToClimbUp && !_isPreparedToClimbUp && !_isClimbingUp && IsOnFloor() &&
+           !IsFalling() && WasUpArrowPressedOnce();
+  }
+
+  private void PrepareToClimbUp()
+  {
+    FlipHorizontally (false);
+
+    _isPreparingToClimbUp = true;
+    _isPreparedToClimbUp = false;
+    _isScrapingCliff = false;
+    _isRunning = false;
+    _isJumping = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isCliffHanging = false;
+
+    _preparingToClimbUpTimer.Start();
+  }
+
+  // TODO Create _isPreparingToScrapeCliff, which is true when attempting scraping, but falling hasn't
+  // TODO   gotten fast enough yet to active it (i.e., ShouldScrapeCliff() would return true except
+  // TODO   _velocity.y < CliffScrapingActivationVelocity) In this case show an animation of pulling out pickaxe and
+  // TODO   swinging it into the cliff, timing it so that the pickaxe sinks into the cliff when
+  // TODO   CliffScrapingActivationVelocity is reached.
+  // TODO Test with !IsOnFloor() removed since IsFalling() makes it redundant.
+  // TODO Check if item being used is pickaxe. For now it's the default and only item.
+  private bool ShouldScrapeCliff()
+  {
+    return IsFullyIntersectingCliffs && !IsOnFloor() && IsFalling() && _velocity.y >= CliffScrapingActivationVelocity &&
+           IsExclusivelyActiveUnless (InputType.Item, _isScrapingCliff);
+  }
+
+  private void ScrapeCliff()
+  {
+    _isScrapingCliff = true;
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isCliffHanging = false;
+  }
+
+  private bool ShouldCliffHang()
+  {
+    return _isScrapingCliff && !IsInMotion() && !IsOnFloor();
+  }
+
+  private void CliffHang()
+  {
+    _isCliffHanging = true;
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isScrapingCliff = false;
+  }
+
+  private bool ShouldClimbHorizontally()
+  {
+    return IsFullyIntersectingCliffs && !_isJumping && !IsOnFloor() && !IsInMotionVertically() &&
+           IsExclusivelyActiveUnless (InputType.Horizontal, _isClimbingHorizontally);
+  }
+
+  private void ClimbHorizontally()
+  {
+    if (ShouldClimbLeft()) ClimbLeft();
+    else if (ShouldClimbRight()) ClimbRight();
+
+    _isClimbingHorizontally = true;
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isScrapingCliff = false;
+    _isCliffHanging = false;
+  }
+
+  private static bool ShouldClimbLeft()
+  {
+    return IsLeftArrowPressed() && !IsRightArrowPressed();
+  }
+
+  private void ClimbLeft()
+  {
+    _isClimbingLeft = true;
+    _isClimbingRight = false;
+  }
+
+  private static bool ShouldClimbRight()
+  {
+    return IsRightArrowPressed() && !IsLeftArrowPressed();
+  }
+
+  private void ClimbRight()
+  {
+    _isClimbingRight = true;
+    _isClimbingLeft = false;
+  }
+
+  private bool ShouldClimbUp()
+  {
+    return (_isPreparedToClimbUp || _isClimbingUp || _isCliffHanging) && IsIntersectingCliffs &&
+           IsExclusivelyActiveUnless (InputType.Up, _isClimbingUp);
+  }
+
+  private void ClimbUp()
+  {
+    FlipHorizontally (false);
+
+    _isClimbingUp = true;
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isScrapingCliff = false;
+    _isCliffHanging = false;
+  }
+
+  private bool ShouldDropFromCliff()
+  {
+    return _isCliffHanging && WasDownArrowPressedOnce();
+  }
+
+  private void DropFromCliff()
+  {
+    FlipHorizontally (false);
+
+    _isCliffHanging = false;
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isScrapingCliff = false;
+  }
+
+  private bool ShouldClimbDownFromFloor()
+  {
+    return WasDownArrowPressedOnce() && IsOnFloor();
+  }
+
+  // Only for ground/floor that has climbable cliffs below it
+  private void ClimbDownFromFloor()
+  {
+    var isClimbingDown = false;
+
+    for (int i = 0; i < GetSlideCount(); ++i)
     {
-      VerticalSpeed = _oldVerticalSpeed;
-      HorizontalSpeed = _oldHorizontalSpeed;
-      _wasClimbingCliffs = false;
+      var collision = GetSlideCollision (i);
+      var collider = collision.Collider as StaticBody2D;
+      if (collider == null) continue;
+      if (!collider.IsInGroup ("Cliffs")) continue;
+      if (!collider.IsInGroup ("Ground")) continue;
+      if (!collider.IsInGroup ("Dropdownable")) continue;
+      var colliderShape = collision.ColliderShape as CollisionShape2D;
+      if (colliderShape == null) continue;
+      colliderShape.Disabled = true;
+      isClimbingDown = true;
     }
+
+    if (!isClimbingDown) return;
+
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    _isScrapingCliff = false;
+    _isCliffHanging = false;
+
+    FlipHorizontally (false);
+  }
+
+  private void Friction()
+  {
+    var isAnyHorizontalArrowPressed = IsAnyHorizontalArrowPressed();
+
+    if (!isAnyHorizontalArrowPressed) _velocity.x *= HorizontalRunJumpStoppingFriction;
+    else if (_isClimbingHorizontally) _velocity.x *= HorizontalClimbFriction;
+    else _velocity.x *= HorizontalRunJumpFriction;
+  }
+
+  private void Gravity()
+  {
+    _velocity.y += Gravity_;
+  }
+
+  private void PostGravity()
+  {
+    if (_isClimbingUp)
+    {
+      _velocity.y -= Gravity_ + VerticalClimbingSpeed * 0.01f;
+      _velocity.y = SafelyClampMin (_velocity.y, -VerticalClimbingSpeed);
+    }
+    else if (_isClimbingHorizontally)
+    {
+      _velocity.x = _isClimbingLeft ? _velocity.x - HorizontalClimbingSpeed : _velocity.x + HorizontalClimbingSpeed;
+      _velocity.x = SafelyClamp (_velocity.x, -HorizontalClimbingSpeed, HorizontalClimbingSpeed);
+      _velocity.y = 0.0f;
+    }
+    else if (_isCliffHanging)
+    {
+      _velocity.y = 0.0f;
+    }
+    else if (_isScrapingCliff)
+    {
+      _velocity.y -= CliffScrapingSpeed;
+      _velocity.y = SafelyClampMin (_velocity.y, 0.0f);
+    }
+  }
+
+  private bool IsInMotion()
+  {
+    return IsInMotionHorizontally() || IsInMotionVertically();
+  }
+
+  private bool IsInMotionHorizontally()
+  {
+    return Mathf.Abs (_velocity.x) > VelocityEpsilon;
+  }
+
+  private bool IsInMotionVertically()
+  {
+    return Mathf.Abs (_velocity.y) > VelocityEpsilon;
+  }
+
+  private void Animations()
+  {
+    var isFalling = IsFalling();
+    var isInMotion = IsInMotion();
+
+    // TODO Use a running animation
+    // TODO _isRunning should not be true when moving horizontally through air; these are 2 different states
+    // TODO Falling from a jump should be a different state than falling from a cliff.
+    // @formatter:off
+    if (_isRunning && !isFalling) _sprite.Animation = IdleLeftAnimation;
+    else if (_isPreparingToClimbUp || _isPreparedToClimbUp) _sprite.Animation = PreparingToClimbUpAnimation;
+    else if (_isScrapingCliff) _sprite.Animation = ScrapingAnimation;
+    else if (_isCliffHanging) _sprite.Animation = CliffHangingAnimation;
+    else if (_isClimbingHorizontally) _sprite.Animation = ClimbingHorizontallyAnimation;
+    else if (_isClimbingUp) _sprite.Animation = ClimbingUpAnimation;
+    else if (isFalling && !_isJumping && IsItemKeyPressed() && IsFullyIntersectingCliffs) _sprite.Animation = ScrapingAnimation;
+    else if (isFalling && !_isJumping) _sprite.Animation = FallingAnimation;
+    else if (!isInMotion) _sprite.Animation = IdleLeftAnimation;
+    // @formatter:on
+  }
+
+  private void PrintLine (string line)
+  {
+    _printLines.Add (line);
+  }
+
+  private void Print()
+  {
+    _label.Text = "";
+    _label.BbcodeText = "";
+    foreach (var line in _printLines) _label.AddText (line + "\n");
+    _printLines.Clear();
   }
 }
