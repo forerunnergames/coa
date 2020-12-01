@@ -97,6 +97,14 @@ public class Player : KinematicBody2D
     _isPreparingToClimbUp = false;
   }
 
+  public override void _UnhandledInput (InputEvent @event)
+  {
+    if (!(@event is InputEventKey eventKey)) return;
+
+    if (eventKey.IsActionReleased ("use_item")) _isScrapingCliff = false;
+    else if (eventKey.IsActionReleased ("show_text")) _label.Visible = !_label.Visible;
+  }
+
   private void Run()
   {
     PrintLine ("IsAnyHorizontalArrowPressed(): " + IsAnyHorizontalArrowPressed());
@@ -208,12 +216,6 @@ public class Player : KinematicBody2D
   private bool IsMovingUp()
   {
     return _velocity.y + VelocityEpsilon < 0.0f;
-  }
-
-  public override void _UnhandledInput (InputEvent @event)
-  {
-    if (!(@event is InputEventKey eventKey) || !eventKey.IsActionReleased ("use_item")) return;
-    _isScrapingCliff = false;
   }
 
   private void Climb()
