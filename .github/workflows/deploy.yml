@@ -1,0 +1,60 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  export:
+    name: export executables
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+      - name: create executables
+        uses: firebelley/godot-export@v2.6.1
+        env:
+          GODOT_MONO_VERSION: 3.2.2
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          godot_executable_download_url: https://downloads.tuxfamily.org/godotengine/${{GODOT_MONO_VERSION}}/mono/Godot_v${{GODOT_MONO_VERSION}}-stable_mono_linux_headless_64.zip
+          godot_export_templates_download_url: https://downloads.tuxfamily.org/godotengine/${{GODOT_MONO_VERSION}}/mono/Godot_v${{GODOT_MONO_VERSION}}-stable_mono_export_templates.tpz
+          relative_project_path: ./
+          use_preset_export_path: true
+          archive_export_output: true
+          create_release: true
+          base_version: 0.0.1
+      - name: save executables
+        uses: actions/upload-artifact@v2
+        with:
+          name: executables
+          path: build
+  deploy:
+    name: deploy executables to itch.io
+    needs: export
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+      platform: [mac, windows, linux]
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+      - name: download executables
+        uses: actions/download-artifact@v2
+        with:
+          name: executables
+      - name: Show downloaded executables directory structure
+        run: ls -R
+        working-directory: build
+      - name: deploy ${{ matrix.platform }} executable to itch.io
+        uses: josephbmanley/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
+          CHANNEL: ${{ matrix.platform }}
+          ITCH_GAME: coa
+          ITCH_USER: forerunnergames
+          PACKAGE: build/${{ matrix.platform }}
+          VERSION: ${{ github.event.release.tag_name }}

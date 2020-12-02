@@ -258,6 +258,7 @@ shape = SubResource( 28 )
 [node name="DebuggingText" type="RichTextLabel" parent="Player" groups=[
 "Player",
 ]]
+visible = false
 margin_left = 72.0
 margin_top = -192.0
 margin_right = 456.0

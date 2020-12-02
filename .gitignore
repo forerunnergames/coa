@@ -1,2 +1,7 @@
 !*.csproj
 !*.sln
+.import/
+*.translation
+.mono/
+data_*/
+mono_crash.*
