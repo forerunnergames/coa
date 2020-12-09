@@ -1,4 +1,5 @@
 using Godot;
+using static Tools;
 
 public class Cliffs : Area2D
 {
@@ -12,9 +13,13 @@ public class Cliffs : Area2D
   private CollisionShape2D _cliffsCollider;
   private bool _isPlayerIntersectingCliffs;
   private bool _isPlayerFullyIntersectingCliffs;
+  private AudioStreamPlayer _audio;
 
   public override void _Ready()
   {
+    _audio = GetNode <AudioStreamPlayer> ("../AudioStreamPlayer");
+    _audio.Stream = ResourceLoader.Load <AudioStream> ("res://ambience_summer.wav");
+    LoopAudio (_audio.Stream);
     _cliffsCollider = GetNode <CollisionShape2D> ("CollisionShape2D");
     _cliffsPosition = _cliffsCollider.GlobalPosition;
   }
@@ -58,6 +63,15 @@ public class Cliffs : Area2D
     var player = GetNode <KinematicBody2D> ("../Player");
     player.Set ("IsIntersectingCliffs", _isPlayerIntersectingCliffs);
     player.Set ("IsFullyIntersectingCliffs", _isPlayerFullyIntersectingCliffs);
+
+    Sounds();
+  }
+
+  private void Sounds()
+  {
+    if (_audio.Playing) return;
+
+    _audio.Play();
   }
 
   private static Vector2 GetExtents (Area2D area)

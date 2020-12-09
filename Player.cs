@@ -31,6 +31,12 @@ public class Player : KinematicBody2D
   [Export] public string ClimbingHorizontallyAnimation = "player_climbing_horizontally";
   [Export] public string ScrapingAnimation = "player_scraping";
   [Export] public string RunAnimation = "player_running";
+  [Export] public string CliffScrapingSoundFile = "res://cliff_scrape.wav";
+  [Export] public bool CliffScrapingSoundLooping = true;
+  [Export] public float CliffScrapingSoundLoopBeginSeconds = 0.0f;
+  [Export] public float CliffScrapingSoundLoopEndSeconds = 4.5f;
+  [Export] public float CliffScrapingSoundVelocityPitchScaleModulation = 4.0f;
+  [Export] public float CliffScrapingSoundMinPitchScale = 2.0f;
 
   // Field must be publicly accessible from Cliffs.cs
   // ReSharper disable once MemberCanBePrivate.Global
@@ -45,6 +51,7 @@ public class Player : KinematicBody2D
   private Vector2 _velocity;
   private RichTextLabel _label;
   private AnimatedSprite _sprite;
+  private AudioStreamPlayer _audio;
   private Timer _preparingToClimbUpTimer;
   private bool _isFlippedHorizontally;
   private readonly List <string> _printLines = new List <string>();
@@ -55,16 +62,44 @@ public class Player : KinematicBody2D
   private bool _isPreparingToClimbUp;
   private bool _isPreparedToClimbUp;
   private bool _isClimbingUp;
-  private bool _isScrapingCliff;
   private bool _isCliffHanging;
   private bool _isClimbingHorizontally;
   private bool _isClimbingLeft;
-  private bool _isClimbingRight; // TODO Remove if not needed
+  private bool _isClimbingRight;
+  private uint _fallingStartTimeMs;
+  private uint _elapsedFallingTimeMs;
+  private uint _lastTotalFallingTimeMs;
+  private float _highestVerticalVelocity;
+  private bool _isScrapingCliff;
+
+  private bool IsScrapingCliff
+  {
+    get => _isScrapingCliff;
+    set
+    {
+      // TODO State Machine
+      if (!_isScrapingCliff && value && IsFalling() && !_audio.Playing)
+      {
+        _audio.Play();
+        PrintLine ("Sound effects: Playing cliff scraping sound.");
+      }
+      else if (_isScrapingCliff && !value && _audio.Playing)
+      {
+        _audio.Stop();
+        PrintLine ("Sound effects: Stopped cliff scraping sound.");
+      }
+
+      _isScrapingCliff = value;
+    }
+  }
 
   public override void _Ready()
   {
-    _sprite = GetNode <AnimatedSprite> ("AnimatedSprite");
+    _audio = GetNode <AudioStreamPlayer> ("AudioStreamPlayer");
+    _audio.Stream = ResourceLoader.Load <AudioStream> (CliffScrapingSoundFile);
+    LoopAudio (_audio.Stream, CliffScrapingSoundLoopBeginSeconds, CliffScrapingSoundLoopEndSeconds);
     _label = GetNode <RichTextLabel> ("DebuggingText");
+    _sprite = GetNode <AnimatedSprite> ("AnimatedSprite");
     _preparingToClimbUpTimer = GetNode <Timer> ("ClimbingReadyTimer");
     _sprite.Animation = IdleLeftAnimation;
   }
@@ -77,14 +112,25 @@ public class Player : KinematicBody2D
     Friction();
     Gravity();
     PostGravity();
-    _velocity = MoveAndSlide (_velocity, Vector2.Up);
-    Animations();
+    SoundEffects();
 
+    _velocity = MoveAndSlide (_velocity, Vector2.Up);
+
+    if (ShouldBecomeIdle()) BecomeIdle();
+    Animations();
+    CalculateFallingStats();
+
+    // @formatter:off
     PrintLine ("IsRightArrowPressed(): " + IsRightArrowPressed() + "\nIsLeftArrowPressed(): " + IsLeftArrowPressed());
     PrintLine ("IsInMotion(): " + IsInMotion());
     PrintLine ("IsFalling(): " + IsFalling());
     PrintLine ("_velocity: " + _velocity);
+    PrintLine ("Vertical velocity (mph): " + _velocity.y * 0.028334573333333);
+    PrintLine ("Highest vertical velocity: " + _highestVerticalVelocity);
+    PrintLine ("Highest vertical velocity (mph): " + _highestVerticalVelocity * 0.028334573333333);
+    PrintLine ("Falling time (sec): " + (_elapsedFallingTimeMs > 0 ? _elapsedFallingTimeMs / 1000.0f : _lastTotalFallingTimeMs / 1000.0f));
     Print();
+    // @formatter:on
   }
 
   // Godot Timer callback
@@ -93,7 +139,7 @@ public class Player : KinematicBody2D
   {
     if (!_isPreparingToClimbUp) return;
 
-    _isPreparedToClimbUp = true;
+    _isPreparedToClimbUp = IsUpArrowPressed();
     _isPreparingToClimbUp = false;
   }
 
@@ -101,8 +147,9 @@ public class Player : KinematicBody2D
   {
     if (!(@event is InputEventKey eventKey)) return;
 
-    if (eventKey.IsActionReleased ("use_item")) _isScrapingCliff = false;
+    if (eventKey.IsActionReleased ("use_item")) IsScrapingCliff = false;
     else if (eventKey.IsActionReleased ("show_text")) _label.Visible = !_label.Visible;
+    else if (eventKey.IsActionReleased ("respawn")) GlobalPosition = new Vector2 (952, -4032);
   }
 
   private void Run()
@@ -126,7 +173,7 @@ public class Player : KinematicBody2D
     _isClimbingHorizontally = false;
     _isClimbingLeft = false;
     _isClimbingRight = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
     _isCliffHanging = false;
   }
 
@@ -194,7 +241,7 @@ public class Player : KinematicBody2D
       _isClimbingHorizontally = false;
       _isClimbingLeft = false;
       _isClimbingRight = false;
-      _isScrapingCliff = false;
+      IsScrapingCliff = false;
       _isCliffHanging = false;
       _velocity.y -= JumpPower;
     }
@@ -237,7 +284,7 @@ public class Player : KinematicBody2D
                "\n_isClimbingUp: " + _isClimbingUp +
                "\nIsFalling(): " + IsFalling() +
                "\nIsMovingUp(): " + IsMovingUp() +
-               "\n_isScrapingCliff: " + _isScrapingCliff +
+               "\n_isScrapingCliff: " + IsScrapingCliff +
                "\nShouldScrapeCliff(): " + ShouldScrapeCliff() +
                "\nIsOnFloor(): " + IsOnFloor() +
                "\nIsIntersectingCliffs: " + IsIntersectingCliffs +
@@ -264,7 +311,7 @@ public class Player : KinematicBody2D
 
     _isPreparingToClimbUp = true;
     _isPreparedToClimbUp = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
     _isRunning = false;
     _isJumping = false;
     _isClimbingUp = false;
@@ -286,12 +333,12 @@ public class Player : KinematicBody2D
   private bool ShouldScrapeCliff()
   {
     return IsFullyIntersectingCliffs && !IsOnFloor() && IsFalling() && _velocity.y >= CliffScrapingActivationVelocity &&
-           IsExclusivelyActiveUnless (InputType.Item, _isScrapingCliff);
+           IsExclusivelyActiveUnless (InputType.Item, IsScrapingCliff);
   }
 
   private void ScrapeCliff()
   {
-    _isScrapingCliff = true;
+    IsScrapingCliff = true;
     _isRunning = false;
     _isJumping = false;
     _isPreparingToClimbUp = false;
@@ -305,7 +352,7 @@ public class Player : KinematicBody2D
 
   private bool ShouldCliffHang()
   {
-    return _isScrapingCliff && !IsInMotion() && !IsOnFloor();
+    return IsScrapingCliff && !IsInMotion() && !IsOnFloor();
   }
 
   private void CliffHang()
@@ -319,13 +366,12 @@ public class Player : KinematicBody2D
     _isClimbingHorizontally = false;
     _isClimbingLeft = false;
     _isClimbingRight = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
   }
 
   private bool ShouldClimbHorizontally()
   {
-    return IsFullyIntersectingCliffs && !_isJumping && !IsOnFloor() && !IsInMotionVertically() &&
-           IsExclusivelyActiveUnless (InputType.Horizontal, _isClimbingHorizontally);
+    return (_isCliffHanging || _isClimbingHorizontally) && IsExclusivelyActiveUnless (InputType.Horizontal, _isClimbingHorizontally);
   }
 
   private void ClimbHorizontally()
@@ -339,7 +385,7 @@ public class Player : KinematicBody2D
     _isPreparingToClimbUp = false;
     _isPreparedToClimbUp = false;
     _isClimbingUp = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
     _isCliffHanging = false;
   }
 
@@ -383,7 +429,7 @@ public class Player : KinematicBody2D
     _isClimbingHorizontally = false;
     _isClimbingLeft = false;
     _isClimbingRight = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
     _isCliffHanging = false;
   }
 
@@ -405,7 +451,7 @@ public class Player : KinematicBody2D
     _isClimbingHorizontally = false;
     _isClimbingLeft = false;
     _isClimbingRight = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
   }
 
   private bool ShouldClimbDownFromFloor()
@@ -418,7 +464,7 @@ public class Player : KinematicBody2D
   {
     var isClimbingDown = false;
 
-    for (int i = 0; i < GetSlideCount(); ++i)
+    for (var i = 0; i < GetSlideCount(); ++i)
     {
       var collision = GetSlideCollision (i);
       var collider = collision.Collider as StaticBody2D;
@@ -442,7 +488,7 @@ public class Player : KinematicBody2D
     _isClimbingHorizontally = false;
     _isClimbingLeft = false;
     _isClimbingRight = false;
-    _isScrapingCliff = false;
+    IsScrapingCliff = false;
     _isCliffHanging = false;
 
     FlipHorizontally (false);
@@ -450,9 +496,7 @@ public class Player : KinematicBody2D
 
   private void Friction()
   {
-    var isAnyHorizontalArrowPressed = IsAnyHorizontalArrowPressed();
-
-    if (!isAnyHorizontalArrowPressed) _velocity.x *= HorizontalRunJumpStoppingFriction;
+    if (!IsAnyHorizontalArrowPressed()) _velocity.x *= HorizontalRunJumpStoppingFriction;
     else if (_isClimbingHorizontally) _velocity.x *= HorizontalClimbFriction;
     else _velocity.x *= HorizontalRunJumpFriction;
   }
@@ -479,7 +523,7 @@ public class Player : KinematicBody2D
     {
       _velocity.y = 0.0f;
     }
-    else if (_isScrapingCliff)
+    else if (IsScrapingCliff)
     {
       _velocity.y -= CliffScrapingSpeed;
       _velocity.y = SafelyClampMin (_velocity.y, 0.0f);
@@ -501,6 +545,35 @@ public class Player : KinematicBody2D
     return Mathf.Abs (_velocity.y) > VelocityEpsilon;
   }
 
+  private void SoundEffects()
+  {
+    if (IsScrapingCliff)
+    {
+      _audio.PitchScale = CliffScrapingSoundMinPitchScale +
+                          _velocity.y / CliffScrapingActivationVelocity /
+                          CliffScrapingSoundVelocityPitchScaleModulation;
+    }
+  }
+
+  private bool ShouldBecomeIdle()
+  {
+    return IsOnFloor() && !IsInMotion() && !_isPreparingToClimbUp && !_isPreparedToClimbUp && !_isClimbingUp;
+  }
+
+  private void BecomeIdle()
+  {
+    _isRunning = false;
+    _isJumping = false;
+    _isPreparingToClimbUp = false;
+    _isPreparedToClimbUp = false;
+    _isClimbingUp = false;
+    _isClimbingHorizontally = false;
+    _isClimbingLeft = false;
+    _isClimbingRight = false;
+    IsScrapingCliff = false;
+    _isCliffHanging = false;
+  }
+
   private void Animations()
   {
     var isFalling = IsFalling();
@@ -512,7 +585,7 @@ public class Player : KinematicBody2D
     // @formatter:off
     if (_isRunning && !isFalling) _sprite.Animation = IdleLeftAnimation;
     else if (_isPreparingToClimbUp || _isPreparedToClimbUp) _sprite.Animation = PreparingToClimbUpAnimation;
-    else if (_isScrapingCliff) _sprite.Animation = ScrapingAnimation;
+    else if (IsScrapingCliff) _sprite.Animation = ScrapingAnimation;
     else if (_isCliffHanging) _sprite.Animation = CliffHangingAnimation;
     else if (_isClimbingHorizontally) _sprite.Animation = ClimbingHorizontallyAnimation;
     else if (_isClimbingUp) _sprite.Animation = ClimbingUpAnimation;
@@ -520,6 +593,26 @@ public class Player : KinematicBody2D
     else if (isFalling && !_isJumping) _sprite.Animation = FallingAnimation;
     else if (!isInMotion) _sprite.Animation = IdleLeftAnimation;
     // @formatter:on
+  }
+
+  private void CalculateFallingStats()
+  {
+    if (_velocity.y > _highestVerticalVelocity) _highestVerticalVelocity = _velocity.y;
+
+    if (IsFalling() && _fallingStartTimeMs == 0)
+    {
+      _fallingStartTimeMs = OS.GetTicksMsec();
+    }
+    else if (IsFalling())
+    {
+      _elapsedFallingTimeMs = OS.GetTicksMsec() - _fallingStartTimeMs;
+    }
+    else if (!IsFalling() && _elapsedFallingTimeMs > 0)
+    {
+      _lastTotalFallingTimeMs = OS.GetTicksMsec() - _fallingStartTimeMs;
+      _fallingStartTimeMs = 0;
+      _elapsedFallingTimeMs = 0;
+    }
   }
 
   private void PrintLine (string line)
