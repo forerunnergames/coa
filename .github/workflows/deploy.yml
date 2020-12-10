@@ -45,6 +45,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: executables
+          path: build
       - run: ls -R
       - name: deploy mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
