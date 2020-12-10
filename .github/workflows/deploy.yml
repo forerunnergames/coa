@@ -45,6 +45,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: executables
+        run: ls -R
       - name: deploy mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
@@ -54,6 +55,7 @@ jobs:
           ITCH_USER: forerunnergames
           PACKAGE: build/mac
           VERSION: ${{ github.event.release.tag_name }}
+        run: ls -R
       - name: deploy windows executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
