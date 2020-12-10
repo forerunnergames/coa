@@ -324,10 +324,11 @@ public class Player : KinematicBody2D
   }
 
   // TODO Create _isPreparingToScrapeCliff, which is true when attempting scraping, but falling hasn't
-  // TODO   gotten fast enough yet to active it (i.e., ShouldScrapeCliff() would return true except
+  // TODO   gotten fast enough yet to activate it (i.e., ShouldScrapeCliff() would return true except
   // TODO   _velocity.y < CliffScrapingActivationVelocity) In this case show an animation of pulling out pickaxe and
   // TODO   swinging it into the cliff, timing it so that the pickaxe sinks into the cliff when
-  // TODO   CliffScrapingActivationVelocity is reached.
+  // TODO   CliffScrapingActivationVelocity is reached. The cliff scraping sound effect will need to be adjusted
+  // TODO   as well to not begin until _isPreparingToScrapeCliff is complete (may resolve itself automatically).
   // TODO Test with !IsOnFloor() removed since IsFalling() makes it redundant.
   // TODO Check if item being used is pickaxe. For now it's the default and only item.
   private bool ShouldScrapeCliff()
