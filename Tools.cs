@@ -31,7 +31,7 @@ public static class Tools
     return Input.IsActionPressed (InputTypes [InputType.Left] [0]);
   }
 
-  private static bool WasLeftArrowPressedOnce()
+  public static bool WasLeftArrowPressedOnce()
   {
     return Input.IsActionJustPressed (InputTypes [InputType.Left] [0]);
   }
@@ -41,12 +41,12 @@ public static class Tools
     return Input.IsActionPressed (InputTypes [InputType.Right] [0]);
   }
 
-  private static bool WasRightArrowPressedOnce()
+  public static bool WasRightArrowPressedOnce()
   {
     return Input.IsActionJustPressed (InputTypes [InputType.Right] [0]);
   }
 
-  private static bool IsUpArrowPressed()
+  public static bool IsUpArrowPressed()
   {
     return Input.IsActionPressed (InputTypes [InputType.Up] [0]);
   }
@@ -56,7 +56,7 @@ public static class Tools
     return Input.IsActionJustPressed (InputTypes [InputType.Up] [0]);
   }
 
-  private static bool IsDownArrowPressed()
+  public static bool IsDownArrowPressed()
   {
     return Input.IsActionPressed (InputTypes [InputType.Down] [0]);
   }
@@ -86,7 +86,7 @@ public static class Tools
     return IsSafelyLessThan (value, min) ? min : value;
   }
 
-  private static float SafelyClampMax (float value, float max)
+  public static float SafelyClampMax (float value, float max)
   {
     return IsSafelyGreaterThan (value, max) ? max : value;
   }
@@ -96,12 +96,12 @@ public static class Tools
     return SafelyClampMin (SafelyClampMax (value, max), min);
   }
 
-  private static bool IsSafelyLessThan (float f1, float f2)
+  public static bool IsSafelyLessThan (float f1, float f2)
   {
     return f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
   }
 
-  private static bool IsSafelyGreaterThan (float f1, float f2)
+  public static bool IsSafelyGreaterThan (float f1, float f2)
   {
     return f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
   }
@@ -151,5 +151,30 @@ public static class Tools
     //   Vertical and "move_up" is an active inclusion, then InputType.Up ["move_up"] will not count as an
     //   active exclusion, since it isn't unique (even though it is active).
     return activeInclusions.Any() && (ignoreExclusions || !activeExclusions.Except (activeInclusions).Any());
+  }
+
+  public static void LoopAudio (AudioStream stream)
+  {
+    LoopAudio (stream, 0.0f, stream.GetLength());
+  }
+
+  public static void LoopAudio (AudioStream stream, float loopBeginSeconds, float loopEndSecondsWavOnly)
+  {
+    switch (stream)
+    {
+      case AudioStreamOGGVorbis ogg:
+      {
+        ogg.Loop = true;
+        ogg.LoopOffset = loopBeginSeconds;
+        break;
+      }
+      case AudioStreamSample wav:
+      {
+        wav.LoopMode = AudioStreamSample.LoopModeEnum.Forward;
+        wav.LoopBegin = Mathf.RoundToInt (loopBeginSeconds * wav.MixRate);
+        wav.LoopEnd = Mathf.RoundToInt (loopEndSecondsWavOnly * wav.MixRate);
+        break;
+      }
+    }
   }
 }

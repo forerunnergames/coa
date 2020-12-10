@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/ambience_summer.wav-45b4424cc2bec97c9a0c1f59c42d27ed.sample"
+
+[deps]
+
+source_file="res://ambience_summer.wav"
+dest_files=[ "res://.import/ambience_summer.wav-45b4424cc2bec97c9a0c1f59c42d27ed.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=true
+compress/mode=0
