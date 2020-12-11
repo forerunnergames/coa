@@ -36,6 +36,7 @@ jobs:
         env:
           RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
         run: |
+          echo "Release version tag: 1. ${{ env.RELEASE_VERSION_TAG }}, 2. $RELEASE_VERSION_TAG, 3. ${{ github.event.release.tag_name }}"
           echo "RELEASE_VERSION_CODE=${RELEASE_VERSION_TAG#v}" >> $GITHUB_ENV
       - name: save release version code
         id: save_release_version_code
@@ -62,7 +63,10 @@ jobs:
           name: executables
           path: build
       - name: print release version code
+        env:
+          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
         run: |
+          echo "Release version tag: 1. ${{ env.RELEASE_VERSION_TAG }}, 2. $RELEASE_VERSION_TAG, 3. ${{ github.event.release.tag_name }}"
           echo "Release version code: ${{ needs.export.outputs.release_version_code }}"
       - name: deploy mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
