@@ -9,8 +9,6 @@ jobs:
   export:
     name: export executables
     runs-on: ubuntu-latest
-    outputs:
-      release_version_code: ${{ steps.save_release_version_code.outputs.release_version_code }}
     steps:
       - name: checkout code
         uses: actions/checkout@v2.3.4
@@ -38,7 +36,11 @@ jobs:
         id: save_release_version_code
         env:
           RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
-        run: echo "::set-output name=release_version_code::${RELEASE_VERSION_TAG#v}"
+        run: |
+          echo "::set-output name=release_version_code::${RELEASE_VERSION_TAG#v}"
+          echo "Release version code: ${{ steps.save_release_version_code.outputs.release_version_code }}"
+    outputs:
+      release_version_code: ${{ steps.save_release_version_code.outputs.release_version_code }}
   deploy:
     name: deploy executables to itch.io
     needs: export
@@ -53,6 +55,10 @@ jobs:
         with:
           name: executables
           path: build
+      - name: print release version code
+        env:
+        run: |
+          echo "Release version code: ${{ needs.export.outputs.release_version_code }}"
       - name: deploy mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
