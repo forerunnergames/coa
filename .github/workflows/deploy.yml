@@ -32,15 +32,19 @@ jobs:
         with:
           name: executables
           path: build
+      - name: get release version code
+        env:
+          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          echo "RELEASE_VERSION_CODE=${RELEASE_VERSION_TAG#v}" >> $GITHUB_ENV
       - name: save release version code
         id: save_release_version_code
+        env:
+          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
         run: |
-          echo "Release version tag (github var): ${{ github.event.release.tag_name }}"
-          export RELEASE_VERSION_TAG="${{ github.event.release.tag_name }}"
-          echo "Release version tag (export): $RELEASE_VERSION_TAG"
-          echo "::set-env name=RELEASE_VERSION_CODE::${RELEASE_VERSION_TAG#v}"
-          echo "Release version code (env var): $RELEASE_VERSION_CODE"
-          echo "Release version code (github output): ${{ steps.save_release_version_code.outputs.release_version_code }}"
+          echo "Release version tag: 1. ${{ env.RELEASE_VERSION_TAG }}, 2. $RELEASE_VERSION_TAG, 3. ${{ github.event.release.tag_name }}"
+          echo "::set-output name=release_version_code::$RELEASE_VERSION_CODE"
+          echo "Release version code: 1. ${{ env.RELEASE_VERSION_CODE }}, 2. $RELEASE_VERSION_CODE, 3. ${{ steps.save_release_version_code.outputs.release_version_code }}"
     outputs:
       release_version_code: ${{ steps.save_release_version_code.outputs.release_version_code }}
   deploy:
