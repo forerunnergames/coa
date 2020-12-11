@@ -56,7 +56,6 @@ jobs:
           name: executables
           path: build
       - name: print release version code
-        env:
         run: |
           echo "Release version code: ${{ needs.export.outputs.release_version_code }}"
       - name: deploy mac executable to itch.io
