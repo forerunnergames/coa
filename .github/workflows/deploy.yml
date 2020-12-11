@@ -46,9 +46,6 @@ jobs:
         with:
           name: executables
           path: build
-      - name: get release version
-        id: version
-        uses: battila7/get-version-action@v2
       - name: deploy mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
@@ -57,7 +54,7 @@ jobs:
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
           PACKAGE: build/mac
-          VERSION: ${{ steps.version.outputs.version-without-v }}
+          VERSION: ${{ github.event.release.tag_name }}
       - name: deploy windows executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
@@ -66,7 +63,7 @@ jobs:
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
           PACKAGE: build/windows
-          VERSION: ${{ steps.version.outputs.version-without-v }}
+          VERSION: ${{ github.event.release.tag_name }}
       - name: deploy linux executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
@@ -75,4 +72,4 @@ jobs:
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
           PACKAGE: build/linux
-          VERSION: ${{ steps.version.outputs.version-without-v }}
+          VERSION: ${{ github.event.release.tag_name }}
