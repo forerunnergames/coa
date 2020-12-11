@@ -34,9 +34,9 @@ jobs:
           path: build
       - name: save release version code
         id: save_release_version_code
-        env:
-          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
         run: |
+          export RELEASE_VERSION_TAG="${{ github.event.release.tag_name }}"
+          echo "Relase version tag: $RELEASE_VERSION_TAG"
           echo "::set-output name=release_version_code::${RELEASE_VERSION_TAG#v}"
           echo "Release version code: ${{ steps.save_release_version_code.outputs.release_version_code }}"
     outputs:
