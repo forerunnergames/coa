@@ -22,7 +22,7 @@ jobs:
           CHANNEL: mac
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
-          PACKAGE: build/mac
+          PACKAGE: coa-mac.zip
           VERSION: ${{ steps.download_mac.outputs.version }}
 
   deploy_windows:
@@ -42,7 +42,7 @@ jobs:
           CHANNEL: windows
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
-          PACKAGE: build/windows
+          PACKAGE: coa-windows.zip
           VERSION: ${{ steps.download_windows.outputs.version }}
 
   deploy_linux:
@@ -62,5 +62,5 @@ jobs:
           CHANNEL: linux
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
-          PACKAGE: build/linux
+          PACKAGE: coa-linux.zip
           VERSION: ${{ steps.download_linux.outputs.version }}
