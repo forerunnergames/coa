@@ -1,74 +1,21 @@
 name: deploy
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [created, edited]
 
 jobs:
-  export:
-    name: export executables
+  deploy_mac:
+    name: Deploy Mac executable to itch.io
     runs-on: ubuntu-latest
     steps:
-      - name: checkout code
-        uses: actions/checkout@v2.3.4
+      - name: Download Mac executable from GitHub release
+        id: download_mac
+        uses: dsaltares/fetch-gh-release-asset@master
         with:
-          fetch-depth: 0
-      - name: create executables
-        uses: firebelley/godot-export@v2.6.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GODOT_MONO_VERSION: 3.2.2
-        with:
-          godot_executable_download_url: https://downloads.tuxfamily.org/godotengine/${{env.GODOT_MONO_VERSION}}/mono/Godot_v${{env.GODOT_MONO_VERSION}}-stable_mono_linux_headless_64.zip
-          godot_export_templates_download_url: https://downloads.tuxfamily.org/godotengine/${{env.GODOT_MONO_VERSION}}/mono/Godot_v${{env.GODOT_MONO_VERSION}}-stable_mono_export_templates.tpz
-          relative_project_path: ./
-          use_preset_export_path: true
-          archive_export_output: true
-          create_release: true
-          base_version: 0.0.1
-      - name: save executables
-        uses: actions/upload-artifact@v2
-        with:
-          name: executables
-          path: build
-      - name: get release version code
-        env:
-          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          echo "Release version tag: 1. ${{ env.RELEASE_VERSION_TAG }}, 2. $RELEASE_VERSION_TAG, 3. ${{ github.event.release.tag_name }}"
-          echo "RELEASE_VERSION_CODE=${RELEASE_VERSION_TAG#v}" >> $GITHUB_ENV
-      - name: save release version code
-        id: save_release_version_code
-        env:
-          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          echo "Release version tag: 1. ${{ env.RELEASE_VERSION_TAG }}, 2. $RELEASE_VERSION_TAG, 3. ${{ github.event.release.tag_name }}"
-          echo "::set-output name=release_version_code::$RELEASE_VERSION_CODE"
-          echo "Release version code: 1. ${{ env.RELEASE_VERSION_CODE }}, 2. $RELEASE_VERSION_CODE, 3. ${{ steps.save_release_version_code.outputs.release_version_code }}"
-    outputs:
-      release_version_code: ${{ steps.save_release_version_code.outputs.release_version_code }}
-  deploy:
-    name: deploy executables to itch.io
-    needs: export
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v2.3.4
-        with:
-          fetch-depth: 0
-      - name: download executables
-        uses: actions/download-artifact@v2
-        with:
-          name: executables
-          path: build
-      - name: print release version code
-        env:
-          RELEASE_VERSION_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          echo "Release version tag: 1. ${{ env.RELEASE_VERSION_TAG }}, 2. $RELEASE_VERSION_TAG, 3. ${{ github.event.release.tag_name }}"
-          echo "Release version code: ${{ needs.export.outputs.release_version_code }}"
-      - name: deploy mac executable to itch.io
+          version: tag/${{ github.event.release.tag_name }}
+          file: coa-mac.zip
+      - name: Publish Mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -76,8 +23,19 @@ jobs:
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
           PACKAGE: build/mac
-          VERSION: ${{ needs.export.outputs.release_version_code }}
-      - name: deploy windows executable to itch.io
+          VERSION: ${{ steps.download_mac.outputs.version }}
+
+  deploy_windows:
+    name: Deploy Windows executable to itch.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows executable from GitHub release
+        id: download_windows
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: tag/${{ github.event.release.tag_name }}
+          file: coa-windows.zip
+      - name: Publish Windows executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -85,8 +43,19 @@ jobs:
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
           PACKAGE: build/windows
-          VERSION: ${{ needs.export.outputs.release_version_code }}
-      - name: deploy linux executable to itch.io
+          VERSION: ${{ steps.download_windows.outputs.version }}
+
+  deploy_linux:
+    name: Deploy Linux executable to itch.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux executable from GitHub release
+        id: download_linux
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: tag/${{ github.event.release.tag_name }}
+          file: coa-linux.zip
+      - name: Publish Linux executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -94,4 +63,4 @@ jobs:
           ITCH_GAME: coa
           ITCH_USER: forerunnergames
           PACKAGE: build/linux
-          VERSION: ${{ needs.export.outputs.release_version_code }}
+          VERSION: ${{ steps.download_linux.outputs.version }}
