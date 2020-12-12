@@ -17,7 +17,7 @@ jobs:
       - name: create executables
         uses: firebelley/godot-export@v2.6.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_ACTIONS_TOKEN }}
           GODOT_MONO_VERSION: 3.2.2
         with:
           godot_executable_download_url: https://downloads.tuxfamily.org/godotengine/${{env.GODOT_MONO_VERSION}}/mono/Godot_v${{env.GODOT_MONO_VERSION}}-stable_mono_linux_headless_64.zip

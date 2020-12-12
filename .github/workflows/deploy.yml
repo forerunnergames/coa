@@ -13,7 +13,7 @@ jobs:
         id: download_mac
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          version: tag/${{ github.event.release.tag_name }}
+          version: tags/${{ github.event.release.tag_name }}
           file: coa-mac.zip
       - name: Publish Mac executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
@@ -33,7 +33,7 @@ jobs:
         id: download_windows
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          version: tag/${{ github.event.release.tag_name }}
+          version: tags/${{ github.event.release.tag_name }}
           file: coa-windows.zip
       - name: Publish Windows executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
@@ -53,7 +53,7 @@ jobs:
         id: download_linux
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          version: tag/${{ github.event.release.tag_name }}
+          version: tags/${{ github.event.release.tag_name }}
           file: coa-linux.zip
       - name: Publish Linux executable to itch.io
         uses: josephbmanley/butler-publish-itchio-action@master
