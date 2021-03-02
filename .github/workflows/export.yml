@@ -32,7 +32,7 @@ jobs:
           godot_export_templates_download_url: https://downloads.tuxfamily.org/godotengine/${{env.GODOT_MONO_URL_VERSION}}/mono/Godot_v${{env.GODOT_MONO_FILE_VERSION}}_mono_export_templates.tpz
           relative_project_path: ./
           archive_export_output: true
-          create_release: false
+          create_release: true
           base_version: 0.0.1
       - name: upload executables
         uses: actions/upload-artifact@v2

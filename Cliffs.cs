@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using static Tools;
 
@@ -12,7 +13,6 @@ public class Cliffs : Area2D
   private Vector2 _cliffsPosition;
   private CollisionShape2D _cliffsCollider;
   private bool _isPlayerIntersectingCliffs;
-  private bool _isPlayerFullyIntersectingCliffs;
   private AudioStreamPlayer _audio;
 
   public override void _Ready()
@@ -22,6 +22,20 @@ public class Cliffs : Area2D
     LoopAudio (_audio.Stream);
     _cliffsCollider = GetNode <CollisionShape2D> ("CollisionShape2D");
     _cliffsPosition = _cliffsCollider.GlobalPosition;
+
+    // TODO Remove.
+    for (var i = 1; i < 11; ++i)
+    {
+      if (Name != "Upper Cliffs") return;
+      GetNode <AnimatedSprite> ("Waterfall/waterfall " + i).Play();
+    }
+
+    // TODO Remove.
+    for (var i = 1; i < 4; ++i)
+    {
+      if (Name != "Upper Cliffs") return;
+      GetNode <AnimatedSprite> ("Waterfall/waterfall mist " + i).Play();
+    }
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -40,13 +54,15 @@ public class Cliffs : Area2D
 
     _playerArea = area;
     _isPlayerIntersectingCliffs = false;
+    GetNode <Player> ("../Player").IsInCliffs = false;
   }
 
   public override void _Process (float delta)
   {
     Update();
+    Sounds();
 
-    if (_playerArea == null) return;
+    if (!_isPlayerIntersectingCliffs) return;
 
     _playerExtents = GetExtents (_playerArea);
     _cliffsExtents = GetExtents (this);
@@ -58,13 +74,7 @@ public class Cliffs : Area2D
     _cliffsRect.Position = _cliffsPosition - _cliffsExtents;
     _cliffsRect.Size = _cliffsExtents * 2;
 
-    _isPlayerFullyIntersectingCliffs = _isPlayerIntersectingCliffs && _cliffsRect.Encloses (_playerRect);
-
-    var player = GetNode <KinematicBody2D> ("../Player");
-    player.Set ("IsIntersectingCliffs", _isPlayerIntersectingCliffs);
-    player.Set ("IsFullyIntersectingCliffs", _isPlayerFullyIntersectingCliffs);
-
-    Sounds();
+    GetNode <Player> ("../Player").IsInCliffs = _isPlayerIntersectingCliffs && _cliffsRect.Encloses (_playerRect);
   }
 
   private void Sounds()
@@ -79,6 +89,7 @@ public class Cliffs : Area2D
     var collisionShape = area.GetNode <CollisionShape2D> ("CollisionShape2D");
     var collisionRect = collisionShape.Shape as RectangleShape2D;
 
+    // ReSharper disable once InvertIf
     if (collisionRect == null)
     {
       OnWrongCollisionShape (area, collisionShape.Shape);

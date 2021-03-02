@@ -1,116 +1,72 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
+// ReSharper disable MemberCanBePrivate.Global
 public static class Tools
 {
-  public enum InputType
+  public enum Input
   {
     Horizontal,
     Vertical,
     Item,
+    Text,
+    Respawn,
     Up,
     Down,
     Left,
-    Right
+    Right,
+    Jump
   }
 
-  private static readonly Dictionary <InputType, string[]> InputTypes = new Dictionary <InputType, string[]>()
+  private static readonly Dictionary <Input, string[]> Inputs = new()
   {
-    { InputType.Horizontal, new[] { "move_left", "move_right" } },
-    { InputType.Vertical, new[] { "move_up", "move_down" } },
-    { InputType.Item, new[] { "use_item" } },
-    { InputType.Up, new[] { "move_up" } },
-    { InputType.Down, new[] { "move_down" } },
-    { InputType.Left, new[] { "move_left" } },
-    { InputType.Right, new[] { "move_right" } }
+    { Input.Horizontal, new[] { "move_left", "move_right" } },
+    { Input.Vertical, new[] { "move_up", "move_down" } },
+    { Input.Item, new[] { "use_item" } },
+    { Input.Text, new[] { "show_text" } },
+    { Input.Respawn, new[] { "respawn" } },
+    { Input.Up, new[] { "move_up" } },
+    { Input.Down, new[] { "move_down" } },
+    { Input.Left, new[] { "move_left" } },
+    { Input.Right, new[] { "move_right" } },
+    { Input.Jump, new[] { "jump" } }
   };
 
-  public static bool IsLeftArrowPressed()
-  {
-    return Input.IsActionPressed (InputTypes [InputType.Left] [0]);
-  }
-
-  public static bool WasLeftArrowPressedOnce()
-  {
-    return Input.IsActionJustPressed (InputTypes [InputType.Left] [0]);
-  }
-
-  public static bool IsRightArrowPressed()
-  {
-    return Input.IsActionPressed (InputTypes [InputType.Right] [0]);
-  }
-
-  public static bool WasRightArrowPressedOnce()
-  {
-    return Input.IsActionJustPressed (InputTypes [InputType.Right] [0]);
-  }
-
-  public static bool IsUpArrowPressed()
-  {
-    return Input.IsActionPressed (InputTypes [InputType.Up] [0]);
-  }
-
-  public static bool WasUpArrowPressedOnce()
-  {
-    return Input.IsActionJustPressed (InputTypes [InputType.Up] [0]);
-  }
-
-  public static bool IsDownArrowPressed()
-  {
-    return Input.IsActionPressed (InputTypes [InputType.Down] [0]);
-  }
-
-  public static bool WasDownArrowPressedOnce()
-  {
-    return Input.IsActionJustPressed (InputTypes [InputType.Down] [0]);
-  }
-
-  public static bool IsAnyHorizontalArrowPressed()
-  {
-    return IsLeftArrowPressed() || IsRightArrowPressed();
-  }
-
-  public static bool IsAnyVerticalArrowPressed()
-  {
-    return IsUpArrowPressed() || IsDownArrowPressed();
-  }
-
-  public static bool IsItemKeyPressed()
-  {
-    return Input.IsActionPressed (InputTypes [InputType.Item] [0]);
-  }
-
-  public static float SafelyClampMin (float value, float min)
-  {
-    return IsSafelyLessThan (value, min) ? min : value;
-  }
-
-  public static float SafelyClampMax (float value, float max)
-  {
-    return IsSafelyGreaterThan (value, max) ? max : value;
-  }
-
-  public static float SafelyClamp (float value, float min, float max)
-  {
-    return SafelyClampMin (SafelyClampMax (value, max), min);
-  }
-
-  public static bool IsSafelyLessThan (float f1, float f2)
-  {
-    return f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
-  }
-
-  public static bool IsSafelyGreaterThan (float f1, float f2)
-  {
-    return f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
-  }
+  public static bool IsReleased (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionReleased (x));
+  public static bool IsOneActiveOf (Input i) => Inputs[i].Where (Godot.Input.IsActionPressed).Take (2).Count() == 1;
+  public static bool IsAnyActiveOf (Input i) => Inputs[i].Any (Godot.Input.IsActionPressed);
+  public static bool IsLeftArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Left][0]);
+  public static bool WasLeftArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Left][0]);
+  public static bool IsRightArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Right][0]);
+  public static bool WasRightArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Right][0]);
+  public static bool IsUpArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Up][0]);
+  public static bool WasUpArrowReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Up][0]);
+  public static bool WasUpArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Up][0]);
+  public static bool IsDownArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Down][0]);
+  public static bool WasDownArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Down][0]);
+  public static bool IsAnyHorizontalArrowPressed() => IsLeftArrowPressed() || IsRightArrowPressed();
+  public static bool IsEveryHorizontalArrowPressed() => IsLeftArrowPressed() && IsRightArrowPressed();
+  public static bool IsAnyVerticalArrowPressed() => IsUpArrowPressed() || IsDownArrowPressed();
+  public static bool IsEveryVerticalArrowPressed() => IsUpArrowPressed() && IsDownArrowPressed();
+  public static bool IsAnyArrowKeyPressed() => IsAnyHorizontalArrowPressed() || IsAnyVerticalArrowPressed();
+  public static bool IsItemKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Item][0]);
+  public static bool WasItemKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Item][0]);
+  public static bool WasJumpKeyPressed() => Godot.Input.IsActionJustPressed (Inputs[Input.Jump][0]);
+  public static bool WasJumpKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Jump][0]);
+  public static float SafelyClampMin (float f, float min) => IsSafelyLessThan (f, min) ? min : f;
+  public static float SafelyClampMax (float f, float max) => IsSafelyGreaterThan (f, max) ? max : f;
+  public static float SafelyClamp (float f, float min, float max) => SafelyClampMin (SafelyClampMax (f, max), min);
+  public static bool IsSafelyLessThan (float f1, float f2) => f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
+  public static bool IsSafelyGreaterThan (float f1, float f2) => f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
+  public static void LoopAudio (AudioStream a) { LoopAudio (a, 0.0f, a.GetLength()); }
 
   /// <summary>
   /// Whether or not the specified input type is the only active input.
   /// </summary>
-  /// <param name="inputType"></param>
-  /// <param name="ignoreExclusions">if true, bypass exclusivity requirement for active input
+  /// <param name="input"></param>
+  /// <param name="disableExclusivity">if true, bypass exclusivity requirement for active input
   /// <br/>
   /// Useful when the desired action from the specified input is already being executed,
   /// since ignoring exclusivity prevents said action from being canceled when
@@ -131,17 +87,18 @@ public static class Tools
   /// would be disabled while running because the right arrow key is already being pressed.
   /// </param>
   /// <returns></returns>
-  public static bool IsExclusivelyActiveUnless (InputType inputType, bool ignoreExclusions)
+  public static bool IsExclusivelyActiveUnless (Input input, bool disableExclusivity)
   {
     var activeInclusions = new List <string>();
     var activeExclusions = new List <string>();
 
-    foreach (var dict in InputTypes)
+    foreach (var (key, values) in Inputs)
     {
-      foreach (var value in dict.Value)
+      foreach (var value in values)
       {
-        var isActionPressed = Input.IsActionPressed (value);
-        if (dict.Key == inputType && isActionPressed) activeInclusions.Add (value);
+        var isActionPressed = Godot.Input.IsActionPressed (value);
+
+        if (key == input && isActionPressed) activeInclusions.Add (value);
         else if (isActionPressed) activeExclusions.Add (value);
       }
     }
@@ -150,12 +107,7 @@ public static class Tools
     //   E.g., InputType.Vertical & InputType.Up both contain "move_up", so if the specified input type is
     //   Vertical and "move_up" is an active inclusion, then InputType.Up ["move_up"] will not count as an
     //   active exclusion, since it isn't unique (even though it is active).
-    return activeInclusions.Any() && (ignoreExclusions || !activeExclusions.Except (activeInclusions).Any());
-  }
-
-  public static void LoopAudio (AudioStream stream)
-  {
-    LoopAudio (stream, 0.0f, stream.GetLength());
+    return activeInclusions.Any() && (disableExclusivity || !activeExclusions.Except (activeInclusions).Any());
   }
 
   public static void LoopAudio (AudioStream stream, float loopBeginSeconds, float loopEndSecondsWavOnly)
@@ -166,6 +118,7 @@ public static class Tools
       {
         ogg.Loop = true;
         ogg.LoopOffset = loopBeginSeconds;
+
         break;
       }
       case AudioStreamSample wav:
@@ -173,8 +126,12 @@ public static class Tools
         wav.LoopMode = AudioStreamSample.LoopModeEnum.Forward;
         wav.LoopBegin = Mathf.RoundToInt (loopBeginSeconds * wav.MixRate);
         wav.LoopEnd = Mathf.RoundToInt (loopEndSecondsWavOnly * wav.MixRate);
+
         break;
       }
     }
   }
+
+  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) =>
+    e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
 }
