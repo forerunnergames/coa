@@ -255,8 +255,17 @@ public class Player : KinematicBody2D
     }
     else if (_stateMachine.Is (State.ClimbingUp))
     {
-      _velocity.y -= Gravity_ + VerticalClimbingSpeed * 0.01f;
-      _velocity.y = SafelyClampMin (_velocity.y, -VerticalClimbingSpeed);
+      // TODO Testing
+      // if ((_sprite.Frame + 1) % 3 == 0)
+      if (_sprite.Frame == 1 || _sprite.Frame == 4)
+      {
+        _velocity.y = -VerticalClimbingSpeed;
+        //_velocity.y = SafelyClampMin (_velocity.y, -VerticalClimbingSpeed);
+      }
+      else
+      {
+        _velocity.y = 0.0f;
+      }
     }
     else if (_stateMachine.Is (State.Traversing))
     {
