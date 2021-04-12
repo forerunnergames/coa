@@ -19,7 +19,7 @@ jobs:
         with:
           dotnet-version: '5.0.x'
       - name: use custom editor settings
-        run: mkdir -p ~/.config/godot && cp default_env.tres ~/.config/godot/editor_settings-3.tres
+        run: mkdir -p ~/.config/godot && chmod 440 default_env.tres && cp default_env.tres ~/.config/godot/editor_settings-3.tres
       - name: create executables
         uses: firebelley/godot-export@v2.6.1
         env:
