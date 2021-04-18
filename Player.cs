@@ -63,6 +63,11 @@ public class Player : KinematicBody2D
   // ReSharper disable once UnassignedField.Global
   public bool IsInCliffs;
 
+  // Field must be publicly accessible from Cliffs.cs
+  // ReSharper disable once MemberCanBePrivate.Global
+  // ReSharper disable once UnassignedField.Global
+  public bool IsTouchingCliffIce;
+
   public enum State
   {
     Idle,
@@ -355,6 +360,7 @@ public class Player : KinematicBody2D
     "\nClimbing prep: " + _stateMachine.Is (State.ClimbingPrep) +
     "\nClimbing prep timer: " + _climbingPrepTimer.TimeLeft +
     "\nClimbing up: " + _stateMachine.Is (State.ClimbingUp) +
+    "\nTouching cliff ice: " + IsTouchingCliffIce +
     "\nScraping cliff: " + _stateMachine.Is (State.Scraping) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Horizontally: " + _stateMachine.Is (State.Traversing) +
@@ -441,14 +447,14 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
     _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0);
-    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs);
+    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs || IsTouchingCliffIce);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.Scraping, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffScrapingActivationVelocity);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasDownArrowPressedOnce);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasDownArrowPressedOnce() || !IsInCliffs);
+    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasDownArrowPressedOnce() || !IsInCliffs || IsTouchingCliffIce);
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Scraping, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.Scraping, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);

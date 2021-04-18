@@ -134,4 +134,9 @@ public static class Tools
 
   public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) =>
     e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
+
+  public static bool IsIntersectingAnyTile (Vector2 globalPosition, TileMap tileMap)
+  {
+    return tileMap.GetCellv (tileMap.WorldToMap (tileMap.ToLocal (globalPosition))) != -1;
+  }
 }

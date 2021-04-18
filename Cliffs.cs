@@ -14,6 +14,11 @@ public class Cliffs : Area2D
   private bool _isPlayerIntersectingCliffs;
   private AudioStreamPlayer _audio;
   private AudioStreamPlayer _music;
+  private TileMap _iceTileMap;
+  private Vector2 _topLeft;
+  private Vector2 _bottomRight;
+  private Vector2 _topRight;
+  private Vector2 _bottomLeft;
 
   public override void _Ready()
   {
@@ -25,6 +30,7 @@ public class Cliffs : Area2D
     LoopAudio (_music.Stream);
     _cliffsCollider = GetNode <CollisionShape2D> ("CollisionShape2D");
     _cliffsPosition = _cliffsCollider.GlobalPosition;
+    _iceTileMap = GetNode <TileMap> ("Ice");
 
     // TODO Remove.
     for (var i = 1; i < 11; ++i)
@@ -78,6 +84,18 @@ public class Cliffs : Area2D
     _cliffsRect.Size = _cliffsExtents * 2;
 
     GetNode <Player> ("../Player").IsInCliffs = _isPlayerIntersectingCliffs && _cliffsRect.Encloses (_playerRect);
+
+    _topLeft = _playerArea.GlobalPosition - _playerExtents;
+    _bottomRight = _playerArea.GlobalPosition + _playerExtents;
+    _topRight.x = _playerArea.GlobalPosition.x + _playerExtents.x;
+    _topRight.y = _playerArea.GlobalPosition.y - _playerExtents.y;
+    _bottomLeft.x = _playerArea.GlobalPosition.x - _playerExtents.x;
+    _bottomLeft.y = _playerArea.GlobalPosition.y + _playerExtents.y;
+
+    GetNode <Player> ("../Player").IsTouchingCliffIce = IsIntersectingAnyTile (_topLeft, _iceTileMap) ||
+                                                        IsIntersectingAnyTile (_bottomRight, _iceTileMap) ||
+                                                        IsIntersectingAnyTile (_topRight, _iceTileMap) ||
+                                                        IsIntersectingAnyTile (_bottomLeft, _iceTileMap);
   }
 
   private void Sounds()
