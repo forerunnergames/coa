@@ -11,7 +11,7 @@ public class TileSet : Godot.TileSet
     CliffGem = 1
   }
 
-  private readonly Dictionary <Tile, Tile[]> _binds = new Dictionary <Tile, Tile[]>()
+  private readonly Dictionary <Tile, Tile[]> _binds = new()
   {
     { Tile.Cliff, new[] { Tile.CliffGem } },
     { Tile.CliffGem, new[] { Tile.Cliff } }

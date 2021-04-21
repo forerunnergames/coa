@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/music2_trimmed.wav-bc809647170e7c4fe1e30c45e5dcf349.sample"
+
+[deps]
+
+source_file="res://music2_trimmed.wav"
+dest_files=[ "res://.import/music2_trimmed.wav-bc809647170e7c4fe1e30c45e5dcf349.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0
