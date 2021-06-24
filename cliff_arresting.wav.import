@@ -2,12 +2,12 @@
 
 importer="wav"
 type="AudioStreamSample"
-path="res://.import/cliff_scrape.wav-8581d3c962209eac9ef708c3934356d4.sample"
+path="res://.import/cliff_arresting.wav-d702b805cacda14dd945adce6ed9e662.sample"
 
 [deps]
 
-source_file="res://cliff_scrape.wav"
-dest_files=[ "res://.import/cliff_scrape.wav-8581d3c962209eac9ef708c3934356d4.sample" ]
+source_file="res://cliff_arresting.wav"
+dest_files=[ "res://.import/cliff_arresting.wav-d702b805cacda14dd945adce6ed9e662.sample" ]
 
 [params]
 

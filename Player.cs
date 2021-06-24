@@ -8,19 +8,19 @@ using Input = Tools.Input;
 // TODO Bug: Running / climbing horizontally against a wall alternates in a loop between idle and running.
 // TODO Bug: Climbing to cliff gap above waterfall still thinks IsFullyIntersectingCliffs is true.
 // TODO Stop polling and have event-based input state changes only.
-// TODO Check if item being used for scraping is pickaxe. For now it's the default and only item.
-// TODO Create _isPreparingToScrapeCliff, which is true when attempting scraping, but falling hasn't
-// TODO   gotten fast enough yet to activate it (i.e., _velocity.y < CliffScrapingActivationVelocity).
+// TODO Check if item being used for cliff arresting is pickaxe. For now it's the default and only item.
+// TODO Create _isPreparingToCliffArrest, which is true when attempting cliff arresting, but falling hasn't
+// TODO   gotten fast enough yet to activate it (i.e., _velocity.y < CliffArrestingActivationVelocity).
 // TODO   In this case show an animation of pulling out pickaxe and swinging it into the cliff, timing it
-// TODO   so that the pickaxe sinks into the cliff when CliffScrapingActivationVelocity is reached.
-// TODO   The cliff scraping sound effect will need to be adjusted as well to not begin until
-// TODO   _isPreparingToScrapeCliff is complete (may resolve itself automatically).
+// TODO   so that the pickaxe sinks into the cliff when CliffArrestingActivationVelocity is reached.
+// TODO   The cliff arresting sound effect will need to be adjusted as well to not begin until
+// TODO   _isPreparingToCliffArrest is complete (may resolve itself automatically).
 // TODO Climbing down? Or leave out?
 // Climbing terminology:
-// Scraping: Using pickaxe to slow a cliff fall
+// Cliff arresting: Using pickaxe to slow a cliff fall
 // Cliffhanging: Attached to a cliff above the ground, not moving
 // Traversing: Climbing horizontally
-// Free falling: Moving down, without scraping, can also be coming down from a jump.
+// Free falling: Moving down, without cliff arresting, can also be coming down from a jump.
 public class Player : KinematicBody2D
 {
   // @formatter:off
@@ -33,8 +33,8 @@ public class Player : KinematicBody2D
   [Export] public float TraverseFriction = 0.9f;
   [Export] public float HorizontalClimbStoppingFriction = 0.6f;
   [Export] public float HorizontalFreeFallingSpeed = 10.0f;
-  [Export] public float CliffScrapingSpeed = 40.0f;
-  [Export] public float CliffScrapingActivationVelocity = 800.0f;
+  [Export] public float CliffArrestingSpeed = 40.0f;
+  [Export] public float CliffArrestingActivationVelocity = 800.0f;
   [Export] public float VelocityEpsilon = 1.0f;
   [Export] public float JumpPower = 800.0f;
   // ReSharper disable once InconsistentNaming
@@ -45,15 +45,15 @@ public class Player : KinematicBody2D
   [Export] public string ClimbingUpAnimation = "player_climbing_up";
   [Export] public string CliffHangingAnimation = "player_cliff_hanging";
   [Export] public string TraversingAnimation = "player_traversing";
-  [Export] public string ScrapingAnimation = "player_scraping";
+  [Export] public string CliffArrestingAnimation = "player_cliff_arresting";
   [Export] public string RunAnimation = "player_running";
-  [Export] public string CliffScrapingSoundFile = "res://cliff_scrape.wav";
-  [Export] public bool CliffScrapingSoundLooping = true;
+  [Export] public string CliffArrestingSoundFile = "res://cliff_arresting.wav";
+  [Export] public bool CliffArrestingSoundLooping = true;
   // ReSharper disable once RedundantDefaultMemberInitializer
-  [Export] public float CliffScrapingSoundLoopBeginSeconds = 0.0f;
-  [Export] public float CliffScrapingSoundLoopEndSeconds = 4.5f;
-  [Export] public float CliffScrapingSoundVelocityPitchScaleModulation = 4.0f;
-  [Export] public float CliffScrapingSoundMinPitchScale = 2.0f;
+  [Export] public float CliffArrestingSoundLoopBeginSeconds = 0.0f;
+  [Export] public float CliffArrestingSoundLoopEndSeconds = 4.5f;
+  [Export] public float CliffArrestingSoundVelocityPitchScaleModulation = 4.0f;
+  [Export] public float CliffArrestingSoundMinPitchScale = 2.0f;
   [Export] public State InitialState = State.Idle;
   [Export] public Log.Level LogLevel = Log.Level.Debug;
   // @formatter:on
@@ -77,7 +77,7 @@ public class Player : KinematicBody2D
     ClimbingUp,
     CliffHanging,
     Traversing,
-    Scraping,
+    CliffArresting,
     FreeFalling
   }
 
@@ -105,15 +105,15 @@ public class Player : KinematicBody2D
     { State.ClimbingUp, new[] { State.FreeFalling } },
     { State.CliffHanging, new[] { State.ClimbingUp, State.Traversing, State.FreeFalling } },
     { State.Traversing, new[] { State.CliffHanging, State.FreeFalling } },
-    { State.Scraping, new[] { State.CliffHanging, State.FreeFalling, State.Idle } },
-    { State.FreeFalling, new[] { State.Scraping, State.Idle, State.Running, State.Jumping } }
+    { State.CliffArresting, new[] { State.CliffHanging, State.FreeFalling, State.Idle } },
+    { State.FreeFalling, new[] { State.CliffArresting, State.Idle, State.Running, State.Jumping } }
   };
 
   public override void _Ready()
   {
     _audio = GetNode <AudioStreamPlayer> ("AudioStreamPlayer");
-    _audio.Stream = ResourceLoader.Load <AudioStream> (CliffScrapingSoundFile);
-    LoopAudio (_audio.Stream, CliffScrapingSoundLoopBeginSeconds, CliffScrapingSoundLoopEndSeconds);
+    _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
+    LoopAudio (_audio.Stream, CliffArrestingSoundLoopBeginSeconds, CliffArrestingSoundLoopEndSeconds);
     _label = GetNode <RichTextLabel> ("DebuggingText");
     _sprite = GetNode <AnimatedSprite> ("AnimatedSprite");
     _climbingPrepTimer = GetNode <Timer> ("ClimbingReadyTimer");
@@ -280,9 +280,9 @@ public class Player : KinematicBody2D
     {
       _velocity.y = 0.0f; // TODO Subtract gravity and round to 0.
     }
-    else if (_stateMachine.Is (State.Scraping))
+    else if (_stateMachine.Is (State.CliffArresting))
     {
-      _velocity.y -= CliffScrapingSpeed;
+      _velocity.y -= CliffArrestingSpeed;
       _velocity.y = SafelyClampMin (_velocity.y, 0.0f);
     }
   }
@@ -312,10 +312,10 @@ public class Player : KinematicBody2D
 
   private void SoundEffects()
   {
-    if (_stateMachine.Is (State.Scraping))
+    if (_stateMachine.Is (State.CliffArresting))
     {
-      _audio.PitchScale = CliffScrapingSoundMinPitchScale +
-                          _velocity.y / CliffScrapingActivationVelocity / CliffScrapingSoundVelocityPitchScaleModulation;
+      _audio.PitchScale = CliffArrestingSoundMinPitchScale +
+                          _velocity.y / CliffArrestingActivationVelocity / CliffArrestingSoundVelocityPitchScaleModulation;
     }
   }
 
@@ -361,7 +361,7 @@ public class Player : KinematicBody2D
     "\nClimbing prep timer: " + _climbingPrepTimer.TimeLeft +
     "\nClimbing up: " + _stateMachine.Is (State.ClimbingUp) +
     "\nTouching cliff ice: " + IsTouchingCliffIce +
-    "\nScraping cliff: " + _stateMachine.Is (State.Scraping) +
+    "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Horizontally: " + _stateMachine.Is (State.Traversing) +
     "\nFree falling: " + _stateMachine.Is (State.FreeFalling) +
@@ -408,22 +408,22 @@ public class Player : KinematicBody2D
       FlipHorizontally (false);
     });
 
-    _stateMachine.OnTransitionFrom (State.Scraping, () =>
+    _stateMachine.OnTransitionFrom (State.CliffArresting, () =>
     {
       if (!_audio.Playing) return;
 
       _audio.Stop();
-      PrintLine ("Sound effects: Stopped cliff scraping sound.");
+      PrintLine ("Sound effects: Stopped cliff arresting sound.");
     });
 
-    _stateMachine.OnTransitionTo (State.Scraping, () =>
+    _stateMachine.OnTransitionTo (State.CliffArresting, () =>
     {
-      _sprite.Animation = ScrapingAnimation;
+      _sprite.Animation = CliffArrestingAnimation;
 
       if (_audio.Playing) return;
 
       _audio.Play();
-      PrintLine ("Sound effects: Playing cliff scraping sound.");
+      PrintLine ("Sound effects: Playing cliff arresting sound.");
     });
 
     _stateMachine.OnTransitionTo (State.ClimbingPrep, () =>
@@ -450,15 +450,15 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs || IsTouchingCliffIce);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor());
-    _stateMachine.AddTrigger (State.FreeFalling, State.Scraping, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffScrapingActivationVelocity);
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasDownArrowPressedOnce);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasDownArrowPressedOnce() || !IsInCliffs || IsTouchingCliffIce);
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
-    _stateMachine.AddTrigger (State.Scraping, State.FreeFalling, WasItemKeyReleased);
-    _stateMachine.AddTrigger (State.Scraping, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);
-    _stateMachine.AddTrigger (State.Scraping, State.Idle, IsOnFloor);
+    _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
+    _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);
+    _stateMachine.AddTrigger (State.CliffArresting, State.Idle, IsOnFloor);
     // @formatter:on
   }
 }
