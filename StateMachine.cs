@@ -180,16 +180,6 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     ExecuteChangeState (to);
   }
 
-  private T DoublePeek()
-  {
-    if (_childStates.Count == 0)
-    {
-      throw new InvalidOperationException ($"Cannot double peek: current state {ToString (_currentState)} wasn't pushed.");
-    }
-
-    return _childStates.Count > 1 ? _childStates.Skip (1).First() : _parentState;
-  }
-
   public void Reset()
   {
     _currentState = _initialState;
@@ -202,16 +192,28 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     if (condition) Pop();
   }
 
-  private bool IsReversible (T state) => CanTransition (state, _currentState);
   public void PopIf (T state, bool condition) => PopIf (Is (state) && condition);
   public void PopIf (T state) => PopIf (Is (state));
+  private bool IsReversible (T state) => CanTransition (state, _currentState);
   private bool CanPopTo (T to) => CanPop() && Equals (DoublePeek(), to);
   private bool CanPop() => IsCurrentChild (_currentState);
   private bool IsCurrentChild (T state) => _childStates.Count > 0 && Equals (state, _childStates.Peek());
   private bool CanTransitionTo (T to) => CanTransition (_currentState, to);
   private bool CanTransition (T from, T to) { return _transitionTable.TryGetValue (from, out var toStates) && toStates.Contains (to); }
   private bool HasTransitionAction (T from, T to) { return _actions.TryGetValue (from, out var actions) && actions.ContainsKey (to); }
+  private string PrintStates() => $"States:\nChildren:\n{Tools.ToString (_childStates, "\n")}\nParent:\n{_parentState}";
   private static bool HasWildcards (params T[] states) => states.Any (state => Equals (state, AnyState));
+  private static string ToString (T t) => Equals (t, AnyState) ? nameof (AnyState) : t.ToString();
+
+  private T DoublePeek()
+  {
+    if (_childStates.Count == 0)
+    {
+      throw new InvalidOperationException ($"Cannot double peek: current state {ToString (_currentState)} wasn't pushed.");
+    }
+
+    return _childStates.Count > 1 ? _childStates.Skip (1).First() : _parentState;
+  }
 
   private bool ShouldExecuteChangeState (T to)
   {
@@ -250,7 +252,4 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       }
     }
   }
-
-  private string PrintStates() => $"States:\nChildren:\n{Tools.ToString (_childStates, "\n")}\nParent:\n{_parentState}";
-  private static string ToString (T t) => Equals (t, AnyState) ? nameof (AnyState) : t.ToString();
 }

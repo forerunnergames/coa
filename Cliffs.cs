@@ -12,8 +12,8 @@ public class Cliffs : Area2D
   private Vector2 _cliffsPosition;
   private CollisionShape2D _cliffsCollider;
   private bool _isPlayerIntersectingCliffs;
-  private AudioStreamPlayer _audio;
-  private AudioStreamPlayer _music;
+  private AudioStreamPlayer _ambiencePlayer;
+  private AudioStreamPlayer _musicPlayer;
   private TileMap _iceTileMap;
   private Vector2 _topLeft;
   private Vector2 _bottomRight;
@@ -22,12 +22,12 @@ public class Cliffs : Area2D
 
   public override void _Ready()
   {
-    _audio = GetNode <AudioStreamPlayer> ("../AudioStreamPlayer");
-    _audio.Stream = ResourceLoader.Load <AudioStream> ("res://ambience_summer.wav");
-    _music = GetNode <AudioStreamPlayer> ("../AudioStreamPlayer2");
-    _music.Stream = ResourceLoader.Load <AudioStream> ("res://music2_trimmed.wav");
-    LoopAudio (_audio.Stream);
-    LoopAudio (_music.Stream);
+    _ambiencePlayer = GetNode <AudioStreamPlayer> ("../AmbiencePlayer");
+    _ambiencePlayer.Stream = ResourceLoader.Load <AudioStream> ("res://ambience_summer.wav");
+    _musicPlayer = GetNode <AudioStreamPlayer> ("../MusicPlayer");
+    _musicPlayer.Stream = ResourceLoader.Load <AudioStream> ("res://music2_trimmed.wav");
+    LoopAudio (_ambiencePlayer.Stream);
+    LoopAudio (_musicPlayer.Stream);
     _cliffsCollider = GetNode <CollisionShape2D> ("CollisionShape2D");
     _cliffsPosition = _cliffsCollider.GlobalPosition;
     _iceTileMap = GetNode <TileMap> ("Ice");
@@ -100,8 +100,8 @@ public class Cliffs : Area2D
 
   private void Sounds()
   {
-    if (!_audio.Playing) _audio.Play();
-    if (!_music.Playing) _music.Play();
+    if (!_ambiencePlayer.Playing) _ambiencePlayer.Play();
+    if (!_musicPlayer.Playing) _musicPlayer.Play();
   }
 
   private static Vector2 GetExtents (Area2D area)

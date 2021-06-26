@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Godot;
 using static Tools;
@@ -37,8 +36,7 @@ public class Player : KinematicBody2D
   [Export] public float CliffArrestingActivationVelocity = 800.0f;
   [Export] public float VelocityEpsilon = 1.0f;
   [Export] public float JumpPower = 800.0f;
-  // ReSharper disable once InconsistentNaming
-  [Export] public float Gravity_ = 30.0f;
+  [Export] public float Gravity = 30.0f;
   [Export] public string IdleLeftAnimation = "player_idle_left";
   [Export] public string ClimbingPrepAnimation = "player_idle_back";
   [Export] public string FreeFallingAnimation = "player_falling";
@@ -111,7 +109,7 @@ public class Player : KinematicBody2D
 
   public override void _Ready()
   {
-    _audio = GetNode <AudioStreamPlayer> ("AudioStreamPlayer");
+    _audio = GetNode <AudioStreamPlayer> ("PlayerSoundEffectsPlayer");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     LoopAudio (_audio.Stream, CliffArrestingSoundLoopBeginSeconds, CliffArrestingSoundLoopEndSeconds);
     _label = GetNode <RichTextLabel> ("DebuggingText");
@@ -248,7 +246,7 @@ public class Player : KinematicBody2D
 
   private void VerticalVelocity()
   {
-    _velocity.y += Gravity_;
+    _velocity.y += Gravity;
 
     // TODO Remove else if's, order shouldn't matter.
     // TODO Make relative by subtracting gravity from _velocity.y and round to 0 within a couple decimal places (or epsilon).
