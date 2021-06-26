@@ -355,7 +355,7 @@ process_mode = 0
 wait_time = 0.75
 one_shot = true
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Player"]
+[node name="PlayerSoundEffectsPlayer" type="AudioStreamPlayer" parent="Player"]
 stream = SubResource( 59 )
 pitch_scale = 2.03
 
@@ -830,11 +830,11 @@ position = Vector2( 960, -4288 )
 rotation = 1.5708
 shape = SubResource( 58 )
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+[node name="AmbiencePlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 6 )
 volume_db = -10.156
 
-[node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="."]
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 9 )
 volume_db = -21.932
 
