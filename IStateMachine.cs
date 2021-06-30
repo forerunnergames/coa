@@ -2,6 +2,12 @@ using System;
 
 public interface IStateMachine <T> where T : Enum
 {
+  public enum ResetOption
+  {
+    IgnoreTransitionActions,
+    ExecuteTransitionActions
+  }
+
   public delegate void TransitionAction();
   public delegate bool TransitionTrigger();
   public bool Is (T state);
@@ -18,5 +24,5 @@ public interface IStateMachine <T> where T : Enum
   public void PopIf (bool condition);
   public void PopIf (T state);
   public void PopIf (T state, bool condition);
-  public void Reset();
+  public void Reset (ResetOption resetOption = ResetOption.IgnoreTransitionActions);
 }

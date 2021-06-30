@@ -144,7 +144,7 @@ public class Player : KinematicBody2D
 
   private void Respawn()
   {
-    _stateMachine.Reset();
+    _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
     GlobalPosition = new Vector2 (952, -4032);
     EnableFloors();
   }
