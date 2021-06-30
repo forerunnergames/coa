@@ -100,20 +100,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       case 0:
         break;
       case 1:
-        var to = triggeredStates.Single();
-
-        if (CanPopTo (to))
-        {
-          Pop();
-        }
-        else if (IsReversible (to))
-        {
-          Push (to);
-        }
-        else
-        {
-          To (to);
-        }
+        TriggerState (triggeredStates.Single());
 
         break;
       default:
@@ -180,11 +167,13 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     ExecuteChangeState (to);
   }
 
-  public void Reset()
+  public void Reset (IStateMachine <T>.ResetOption resetOption)
   {
+    if (resetOption == IStateMachine <T>.ResetOption.ExecuteTransitionActions) TriggerState (_initialState);
     _currentState = _initialState;
     _parentState = _initialState;
     _childStates.Clear();
+    Log.Info ("Reset state machine.");
   }
 
   public void PopIf (bool condition)
@@ -213,6 +202,22 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     }
 
     return _childStates.Count > 1 ? _childStates.Skip (1).First() : _parentState;
+  }
+
+  private void TriggerState (T to)
+  {
+    if (CanPopTo (to))
+    {
+      Pop();
+    }
+    else if (IsReversible (to))
+    {
+      Push (to);
+    }
+    else
+    {
+      To (to);
+    }
   }
 
   private bool ShouldExecuteChangeState (T to)
