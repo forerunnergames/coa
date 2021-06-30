@@ -108,7 +108,7 @@ public class Cliffs : Area2D
   private void Sounds()
   {
     if (!_ambiencePlayer.Playing) _ambiencePlayer.Play();
-    if (!_musicPlayer.Playing) _musicPlayer.Play();
+    //if (!_musicPlayer.Playing) _musicPlayer.Play();
   }
 
   private static Vector2 GetExtents (Area2D area)
