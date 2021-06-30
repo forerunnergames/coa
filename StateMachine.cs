@@ -199,8 +199,8 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private bool CanPop() => IsCurrentChild (_currentState);
   private bool IsCurrentChild (T state) => _childStates.Count > 0 && Equals (state, _childStates.Peek());
   private bool CanTransitionTo (T to) => CanTransition (_currentState, to);
-  private bool CanTransition (T from, T to) { return _transitionTable.TryGetValue (from, out var toStates) && toStates.Contains (to); }
-  private bool HasTransitionAction (T from, T to) { return _actions.TryGetValue (from, out var actions) && actions.ContainsKey (to); }
+  private bool CanTransition (T from, T to) => _transitionTable.TryGetValue (@from, out var toStates) && toStates.Contains (to);
+  private bool HasTransitionAction (T from, T to) => _actions.TryGetValue (@from, out var actions) && actions.ContainsKey (to);
   private string PrintStates() => $"States:\nChildren:\n{Tools.ToString (_childStates, "\n")}\nParent:\n{_parentState}";
   private static bool HasWildcards (params T[] states) => states.Any (state => Equals (state, AnyState));
   private static string ToString (T t) => Equals (t, AnyState) ? nameof (AnyState) : t.ToString();

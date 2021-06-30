@@ -36,6 +36,7 @@ public class Cliffs : Area2D
     for (var i = 1; i < 11; ++i)
     {
       if (Name != "Upper Cliffs") return;
+
       GetNode <AnimatedSprite> ("Waterfall/waterfall " + i).Play();
     }
 
@@ -43,6 +44,7 @@ public class Cliffs : Area2D
     for (var i = 1; i < 4; ++i)
     {
       if (Name != "Upper Cliffs") return;
+
       GetNode <AnimatedSprite> ("Waterfall/waterfall mist " + i).Play();
     }
   }
@@ -73,6 +75,8 @@ public class Cliffs : Area2D
 
     if (!_isPlayerIntersectingCliffs) return;
 
+    // @formatter:off
+
     _playerExtents = GetExtents (_playerArea);
     _cliffsExtents = GetExtents (this);
     _playerPosition = _playerArea.GlobalPosition;
@@ -96,6 +100,8 @@ public class Cliffs : Area2D
                                                         IsIntersectingAnyTile (_bottomRight, _iceTileMap) ||
                                                         IsIntersectingAnyTile (_topRight, _iceTileMap) ||
                                                         IsIntersectingAnyTile (_bottomLeft, _iceTileMap);
+
+    // @formatter:on
   }
 
   private void Sounds()
@@ -113,6 +119,7 @@ public class Cliffs : Area2D
     if (collisionRect == null)
     {
       OnWrongCollisionShape (area, collisionShape.Shape);
+
       return Vector2.Zero;
     }
 
@@ -121,7 +128,6 @@ public class Cliffs : Area2D
 
   private static void OnWrongCollisionShape (Area2D area, Shape2D shape)
   {
-    GD.PrintErr (area.Name + " collision shape must be a " + typeof (RectangleShape2D) +
-                 ", not a " + shape.GetType());
+    GD.PrintErr (area.Name + " collision shape must be a " + typeof (RectangleShape2D) + ", not a " + shape.GetType());
   }
 }
