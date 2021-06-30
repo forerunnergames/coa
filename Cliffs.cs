@@ -96,10 +96,11 @@ public class Cliffs : Area2D
     _bottomLeft.x = _playerArea.GlobalPosition.x - _playerExtents.x;
     _bottomLeft.y = _playerArea.GlobalPosition.y + _playerExtents.y;
 
-    GetNode <Player> ("../Player").IsTouchingCliffIce = IsIntersectingAnyTile (_topLeft, _iceTileMap) ||
+    GetNode <Player> ("../Player").IsTouchingCliffIce = _iceTileMap.Visible &&
+                                                        (IsIntersectingAnyTile (_topLeft, _iceTileMap) ||
                                                         IsIntersectingAnyTile (_bottomRight, _iceTileMap) ||
                                                         IsIntersectingAnyTile (_topRight, _iceTileMap) ||
-                                                        IsIntersectingAnyTile (_bottomLeft, _iceTileMap);
+                                                        IsIntersectingAnyTile (_bottomLeft, _iceTileMap));
 
     // @formatter:on
   }
