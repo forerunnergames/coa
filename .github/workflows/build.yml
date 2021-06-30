@@ -1,4 +1,4 @@
-name: export
+name: build
 
 on:
   push:
