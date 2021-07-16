@@ -48,8 +48,8 @@ public class Player : KinematicBody2D
   [Export] public string CliffArrestingSoundFile = "res://cliff_arresting.wav";
   [Export] public bool CliffArrestingSoundLooping = true;
   // ReSharper disable once RedundantDefaultMemberInitializer
-  [Export] public float CliffArrestingSoundLoopBeginSeconds = 0.0f;
-  [Export] public float CliffArrestingSoundLoopEndSeconds = 4.5f;
+  [Export] public float CliffArrestingSoundLoopBeginSeconds = 0.5f;
+  [Export] public float CliffArrestingSoundLoopEndSeconds = 3.8f;
   [Export] public float CliffArrestingSoundVelocityPitchScaleModulation = 4.0f;
   [Export] public float CliffArrestingSoundMinPitchScale = 2.0f;
   [Export] public State InitialState = State.Idle;
@@ -387,7 +387,7 @@ public class Player : KinematicBody2D
   {
     _stateMachine = new StateMachine <State> (TransitionTable, InitialState);
     _stateMachine.OnTransitionTo (State.Idle, () => _sprite.Animation = IdleLeftAnimation);
-    _stateMachine.OnTransitionTo (State.Running, () => _sprite.Animation = RunAnimation);
+    //_stateMachine.OnTransitionTo (State.Running, () => _sprite.Animation = RunAnimation);
     _stateMachine.OnTransitionTo (State.CliffHanging, () => _sprite.Animation = CliffHangingAnimation);
     _stateMachine.OnTransitionTo (State.FreeFalling, () => _sprite.Animation = FreeFallingAnimation);
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());

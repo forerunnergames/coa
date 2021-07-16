@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 // TODO Implement State Conditions for entering / exiting
 // TODO Implement per-frame delegate actions that repeat while in a specific state.
@@ -22,25 +23,31 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private readonly Stack <T> _childStates = new();
   private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionAction>> _actions = new();
   private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionTrigger>> _triggers = new();
+  private readonly Log _log;
 
-  public StateMachine (Dictionary <T, T[]> transitionTable, T initialState) : this (
-    transitionTable.ToDictionary (kvp => kvp.Key, kvp => kvp.Value.ToHashSet()), initialState)
+  // ReSharper disable once ExplicitCallerInfoArgument
+  public StateMachine (Dictionary <T, T[]> transitionTable, T initialState, [CallerFilePath] string name = "") : this (
+    transitionTable.ToDictionary (kvp => kvp.Key, kvp => kvp.Value.ToHashSet()), initialState, name)
   {
   }
 
-  private StateMachine (Dictionary <T, HashSet <T>> transitionTable, T initialState)
+  // ReSharper disable once ExplicitCallerInfoArgument
+  private StateMachine (Dictionary <T, HashSet <T>> transitionTable, T initialState, [CallerFilePath] string name = "")
   {
     if (transitionTable.ContainsKey (AnyState) || transitionTable.Values.Any (x => x.Any (y => Equals (y, AnyState))))
     {
       throw new ArgumentException ($"{nameof (transitionTable)} cannot contain wildcard {ToString (AnyState)}");
     }
 
+    _log = new Log (name);
     _initialState = initialState;
     _currentState = initialState;
     _parentState = initialState;
     _transitionTable = transitionTable;
+    _log.Info ($"Initial state: {_initialState}");
   }
 
+  public T GetState() => _currentState;
   public bool Is (T state) => Equals (_currentState, state);
   public void OnTransitionTo (T to, IStateMachine <T>.TransitionAction action) => OnTransition (AnyState, to, action);
   public void OnTransitionFrom (T from, IStateMachine <T>.TransitionAction action) => OnTransition (from, AnyState, action);
@@ -49,7 +56,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   {
     if (!HasWildcards (from, to) && !CanTransition (from, to))
     {
-      Log.Warn ($"Ignoring invalid transition from {ToString (from)} to {ToString (to)}.");
+      _log.Warn ($"Ignoring invalid transition from {ToString (from)} to {ToString (to)}.");
 
       return;
     }
@@ -74,7 +81,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 
     if (!HasWildcards (from, to) && !CanTransition (from, to))
     {
-      Log.Warn ($"Ignoring invalid trigger from {ToString (from)} to {ToString (to)}.");
+      _log.Warn ($"Ignoring invalid trigger from {ToString (from)} to {ToString (to)}.");
 
       return;
     }
@@ -104,7 +111,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 
         break;
       default:
-        Log.Warn (
+        _log.Warn (
           $"Ignoring multiple valid triggers from {ToString (_currentState)} to {Tools.ToString (triggeredStates, f: ToString)}.");
 
         break;
@@ -131,15 +138,15 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 
     if (!IsReversible (to))
     {
-      Log.Warn ($"Cannot push {ToString (to)}: Would not be able to change back to {ToString (_currentState)} " +
-                $"from {ToString (to)}.\nUse {nameof (IStateMachine <T>)}#{nameof (To)} for a one-way transition.");
+      _log.Warn ($"Cannot push {ToString (to)}: Would not be able to change back to {ToString (_currentState)} " +
+                 $"from {ToString (to)}.\nUse {nameof (IStateMachine <T>)}#{nameof (To)} for a one-way transition.");
 
       return;
     }
 
     if (!IsCurrentChild (to)) _childStates.Push (to);
-    Log.Debug ($"Pushed: {ToString (to)}");
-    Log.All (PrintStates());
+    _log.Debug ($"Pushed: {ToString (to)}");
+    _log.All (PrintStates());
     ExecuteChangeState (to);
   }
 
@@ -152,7 +159,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   {
     if (!CanPop())
     {
-      Log.Warn ($"Cannot pop {ToString (_currentState)}: wasn't pushed.\nUse {nameof (IStateMachine <T>)}#{nameof (To)} instead.");
+      _log.Warn ($"Cannot pop {ToString (_currentState)}: wasn't pushed.\nUse {nameof (IStateMachine <T>)}#{nameof (To)} instead.");
 
       return;
     }
@@ -162,8 +169,8 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     if (!ShouldExecuteChangeState (to)) return;
 
     _childStates.Pop();
-    Log.Debug ($"Popped: {ToString (_currentState)}");
-    Log.Debug (PrintStates());
+    _log.Debug ($"Popped: {ToString (_currentState)}");
+    _log.Debug (PrintStates());
     ExecuteChangeState (to);
   }
 
@@ -173,7 +180,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     _currentState = _initialState;
     _parentState = _initialState;
     _childStates.Clear();
-    Log.Info ("Reset state machine.");
+    _log.Info ("Reset state machine.");
   }
 
   public void PopIf (bool condition)
@@ -224,7 +231,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   {
     if (Equals (to, _currentState))
     {
-      Log.All ($"Ignoring duplicate {ToString (to)} state transition.");
+      _log.All ($"Ignoring duplicate {ToString (to)} state transition.");
 
       return false;
     }
@@ -232,7 +239,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     // ReSharper disable once InvertIf
     if (!CanTransitionTo (to))
     {
-      Log.Warn ($"Ignoring invalid transition from {ToString (_currentState)} to {ToString (to)}.");
+      _log.Warn ($"Ignoring invalid transition from {ToString (_currentState)} to {ToString (to)}.");
 
       return false;
     }
@@ -243,7 +250,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private void ExecuteChangeState (T to)
   {
     ExecuteTransitionActionsTo (to);
-    Log.Info ($"State transition: {ToString (_currentState)} => {ToString (to)}");
+    _log.Info ($"State transition: {ToString (_currentState)} => {ToString (to)}");
     _currentState = to;
   }
 

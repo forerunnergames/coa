@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/cliff_scrape.wav-8581d3c962209eac9ef708c3934356d4.sample"
+
+[deps]
+
+source_file="res://cliff_scrape.wav"
+dest_files=[ "res://.import/cliff_scrape.wav-8581d3c962209eac9ef708c3934356d4.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=true
+edit/normalize=false
+edit/loop=true
+compress/mode=0
