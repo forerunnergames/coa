@@ -1,8 +1,9 @@
 name: deploy
 
 on:
-  release:
-    types: [created, edited]
+  push:
+    branches:
+      - master
 
 jobs:
   deploy_mac:
