@@ -1,9 +1,12 @@
 using System;
+using System.Runtime.CompilerServices;
 using Godot;
+using Path = System.IO.Path;
 
-public static class Log
+public class Log
 {
-  public static Level CurrentLevel { get; set; } = Level.Info;
+  public Level CurrentLevel { get; set; } = Level.Info;
+  private readonly string _name;
 
   public enum Level
   {
@@ -14,14 +17,16 @@ public static class Log
     All
   }
 
-  public static bool All (string message) => CurrentLevel > Level.Debug && Print (message, Level.All);
-  public static bool Debug (string message) => CurrentLevel > Level.Info && Print (message, Level.Debug);
-  public static bool Info (string message) => CurrentLevel > Level.Warn && Print (message, Level.Info);
-  public static bool Warn (string message) => CurrentLevel > Level.Off && Print (message, Level.Warn);
+  public Log ([CallerFilePath] string name = "") { _name = Path.GetFileNameWithoutExtension (name); }
+  public bool All (string message) => CurrentLevel > Level.Debug && Print (message, Level.All);
+  public bool Debug (string message) => CurrentLevel > Level.Info && Print (message, Level.Debug);
+  public bool Info (string message) => CurrentLevel > Level.Warn && Print (message, Level.Info);
+  public bool Warn (string message) => CurrentLevel > Level.Off && Print (message, Level.Warn);
 
-  private static bool Print (string message, Level level)
+  private bool Print (string message, Level level)
   {
-    GD.Print ($"{level}: {DateTime.Now:HH:mm:ss:ffff} ", message);
+    GD.Print ($"{_name}{(_name.Empty() ? "" : " ")}{level}: {DateTime.Now:HH:mm:ss:ffff} ", message);
+
     return true;
   }
 }
