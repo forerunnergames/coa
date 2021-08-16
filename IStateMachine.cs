@@ -10,6 +10,7 @@ public interface IStateMachine <T> where T : Enum
 
   public delegate void TransitionAction();
   public delegate bool TransitionTrigger();
+  public T GetState();
   public bool Is (T state);
   public void OnTransitionTo (T to, TransitionAction action);
   public void OnTransitionFrom (T from, TransitionAction action);

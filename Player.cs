@@ -47,13 +47,11 @@ public class Player : KinematicBody2D
   [Export] public string RunAnimation = "player_running";
   [Export] public string CliffArrestingSoundFile = "res://cliff_arresting.wav";
   [Export] public bool CliffArrestingSoundLooping = true;
-  // ReSharper disable once RedundantDefaultMemberInitializer
-  [Export] public float CliffArrestingSoundLoopBeginSeconds = 0.0f;
-  [Export] public float CliffArrestingSoundLoopEndSeconds = 4.5f;
+  [Export] public float CliffArrestingSoundLoopBeginSeconds = 0.5f;
+  [Export] public float CliffArrestingSoundLoopEndSeconds = 3.8f;
   [Export] public float CliffArrestingSoundVelocityPitchScaleModulation = 4.0f;
   [Export] public float CliffArrestingSoundMinPitchScale = 2.0f;
   [Export] public State InitialState = State.Idle;
-  [Export] public Log.Level LogLevel = Log.Level.Debug;
   // @formatter:on
 
   // Field must be publicly accessible from Cliffs.cs
@@ -64,7 +62,17 @@ public class Player : KinematicBody2D
   // Field must be publicly accessible from Cliffs.cs
   // ReSharper disable once MemberCanBePrivate.Global
   // ReSharper disable once UnassignedField.Global
+  public bool IsInGround;
+
+  // Field must be publicly accessible from Cliffs.cs
+  // ReSharper disable once MemberCanBePrivate.Global
+  // ReSharper disable once UnassignedField.Global
   public bool IsTouchingCliffIce;
+
+  // Field must be publicly accessible from Cliffs.cs
+  // ReSharper disable once MemberCanBePrivate.Global
+  // ReSharper disable once UnassignedField.Global
+  public bool IsInFrozenWaterfall;
 
   public enum State
   {
@@ -92,7 +100,7 @@ public class Player : KinematicBody2D
   private uint _elapsedFallingTimeMs;
   private uint _lastTotalFallingTimeMs;
   private float _highestVerticalVelocity;
-  private readonly List <CollisionShape2D> _disabledFloors = new();
+  private bool _isResting;
 
   private static readonly Dictionary <State, State[]> TransitionTable = new()
   {
@@ -113,6 +121,7 @@ public class Player : KinematicBody2D
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     LoopAudio (_audio.Stream, CliffArrestingSoundLoopBeginSeconds, CliffArrestingSoundLoopEndSeconds);
     _label = GetNode <RichTextLabel> ("DebuggingText");
+    _label.Visible = false;
     _sprite = GetNode <AnimatedSprite> ("AnimatedSprite");
     _climbingPrepTimer = GetNode <Timer> ("ClimbingReadyTimer");
     _sprite.Animation = IdleLeftAnimation;
@@ -122,7 +131,7 @@ public class Player : KinematicBody2D
 
   public override void _PhysicsProcess (float delta)
   {
-    if (ShouldDisableFloor()) DisableFloor(); // TODO Create a separate state machine for the dropdownable floors.
+    // if (ShouldDisableFloor()) DisableFloor(); // TODO Create a separate state machine for the dropdownable floors.
     _stateMachine.Update();
     HorizontalVelocity();
     VerticalVelocity();
@@ -133,6 +142,20 @@ public class Player : KinematicBody2D
     CalculateFallingStats();
     PrintLine (DumpState());
     Print();
+
+    for (var i = 0; i < GetSlideCount(); ++i)
+    {
+      var collision = GetSlideCollision (i);
+
+      if (!IsOnFloor() || !WasDownArrowPressedOnce()) continue;
+      if (collision.Collider is not StaticBody2D body) continue;
+      if (!body.IsInGroup ("Cliffs")) continue;
+      if (!body.IsInGroup ("Ground")) continue;
+      if (!body.IsInGroup ("Dropdownable")) continue;
+      if (collision.ColliderShape is not CollisionShape2D ground) continue;
+
+      DropDownThrough (ground, delta);
+    }
   }
 
   // Godot input callback
@@ -142,20 +165,34 @@ public class Player : KinematicBody2D
     if (IsReleased (Input.Respawn, @event)) Respawn();
   }
 
+  // ReSharper disable once UnusedMember.Global
+  public void _OnCliffsGroundExited (Area2D area)
+  {
+    if (!area.IsInGroup ("Player")) return;
+
+    RestAfterClimbingToNewLevel();
+  }
+
+  private async void RestAfterClimbingToNewLevel()
+  {
+    _isResting = true;
+    await ToSignal (GetTree().CreateTimer (1.0f, false), "timeout");
+    _isResting = false;
+  }
+
+  private async void DropDownThrough (CollisionShape2D ground, float delta)
+  {
+    ground.Disabled = true;
+    await ToSignal (GetTree().CreateTimer (delta * 3, false), "timeout");
+    ground.Disabled = false;
+  }
+
   private void Respawn()
   {
     _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
     GlobalPosition = new Vector2 (952, -4032);
-    EnableFloors();
   }
 
-  private void EnableFloors()
-  {
-    _disabledFloors.ForEach (x => x.Disabled = false);
-    _disabledFloors.Clear();
-  }
-
-  private bool ShouldDisableFloor() => IsOnFloor() && WasDownArrowPressedOnce();
   private bool IsMoving() => IsMovingHorizontally() || IsMovingVertically();
   private bool IsMovingVertically() => Mathf.Abs (_velocity.y) > VelocityEpsilon;
   private bool IsMovingHorizontally() => Mathf.Abs (_velocity.x) > VelocityEpsilon;
@@ -163,28 +200,6 @@ public class Player : KinematicBody2D
   private bool IsMovingDown() => _velocity.y - VelocityEpsilon > 0.0f;
   private bool IsMovingLeft() => _velocity.x + VelocityEpsilon < 0.0f;
   private bool IsMovingRight() => _velocity.x + VelocityEpsilon < 0.0f;
-
-  // Only for ground/floor that has climbable cliffs below it
-  private void DisableFloor()
-  {
-    for (var i = 0; i < GetSlideCount(); ++i)
-    {
-      var collision = GetSlideCollision (i);
-      var collider = collision.Collider as StaticBody2D;
-
-      if (collider == null) continue;
-      if (!collider.IsInGroup ("Cliffs")) continue;
-      if (!collider.IsInGroup ("Ground")) continue;
-      if (!collider.IsInGroup ("Dropdownable")) continue;
-
-      var colliderShape = collision.ColliderShape as CollisionShape2D;
-
-      if (colliderShape == null) continue;
-
-      colliderShape.Disabled = true;
-      _disabledFloors.Add (colliderShape);
-    }
-  }
 
   private void HorizontalVelocity()
   {
@@ -248,37 +263,15 @@ public class Player : KinematicBody2D
   {
     _velocity.y += Gravity;
 
-    // TODO Remove else if's, order shouldn't matter.
-    // TODO Make relative by subtracting gravity from _velocity.y and round to 0 within a couple decimal places (or epsilon).
-    if (_stateMachine.Is (State.Jumping))
-    {
-      // Makes jumps less high when releasing jump button early.
-      // (Holding down jump continuously allows gravity to take over.)
-      if (WasJumpKeyReleased() && IsMovingUp()) _velocity.y = 0.0f; // TODO Subtract gravity and round to 0.
-    }
-    else if (_stateMachine.Is (State.ClimbingUp))
-    {
-      // TODO Testing
-      // if ((_sprite.Frame + 1) % 3 == 0)
-      if (_sprite.Frame == 1 || _sprite.Frame == 4)
-      {
-        _velocity.y = -VerticalClimbingSpeed;
-        //_velocity.y = SafelyClampMin (_velocity.y, -VerticalClimbingSpeed);
-      }
-      else
-      {
-        _velocity.y = 0.0f;
-      }
-    }
-    else if (_stateMachine.Is (State.Traversing))
-    {
-      _velocity.y = 0.0f; // TODO Subtract gravity and round to 0.
-    }
-    else if (_stateMachine.Is (State.CliffHanging))
-    {
-      _velocity.y = 0.0f; // TODO Subtract gravity and round to 0.
-    }
-    else if (_stateMachine.Is (State.CliffArresting))
+    // TODO For jumping, traversing, and cliffhanging, subtract gravity and round to 0.
+    // Makes jumps less high when releasing jump button early.
+    // (Holding down jump continuously allows gravity to take over.)
+    if (_stateMachine.Is (State.Jumping) && WasJumpKeyReleased() && IsMovingUp()) _velocity.y = 0.0f;
+    if (_stateMachine.Is (State.ClimbingUp)) _velocity.y = _sprite.Frame is 1 or 4 ? -VerticalClimbingSpeed : 0.0f;
+    if (_stateMachine.Is (State.Traversing)) _velocity.y = 0.0f;
+    if (_stateMachine.Is (State.CliffHanging)) _velocity.y = 0.0f;
+
+    if (_stateMachine.Is (State.CliffArresting))
     {
       _velocity.y -= CliffArrestingSpeed;
       _velocity.y = SafelyClampMin (_velocity.y, 0.0f);
@@ -352,18 +345,22 @@ public class Player : KinematicBody2D
 
   // @formatter:off
   private string DumpState() =>
+    "\nSeason: " + GetNode <Cliffs>("../Upper Cliffs").CurrentSeason +
     "\nIdle: " + _stateMachine.Is (State.Idle) +
     "\nRunning: " + _stateMachine.Is (State.Running) +
     "\nJumping: " + _stateMachine.Is (State.Jumping) +
     "\nClimbing prep: " + _stateMachine.Is (State.ClimbingPrep) +
     "\nClimbing prep timer: " + _climbingPrepTimer.TimeLeft +
     "\nClimbing up: " + _stateMachine.Is (State.ClimbingUp) +
-    "\nTouching cliff ice: " + IsTouchingCliffIce +
+    "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
+    "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall +
     "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Horizontally: " + _stateMachine.Is (State.Traversing) +
     "\nFree falling: " + _stateMachine.Is (State.FreeFalling) +
     "\nIsOnFloor(): " + IsOnFloor() +
+    "\nIsInCliffs: " + IsInCliffs +
+    "\nIsInGround: " + IsInGround +
     "\nIsFullyIntersectingCliffs: " + IsInCliffs +
     "\nIsInMotion(): " + IsMoving() +
     "\nIsMovingDown(): " + IsMovingDown() +
@@ -376,7 +373,7 @@ public class Player : KinematicBody2D
     "\nIsDownArrowPressed(): " + IsDownArrowPressed() +
     "\nIsAnyHorizontalArrowPressed(): " + IsAnyHorizontalArrowPressed() +
     "\nIsAnyVerticalArrowPressed(): " + IsAnyVerticalArrowPressed() +
-    "\n_velocity: " + _velocity +
+    "\nVelocity: " + _velocity +
     "\nVertical velocity (mph): " + _velocity.y * 0.028334573333333 +
     "\nHighest vertical velocity: " + _highestVerticalVelocity +
     "\nHighest vertical velocity (mph): " + _highestVerticalVelocity * 0.028334573333333 +
@@ -387,7 +384,7 @@ public class Player : KinematicBody2D
   {
     _stateMachine = new StateMachine <State> (TransitionTable, InitialState);
     _stateMachine.OnTransitionTo (State.Idle, () => _sprite.Animation = IdleLeftAnimation);
-    _stateMachine.OnTransitionTo (State.Running, () => _sprite.Animation = RunAnimation);
+    //_stateMachine.OnTransitionTo (State.Running, () => _sprite.Animation = RunAnimation);
     _stateMachine.OnTransitionTo (State.CliffHanging, () => _sprite.Animation = CliffHangingAnimation);
     _stateMachine.OnTransitionTo (State.FreeFalling, () => _sprite.Animation = FreeFallingAnimation);
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
@@ -436,7 +433,7 @@ public class Player : KinematicBody2D
     // @formatter:off
     _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Idle, State.Jumping, WasJumpKeyPressed);
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs);
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isResting);
     _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.Running, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && ! IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Running, State.Jumping, WasJumpKeyPressed);
@@ -444,15 +441,15 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs);
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
-    _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0);
-    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs || IsTouchingCliffIce);
+    _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall);
+    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasDownArrowPressedOnce);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasDownArrowPressedOnce() || !IsInCliffs || IsTouchingCliffIce);
+    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasDownArrowPressedOnce() || !IsInCliffs || IsTouchingCliffIce || IsInFrozenWaterfall);
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);

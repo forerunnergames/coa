@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Godot.Collections;
+using Array = Godot.Collections.Array;
 
 // ReSharper disable MemberCanBePrivate.Global
 public static class Tools
@@ -13,6 +15,8 @@ public static class Tools
     Item,
     Text,
     Respawn,
+    Season,
+    Music,
     Up,
     Down,
     Left,
@@ -20,13 +24,15 @@ public static class Tools
     Jump
   }
 
-  private static readonly Dictionary <Input, string[]> Inputs = new()
+  private static readonly System.Collections.Generic.Dictionary <Input, string[]> Inputs = new()
   {
     { Input.Horizontal, new[] { "move_left", "move_right" } },
     { Input.Vertical, new[] { "move_up", "move_down" } },
     { Input.Item, new[] { "use_item" } },
     { Input.Text, new[] { "show_text" } },
     { Input.Respawn, new[] { "respawn" } },
+    { Input.Season, new[] { "season" } },
+    { Input.Music, new[] { "music" } },
     { Input.Up, new[] { "move_up" } },
     { Input.Down, new[] { "move_down" } },
     { Input.Left, new[] { "move_left" } },
@@ -60,6 +66,13 @@ public static class Tools
   public static float SafelyClamp (float f, float min, float max) => SafelyClampMin (SafelyClampMax (f, max), min);
   public static bool IsSafelyLessThan (float f1, float f2) => f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
   public static bool IsSafelyGreaterThan (float f1, float f2) => f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
+
+  public static bool AreColorsAlmostEqual (Color color1, Color color2, float epsilon)
+  {
+    return Mathf.Abs (color1.r - color2.r) < epsilon && Mathf.Abs (color1.g - color2.g) < epsilon &&
+           Mathf.Abs (color1.b - color2.b) < epsilon && Mathf.Abs (color1.a - color2.a) < epsilon;
+  }
+
   public static void LoopAudio (AudioStream a) { LoopAudio (a, 0.0f, a.GetLength()); }
 
   /// <summary>
@@ -132,11 +145,37 @@ public static class Tools
     }
   }
 
+  public static Vector2 GetExtents (Area2D area)
+  {
+    var collisionShape = area.GetNode <CollisionShape2D> ("CollisionShape2D");
+
+    // ReSharper disable once InvertIf
+    if (collisionShape.Shape is not RectangleShape2D collisionRect)
+    {
+      OnWrongCollisionShape (area, collisionShape.Shape);
+
+      return Vector2.Zero;
+    }
+
+    return collisionRect.Extents;
+  }
+
+  // ReSharper disable once SuggestBaseTypeForParameter
+  private static void OnWrongCollisionShape (Area2D area, Shape2D shape)
+  {
+    GD.PrintErr (area.Name + " collision shape must be a " + typeof (RectangleShape2D) + ", not a " + shape.GetType());
+  }
+
   public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) =>
     e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
 
-  public static bool IsIntersectingAnyTile (Vector2 globalPosition, TileMap tileMap)
-  {
-    return tileMap.GetCellv (tileMap.WorldToMap (tileMap.ToLocal (globalPosition))) != -1;
-  }
+  // @formatter:off
+  public static Vector2 GetCellCenterOffset (TileMap t) => t.CellSize * t.GlobalScale / 2;
+  public static bool IsIntersectingAnyTile (Vector2 pos, TileMap t) => GetIntersectingTileId (pos, t) != -1;
+  public static int GetIntersectingTileId (Vector2 pos, TileMap t) => t.GetCellv (t.WorldToMap (t.ToLocal (pos)));
+  public static string GetIntersectingTileName (Vector2 pos, TileMap t) => t.TileSet.TileGetName (GetIntersectingTileId (pos, t));
+  public static Vector2 GetIntersectingTileCell (Vector2 pos, TileMap t) => t.WorldToMap (t.ToLocal (pos));
+  public static Vector2 GetTileCellGlobalPosition (Vector2 cell, TileMap t) => t.ToGlobal (t.MapToWorld (cell));
+  public static Vector2 GetIntersectingTileCellGlobalPosition (Vector2 pos, TileMap t) => t.ToGlobal (t.MapToWorld (t.WorldToMap (t.ToLocal (pos))));
+  // @formatter:on
 }
