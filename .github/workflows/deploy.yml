@@ -6,16 +6,16 @@ on:
 
 jobs:
   deploy_mac:
-    name: Deploy Mac executable to itch.io
+    name: deploy mac
     runs-on: ubuntu-latest
     steps:
-      - name: Download Mac executable from GitHub release
+      - name: download mac
         id: download_mac
         uses: dsaltares/fetch-gh-release-asset@master
         with:
           version: tags/${{ github.event.release.tag_name }}
           file: coa-mac.zip
-      - name: Publish Mac executable to itch.io
+      - name: publish mac
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -26,16 +26,16 @@ jobs:
           VERSION: ${{ steps.download_mac.outputs.version }}
 
   deploy_windows:
-    name: Deploy Windows executable to itch.io
+    name: deploy windows
     runs-on: ubuntu-latest
     steps:
-      - name: Download Windows executable from GitHub release
+      - name: download windows
         id: download_windows
         uses: dsaltares/fetch-gh-release-asset@master
         with:
           version: tags/${{ github.event.release.tag_name }}
           file: coa-windows.zip
-      - name: Publish Windows executable to itch.io
+      - name: publish windows
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -46,16 +46,16 @@ jobs:
           VERSION: ${{ steps.download_windows.outputs.version }}
 
   deploy_linux:
-    name: Deploy Linux executable to itch.io
+    name: deploy linux
     runs-on: ubuntu-latest
     steps:
-      - name: Download Linux executable from GitHub release
+      - name: download linux
         id: download_linux
         uses: dsaltares/fetch-gh-release-asset@master
         with:
           version: tags/${{ github.event.release.tag_name }}
           file: coa-linux.zip
-      - name: Publish Linux executable to itch.io
+      - name: publish linux
         uses: josephbmanley/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -66,11 +66,12 @@ jobs:
           VERSION: ${{ steps.download_linux.outputs.version }}
 
   cleanup:
+    name: cleanup
     runs-on: ubuntu-latest
     steps:
-      - name: Delete GitHub executables
-      uses: mknejp/delete-release-assets@v1
-      with:
-        token: ${{ secrets.GH_ACTIONS_TOKEN }}
-        tag: tags/${{ github.event.release.tag_name }}
-        assets: 'coa-*.zip'
+      - name: delete github executables
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ secrets.GH_ACTIONS_TOKEN }}
+          tag: tags/${{ github.event.release.tag_name }}
+          assets: 'coa-*.zip'
