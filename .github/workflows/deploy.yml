@@ -64,3 +64,13 @@ jobs:
           ITCH_USER: forerunnergames
           PACKAGE: coa-linux.zip
           VERSION: ${{ steps.download_linux.outputs.version }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete GitHub executables
+      uses: mknejp/delete-release-assets@v1
+      with:
+        token: ${{ secrets.GH_ACTIONS_TOKEN }}
+        tag: tags/${{ github.event.release.tag_name }}
+        assets: 'coa-*.zip'
