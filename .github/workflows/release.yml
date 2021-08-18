@@ -1,4 +1,4 @@
-name: build-release
+name: release
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
 
 jobs:
   export:
-    name: export executables
+    name: release
     runs-on: ubuntu-latest
     steps:
       - name: set locale
