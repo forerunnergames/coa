@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using static Tools;
+using Transform = Tools.Transform;
 
 public class CatmullRom
 {
   public float Length { get; private set; }
-  public Color DrawColor { get => _drawColor[0]; set => _drawColor[0] = value; }
+  public Color DrawColor { get => _drawColor == null ? Colors.White : _drawColor[0]; set => _drawColor = new[] { value }; }
   public bool DrawPath { get; set; }
 
   public List <Vector2> Path
@@ -18,17 +20,14 @@ public class CatmullRom
     }
   }
 
-  public delegate Vector2 Transform (Vector2 point);
-  public delegate void Draw (Vector2[] points, Color[] colors, Vector2[] uvs);
-  public delegate Transform GetLocalTransform();
   private List <Vector2> _path;
   private Vector2 _splinePoint = Vector2.Zero;
   private readonly List <float> _splineLengths = new();
   private readonly List <Vector2> _segmentPoints = new();
   private readonly Transform _globalTransform;
-  private readonly Color[] _drawColor = { Colors.Yellow };
   private readonly Vector2[] _drawUv = { Vector2.Zero };
   private readonly Vector2[] _drawPoint = { Vector2.Zero };
+  private Color[] _drawColor;
 
   public CatmullRom (List <Vector2> path, Transform globalTransform)
   {
@@ -50,7 +49,7 @@ public class CatmullRom
     return _GetSplinePoint (node < _splineLengths.Count ? node + lengthRemainder / _splineLengths[node] : _splineLengths.Count);
   }
 
-  public void DrawPoints (Draw draw, GetLocalTransform getLocalTransform)
+  public void Draw (DrawPrimitive draw, GetLocalTransform getLocalTransform)
   {
     if (!DrawPath) return;
 

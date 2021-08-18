@@ -80,6 +80,11 @@ music={
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":77,"unicode":0,"echo":false,"script":null)
  ]
 }
+read_sign={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777232,"unicode":0,"echo":false,"script":null)
+ ]
+}
 
 [layer_names]
 
@@ -89,7 +94,6 @@ music={
 2d_physics/layer_4="NPC"
 2d_physics/layer_5="Projectiles"
 2d_physics/layer_6="Environment Background"
-2d_physics/layer_7="Environment Foreground 2 (Player Passthrough)"
 
 [rendering]
 

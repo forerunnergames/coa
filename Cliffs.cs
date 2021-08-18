@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using Godot;
-using Godot.Collections;
 using static Tools;
 
 public class Cliffs : Area2D
@@ -220,12 +220,12 @@ public class Cliffs : Area2D
       Modulate = Modulate.LinearInterpolate (Colors.Black, _currentSeasonFadeOutTimeSeconds * 0.2f);
       _clearColor = _clearColor.LinearInterpolate (Colors.Black, _currentSeasonFadeOutTimeSeconds * 0.2f);
       VisualServer.SetDefaultClearColor (_clearColor);
-      _fadeIn = AreColorsAlmostEqual (Modulate, Colors.Black, 0.01f) && AreColorsAlmostEqual (_clearColor, Colors.Black, 0.1f);
+      _fadeIn = AreAlmostEqual (Modulate, Colors.Black, 0.01f) && AreAlmostEqual (_clearColor, Colors.Black, 0.1f);
 
       return;
     }
 
-    if (_skipFade || AreColorsAlmostEqual (Modulate, Colors.Black, 0.01f) && AreColorsAlmostEqual (_clearColor, Colors.Black, 0.1f))
+    if (_skipFade || AreAlmostEqual (Modulate, Colors.Black, 0.01f) && AreAlmostEqual (_clearColor, Colors.Black, 0.1f))
     {
       SetGroupVisible (Enum.GetName (typeof (Season), CurrentSeason), false);
       SetGroupVisible (Enum.GetName (typeof (Season), _newSeason), true);
@@ -247,13 +247,13 @@ public class Cliffs : Area2D
       VisualServer.SetDefaultClearColor (_clearColor);
     }
 
-    _seasonChangeInProgress = !AreColorsAlmostEqual (Modulate, Colors.White, 0.01f) ||
-                              !AreColorsAlmostEqual (_clearColor, InitialClearColor, 0.1f);
+    _seasonChangeInProgress = !AreAlmostEqual (Modulate, Colors.White, 0.01f) ||
+                              !AreAlmostEqual (_clearColor, InitialClearColor, 0.1f);
 
     if (_seasonChangeInProgress) return;
 
     CurrentSeason = _newSeason;
-    _musicPlayer.Play();
+    // _musicPlayer.Play();
     _log.Info ($"Current season is now: {CurrentSeason}");
   }
 
