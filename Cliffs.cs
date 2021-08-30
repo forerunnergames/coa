@@ -164,7 +164,7 @@ public class Cliffs : Area2D
     _musicPlayer.Stop();
   }
 
-  private void UpdateWaterfall (Season season)
+  private void UpdateWaterfall (Season season, float delta)
   {
     if (Name != "Upper Cliffs") return;
 
@@ -174,6 +174,8 @@ public class Cliffs : Area2D
 
     foreach (Node node1 in waterfall.GetChildren())
     {
+      if (node1 is StaticBody2D body) UpdateFrozenWaterfallTopGround (body, season, delta);
+
       if (node1 is not AnimatedSprite sprite) continue;
 
       sprite.Playing = season != Season.Winter;
@@ -188,6 +190,21 @@ public class Cliffs : Area2D
     }
 
     GetNode <Player> ("../Player").IsInFrozenWaterfall = _isPlayerInWaterfall && season == Season.Winter;
+  }
+
+  private async void UpdateFrozenWaterfallTopGround (PhysicsBody2D waterSurfaceCollider, Season season, float delta)
+  {
+    waterSurfaceCollider.SetCollisionMaskBit (0, season == Season.Winter);
+    waterSurfaceCollider.SetCollisionLayerBit (1, season == Season.Winter);
+    var cliffGroundBehindWaterfall = GetNode <StaticBody2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 3");
+    cliffGroundBehindWaterfall.SetCollisionLayerBit (1, season != Season.Winter);
+    cliffGroundBehindWaterfall.SetCollisionMaskBit (0, season != Season.Winter);
+    await ToSignal (GetTree().CreateTimer (delta, false), "timeout");
+
+    foreach (int shapeOwnerId in waterSurfaceCollider.GetShapeOwners())
+    {
+      waterSurfaceCollider.ShapeOwnerSetOneWayCollision (Convert.ToUInt32 (shapeOwnerId), season == Season.Winter);
+    }
   }
 
   private void SetGroupVisible (string groupName, bool isVisible)
@@ -236,7 +253,7 @@ public class Cliffs : Area2D
       LoopAudio (_musicPlayer.Stream);
       LoopAudio (_ambiencePlayer.Stream);
       _ambiencePlayer.Play();
-      UpdateWaterfall (_newSeason);
+      UpdateWaterfall (_newSeason, delta);
     }
 
     if (!_skipFade)
