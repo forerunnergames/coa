@@ -1,4 +1,4 @@
-[gd_scene load_steps=80 format=2]
+[gd_scene load_steps=90 format=2]
 
 [ext_resource path="res://Player.cs" type="Script" id=1]
 [ext_resource path="res://waterfall2.png" type="Texture" id=2]
@@ -12,94 +12,99 @@
 [ext_resource path="res://Butterfly.cs" type="Script" id=10]
 [ext_resource path="res://cliff_scrape.wav" type="AudioStream" id=11]
 [ext_resource path="res://cliff_arresting.wav" type="AudioStream" id=12]
+[ext_resource path="res://goe.png" type="Texture" id=13]
+[ext_resource path="res://sign-arrow-right-blank.png" type="Texture" id=14]
+[ext_resource path="res://sign-blank.png" type="Texture" id=15]
+[ext_resource path="res://sign-font.png" type="Texture" id=16]
+[ext_resource path="res://sign-arrow-left-blank.png" type="Texture" id=17]
 
 [sub_resource type="AtlasTexture" id=1]
 atlas = ExtResource( 7 )
-region = Rect2( 0, 16, 16, 16 )
+region = Rect2( 0, 64, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=2]
 atlas = ExtResource( 7 )
-region = Rect2( 16, 16, 16, 16 )
+region = Rect2( 0, 64, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=3]
 atlas = ExtResource( 7 )
-region = Rect2( 32, 16, 16, 16 )
+region = Rect2( 0, 48, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=4]
 atlas = ExtResource( 7 )
-region = Rect2( 48, 16, 16, 16 )
+region = Rect2( 16, 48, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=5]
 atlas = ExtResource( 7 )
-region = Rect2( 64, 16, 16, 16 )
+region = Rect2( 32, 48, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=6]
 atlas = ExtResource( 7 )
-region = Rect2( 0, 0, 16, 16 )
+region = Rect2( 48, 48, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=7]
 atlas = ExtResource( 7 )
-region = Rect2( 16, 0, 16, 16 )
+region = Rect2( 64, 48, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=8]
 atlas = ExtResource( 7 )
-region = Rect2( 32, 0, 16, 16 )
+region = Rect2( 0, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=9]
 atlas = ExtResource( 7 )
-region = Rect2( 48, 0, 16, 16 )
+region = Rect2( 16, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=10]
 atlas = ExtResource( 7 )
-region = Rect2( 64, 0, 16, 16 )
+region = Rect2( 32, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=11]
 atlas = ExtResource( 7 )
-region = Rect2( 0, 64, 16, 16 )
+region = Rect2( 48, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=12]
 atlas = ExtResource( 7 )
-region = Rect2( 0, 0, 16, 16 )
+region = Rect2( 64, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=13]
 atlas = ExtResource( 7 )
-region = Rect2( 16, 0, 16, 16 )
+region = Rect2( 0, 16, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=14]
 atlas = ExtResource( 7 )
-region = Rect2( 32, 0, 16, 16 )
+region = Rect2( 16, 16, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=15]
 atlas = ExtResource( 7 )
-region = Rect2( 48, 0, 16, 16 )
+region = Rect2( 32, 16, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=16]
 atlas = ExtResource( 7 )
-region = Rect2( 64, 0, 16, 16 )
+region = Rect2( 48, 16, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=17]
 atlas = ExtResource( 7 )
-region = Rect2( 0, 64, 16, 16 )
+region = Rect2( 64, 16, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=18]
 atlas = ExtResource( 7 )
-region = Rect2( 0, 48, 16, 16 )
+region = Rect2( 0, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=19]
 atlas = ExtResource( 7 )
-region = Rect2( 16, 48, 16, 16 )
+region = Rect2( 16, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=20]
 atlas = ExtResource( 7 )
-region = Rect2( 32, 48, 16, 16 )
+region = Rect2( 32, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=21]
 atlas = ExtResource( 7 )
-region = Rect2( 48, 48, 16, 16 )
+region = Rect2( 48, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=22]
 atlas = ExtResource( 7 )
-region = Rect2( 64, 48, 16, 16 )
+region = Rect2( 64, 0, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=23]
 atlas = ExtResource( 7 )
@@ -127,39 +132,39 @@ region = Rect2( 64, 0, 16, 16 )
 
 [sub_resource type="SpriteFrames" id=29]
 animations = [ {
-"frames": [ SubResource( 1 ), SubResource( 2 ), SubResource( 3 ), SubResource( 4 ), SubResource( 5 ) ],
-"loop": true,
-"name": "player_idle_back",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 6 ), SubResource( 7 ), SubResource( 8 ), SubResource( 9 ), SubResource( 10 ) ],
-"loop": true,
-"name": "player_running",
-"speed": 4.0
-}, {
-"frames": [ SubResource( 11 ) ],
-"loop": true,
-"name": "player_traversing",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 12 ), SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ) ],
-"loop": true,
-"name": "player_falling",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 17 ) ],
+"frames": [ SubResource( 1 ) ],
 "loop": true,
 "name": "player_cliff_arresting",
 "speed": 5.0
 }, {
-"frames": [ SubResource( 18 ), SubResource( 19 ), SubResource( 20 ), SubResource( 21 ), SubResource( 22 ), SubResource( 20 ) ],
+"frames": [ SubResource( 2 ) ],
+"loop": true,
+"name": "player_cliff_hanging",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 3 ), SubResource( 4 ), SubResource( 5 ), SubResource( 6 ), SubResource( 7 ), SubResource( 5 ) ],
 "loop": true,
 "name": "player_climbing_up",
 "speed": 5.0
 }, {
+"frames": [ SubResource( 8 ), SubResource( 9 ), SubResource( 10 ), SubResource( 11 ), SubResource( 12 ) ],
+"loop": true,
+"name": "player_falling",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ) ],
+"loop": true,
+"name": "player_idle_back",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 18 ), SubResource( 19 ), SubResource( 20 ), SubResource( 21 ), SubResource( 22 ) ],
+"loop": true,
+"name": "player_running",
+"speed": 4.0
+}, {
 "frames": [ SubResource( 23 ) ],
 "loop": true,
-"name": "player_cliff_hanging",
+"name": "player_traversing",
 "speed": 5.0
 }, {
 "frames": [ SubResource( 24 ), SubResource( 25 ), SubResource( 26 ), SubResource( 27 ), SubResource( 28 ) ],
@@ -190,7 +195,23 @@ region = Rect2( 64, 80, 16, 16 )
 atlas = ExtResource( 5 )
 region = Rect2( 80, 80, 16, 16 )
 
-[sub_resource type="SpriteFrames" id=36]
+[sub_resource type="AtlasTexture" id=36]
+atlas = ExtResource( 5 )
+region = Rect2( 64, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=37]
+atlas = ExtResource( 5 )
+region = Rect2( 80, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=38]
+atlas = ExtResource( 5 )
+region = Rect2( 64, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=39]
+atlas = ExtResource( 5 )
+region = Rect2( 80, 80, 16, 16 )
+
+[sub_resource type="SpriteFrames" id=40]
 animations = [ {
 "frames": [ SubResource( 32 ), SubResource( 33 ) ],
 "loop": true,
@@ -201,119 +222,1111 @@ animations = [ {
 "loop": true,
 "name": "butterfly_flying",
 "speed": 8.5
+}, {
+"frames": [ SubResource( 36 ), SubResource( 37 ) ],
+"loop": true,
+"name": "butterfly_perching",
+"speed": 12.0
+}, {
+"frames": [ SubResource( 38 ), SubResource( 39 ) ],
+"loop": true,
+"name": "butterfly_evading",
+"speed": 12.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=37]
+[sub_resource type="RectangleShape2D" id=41]
 extents = Vector2( 0.5, 0.5 )
 
-[sub_resource type="CircleShape2D" id=38]
+[sub_resource type="CircleShape2D" id=42]
 radius = 7.0
 
-[sub_resource type="RectangleShape2D" id=39]
+[sub_resource type="TileSet" id=43]
+0/name = "A"
+0/texture = ExtResource( 16 )
+0/tex_offset = Vector2( 0, 0 )
+0/modulate = Color( 1, 1, 1, 1 )
+0/region = Rect2( 0, 0, 16, 16 )
+0/tile_mode = 0
+0/occluder_offset = Vector2( 0, 0 )
+0/navigation_offset = Vector2( 0, 0 )
+0/shape_offset = Vector2( 0, 0 )
+0/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+0/shape_one_way = false
+0/shape_one_way_margin = 0.0
+0/shapes = [  ]
+0/z_index = 0
+1/name = "B"
+1/texture = ExtResource( 16 )
+1/tex_offset = Vector2( 0, 0 )
+1/modulate = Color( 1, 1, 1, 1 )
+1/region = Rect2( 16, 0, 16, 16 )
+1/tile_mode = 0
+1/occluder_offset = Vector2( 0, 0 )
+1/navigation_offset = Vector2( 0, 0 )
+1/shape_offset = Vector2( 0, 0 )
+1/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+1/shape_one_way = false
+1/shape_one_way_margin = 0.0
+1/shapes = [  ]
+1/z_index = 0
+2/name = "C"
+2/texture = ExtResource( 16 )
+2/tex_offset = Vector2( 0, 0 )
+2/modulate = Color( 1, 1, 1, 1 )
+2/region = Rect2( 32, 0, 16, 16 )
+2/tile_mode = 0
+2/occluder_offset = Vector2( 0, 0 )
+2/navigation_offset = Vector2( 0, 0 )
+2/shape_offset = Vector2( 0, 0 )
+2/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+2/shape_one_way = false
+2/shape_one_way_margin = 0.0
+2/shapes = [  ]
+2/z_index = 0
+3/name = "D"
+3/texture = ExtResource( 16 )
+3/tex_offset = Vector2( 0, 0 )
+3/modulate = Color( 1, 1, 1, 1 )
+3/region = Rect2( 48, 0, 16, 16 )
+3/tile_mode = 0
+3/occluder_offset = Vector2( 0, 0 )
+3/navigation_offset = Vector2( 0, 0 )
+3/shape_offset = Vector2( 0, 0 )
+3/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+3/shape_one_way = false
+3/shape_one_way_margin = 0.0
+3/shapes = [  ]
+3/z_index = 0
+4/name = "E"
+4/texture = ExtResource( 16 )
+4/tex_offset = Vector2( 0, 0 )
+4/modulate = Color( 1, 1, 1, 1 )
+4/region = Rect2( 64, 0, 16, 16 )
+4/tile_mode = 0
+4/occluder_offset = Vector2( 0, 0 )
+4/navigation_offset = Vector2( 0, 0 )
+4/shape_offset = Vector2( 0, 0 )
+4/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+4/shape_one_way = false
+4/shape_one_way_margin = 0.0
+4/shapes = [  ]
+4/z_index = 0
+5/name = "F"
+5/texture = ExtResource( 16 )
+5/tex_offset = Vector2( 0, 0 )
+5/modulate = Color( 1, 1, 1, 1 )
+5/region = Rect2( 80, 0, 16, 16 )
+5/tile_mode = 0
+5/occluder_offset = Vector2( 0, 0 )
+5/navigation_offset = Vector2( 0, 0 )
+5/shape_offset = Vector2( 0, 0 )
+5/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+5/shape_one_way = false
+5/shape_one_way_margin = 0.0
+5/shapes = [  ]
+5/z_index = 0
+6/name = "G"
+6/texture = ExtResource( 16 )
+6/tex_offset = Vector2( 0, 0 )
+6/modulate = Color( 1, 1, 1, 1 )
+6/region = Rect2( 96, 0, 16, 16 )
+6/tile_mode = 0
+6/occluder_offset = Vector2( 0, 0 )
+6/navigation_offset = Vector2( 0, 0 )
+6/shape_offset = Vector2( 0, 0 )
+6/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+6/shape_one_way = false
+6/shape_one_way_margin = 0.0
+6/shapes = [  ]
+6/z_index = 0
+7/name = "H"
+7/texture = ExtResource( 16 )
+7/tex_offset = Vector2( 0, 0 )
+7/modulate = Color( 1, 1, 1, 1 )
+7/region = Rect2( 112, 0, 16, 16 )
+7/tile_mode = 0
+7/occluder_offset = Vector2( 0, 0 )
+7/navigation_offset = Vector2( 0, 0 )
+7/shape_offset = Vector2( 0, 0 )
+7/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+7/shape_one_way = false
+7/shape_one_way_margin = 0.0
+7/shapes = [  ]
+7/z_index = 0
+8/name = "I"
+8/texture = ExtResource( 16 )
+8/tex_offset = Vector2( 0, 0 )
+8/modulate = Color( 1, 1, 1, 1 )
+8/region = Rect2( 0, 16, 16, 16 )
+8/tile_mode = 0
+8/occluder_offset = Vector2( 0, 0 )
+8/navigation_offset = Vector2( 0, 0 )
+8/shape_offset = Vector2( 0, 0 )
+8/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+8/shape_one_way = false
+8/shape_one_way_margin = 0.0
+8/shapes = [  ]
+8/z_index = 0
+9/name = "J"
+9/texture = ExtResource( 16 )
+9/tex_offset = Vector2( 0, 0 )
+9/modulate = Color( 1, 1, 1, 1 )
+9/region = Rect2( 16, 16, 16, 16 )
+9/tile_mode = 0
+9/occluder_offset = Vector2( 0, 0 )
+9/navigation_offset = Vector2( 0, 0 )
+9/shape_offset = Vector2( 0, 0 )
+9/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+9/shape_one_way = false
+9/shape_one_way_margin = 0.0
+9/shapes = [  ]
+9/z_index = 0
+10/name = "K"
+10/texture = ExtResource( 16 )
+10/tex_offset = Vector2( 0, 0 )
+10/modulate = Color( 1, 1, 1, 1 )
+10/region = Rect2( 32, 16, 16, 16 )
+10/tile_mode = 0
+10/occluder_offset = Vector2( 0, 0 )
+10/navigation_offset = Vector2( 0, 0 )
+10/shape_offset = Vector2( 0, 0 )
+10/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+10/shape_one_way = false
+10/shape_one_way_margin = 0.0
+10/shapes = [  ]
+10/z_index = 0
+11/name = "L"
+11/texture = ExtResource( 16 )
+11/tex_offset = Vector2( 0, 0 )
+11/modulate = Color( 1, 1, 1, 1 )
+11/region = Rect2( 48, 16, 16, 16 )
+11/tile_mode = 0
+11/occluder_offset = Vector2( 0, 0 )
+11/navigation_offset = Vector2( 0, 0 )
+11/shape_offset = Vector2( 0, 0 )
+11/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+11/shape_one_way = false
+11/shape_one_way_margin = 0.0
+11/shapes = [  ]
+11/z_index = 0
+12/name = "M"
+12/texture = ExtResource( 16 )
+12/tex_offset = Vector2( 0, 0 )
+12/modulate = Color( 1, 1, 1, 1 )
+12/region = Rect2( 64, 16, 16, 16 )
+12/tile_mode = 0
+12/occluder_offset = Vector2( 0, 0 )
+12/navigation_offset = Vector2( 0, 0 )
+12/shape_offset = Vector2( 0, 0 )
+12/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+12/shape_one_way = false
+12/shape_one_way_margin = 0.0
+12/shapes = [  ]
+12/z_index = 0
+13/name = "N"
+13/texture = ExtResource( 16 )
+13/tex_offset = Vector2( 0, 0 )
+13/modulate = Color( 1, 1, 1, 1 )
+13/region = Rect2( 80, 16, 16, 16 )
+13/tile_mode = 0
+13/occluder_offset = Vector2( 0, 0 )
+13/navigation_offset = Vector2( 0, 0 )
+13/shape_offset = Vector2( 0, 0 )
+13/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+13/shape_one_way = false
+13/shape_one_way_margin = 0.0
+13/shapes = [  ]
+13/z_index = 0
+14/name = "O"
+14/texture = ExtResource( 16 )
+14/tex_offset = Vector2( 0, 0 )
+14/modulate = Color( 1, 1, 1, 1 )
+14/region = Rect2( 96, 16, 16, 16 )
+14/tile_mode = 0
+14/occluder_offset = Vector2( 0, 0 )
+14/navigation_offset = Vector2( 0, 0 )
+14/shape_offset = Vector2( 0, 0 )
+14/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+14/shape_one_way = false
+14/shape_one_way_margin = 0.0
+14/shapes = [  ]
+14/z_index = 0
+15/name = "P"
+15/texture = ExtResource( 16 )
+15/tex_offset = Vector2( 0, 0 )
+15/modulate = Color( 1, 1, 1, 1 )
+15/region = Rect2( 112, 16, 16, 16 )
+15/tile_mode = 0
+15/occluder_offset = Vector2( 0, 0 )
+15/navigation_offset = Vector2( 0, 0 )
+15/shape_offset = Vector2( 0, 0 )
+15/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+15/shape_one_way = false
+15/shape_one_way_margin = 0.0
+15/shapes = [  ]
+15/z_index = 0
+16/name = "Q"
+16/texture = ExtResource( 16 )
+16/tex_offset = Vector2( 0, 0 )
+16/modulate = Color( 1, 1, 1, 1 )
+16/region = Rect2( 0, 32, 16, 16 )
+16/tile_mode = 0
+16/occluder_offset = Vector2( 0, 0 )
+16/navigation_offset = Vector2( 0, 0 )
+16/shape_offset = Vector2( 0, 0 )
+16/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+16/shape_one_way = false
+16/shape_one_way_margin = 0.0
+16/shapes = [  ]
+16/z_index = 0
+17/name = "R"
+17/texture = ExtResource( 16 )
+17/tex_offset = Vector2( 0, 0 )
+17/modulate = Color( 1, 1, 1, 1 )
+17/region = Rect2( 16, 32, 16, 16 )
+17/tile_mode = 0
+17/occluder_offset = Vector2( 0, 0 )
+17/navigation_offset = Vector2( 0, 0 )
+17/shape_offset = Vector2( 0, 0 )
+17/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+17/shape_one_way = false
+17/shape_one_way_margin = 0.0
+17/shapes = [  ]
+17/z_index = 0
+18/name = "S"
+18/texture = ExtResource( 16 )
+18/tex_offset = Vector2( 0, 0 )
+18/modulate = Color( 1, 1, 1, 1 )
+18/region = Rect2( 32, 32, 16, 16 )
+18/tile_mode = 0
+18/occluder_offset = Vector2( 0, 0 )
+18/navigation_offset = Vector2( 0, 0 )
+18/shape_offset = Vector2( 0, 0 )
+18/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+18/shape_one_way = false
+18/shape_one_way_margin = 0.0
+18/shapes = [  ]
+18/z_index = 0
+19/name = "T"
+19/texture = ExtResource( 16 )
+19/tex_offset = Vector2( 0, 0 )
+19/modulate = Color( 1, 1, 1, 1 )
+19/region = Rect2( 48, 32, 16, 16 )
+19/tile_mode = 0
+19/occluder_offset = Vector2( 0, 0 )
+19/navigation_offset = Vector2( 0, 0 )
+19/shape_offset = Vector2( 0, 0 )
+19/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+19/shape_one_way = false
+19/shape_one_way_margin = 0.0
+19/shapes = [  ]
+19/z_index = 0
+20/name = "U"
+20/texture = ExtResource( 16 )
+20/tex_offset = Vector2( 0, 0 )
+20/modulate = Color( 1, 1, 1, 1 )
+20/region = Rect2( 64, 32, 16, 16 )
+20/tile_mode = 0
+20/occluder_offset = Vector2( 0, 0 )
+20/navigation_offset = Vector2( 0, 0 )
+20/shape_offset = Vector2( 0, 0 )
+20/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+20/shape_one_way = false
+20/shape_one_way_margin = 0.0
+20/shapes = [  ]
+20/z_index = 0
+21/name = "V"
+21/texture = ExtResource( 16 )
+21/tex_offset = Vector2( 0, 0 )
+21/modulate = Color( 1, 1, 1, 1 )
+21/region = Rect2( 80, 32, 16, 16 )
+21/tile_mode = 0
+21/occluder_offset = Vector2( 0, 0 )
+21/navigation_offset = Vector2( 0, 0 )
+21/shape_offset = Vector2( 0, 0 )
+21/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+21/shape_one_way = false
+21/shape_one_way_margin = 0.0
+21/shapes = [  ]
+21/z_index = 0
+22/name = "W"
+22/texture = ExtResource( 16 )
+22/tex_offset = Vector2( 0, 0 )
+22/modulate = Color( 1, 1, 1, 1 )
+22/region = Rect2( 96, 32, 16, 16 )
+22/tile_mode = 0
+22/occluder_offset = Vector2( 0, 0 )
+22/navigation_offset = Vector2( 0, 0 )
+22/shape_offset = Vector2( 0, 0 )
+22/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+22/shape_one_way = false
+22/shape_one_way_margin = 0.0
+22/shapes = [  ]
+22/z_index = 0
+23/name = "X"
+23/texture = ExtResource( 16 )
+23/tex_offset = Vector2( 0, 0 )
+23/modulate = Color( 1, 1, 1, 1 )
+23/region = Rect2( 112, 32, 16, 16 )
+23/tile_mode = 0
+23/occluder_offset = Vector2( 0, 0 )
+23/navigation_offset = Vector2( 0, 0 )
+23/shape_offset = Vector2( 0, 0 )
+23/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+23/shape_one_way = false
+23/shape_one_way_margin = 0.0
+23/shapes = [  ]
+23/z_index = 0
+24/name = "Y"
+24/texture = ExtResource( 16 )
+24/tex_offset = Vector2( 0, 0 )
+24/modulate = Color( 1, 1, 1, 1 )
+24/region = Rect2( 0, 48, 16, 16 )
+24/tile_mode = 0
+24/occluder_offset = Vector2( 0, 0 )
+24/navigation_offset = Vector2( 0, 0 )
+24/shape_offset = Vector2( 0, 0 )
+24/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+24/shape_one_way = false
+24/shape_one_way_margin = 0.0
+24/shapes = [  ]
+24/z_index = 0
+25/name = "Z"
+25/texture = ExtResource( 16 )
+25/tex_offset = Vector2( 0, 0 )
+25/modulate = Color( 1, 1, 1, 1 )
+25/region = Rect2( 16, 48, 16, 16 )
+25/tile_mode = 0
+25/occluder_offset = Vector2( 0, 0 )
+25/navigation_offset = Vector2( 0, 0 )
+25/shape_offset = Vector2( 0, 0 )
+25/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+25/shape_one_way = false
+25/shape_one_way_margin = 0.0
+25/shapes = [  ]
+25/z_index = 0
+26/name = "1"
+26/texture = ExtResource( 16 )
+26/tex_offset = Vector2( 0, 0 )
+26/modulate = Color( 1, 1, 1, 1 )
+26/region = Rect2( 32, 48, 16, 16 )
+26/tile_mode = 0
+26/occluder_offset = Vector2( 0, 0 )
+26/navigation_offset = Vector2( 0, 0 )
+26/shape_offset = Vector2( 0, 0 )
+26/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+26/shape_one_way = false
+26/shape_one_way_margin = 0.0
+26/shapes = [  ]
+26/z_index = 0
+27/name = "2"
+27/texture = ExtResource( 16 )
+27/tex_offset = Vector2( 0, 0 )
+27/modulate = Color( 1, 1, 1, 1 )
+27/region = Rect2( 48, 48, 16, 16 )
+27/tile_mode = 0
+27/occluder_offset = Vector2( 0, 0 )
+27/navigation_offset = Vector2( 0, 0 )
+27/shape_offset = Vector2( 0, 0 )
+27/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+27/shape_one_way = false
+27/shape_one_way_margin = 0.0
+27/shapes = [  ]
+27/z_index = 0
+28/name = "3"
+28/texture = ExtResource( 16 )
+28/tex_offset = Vector2( 0, 0 )
+28/modulate = Color( 1, 1, 1, 1 )
+28/region = Rect2( 64, 48, 16, 16 )
+28/tile_mode = 0
+28/occluder_offset = Vector2( 0, 0 )
+28/navigation_offset = Vector2( 0, 0 )
+28/shape_offset = Vector2( 0, 0 )
+28/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+28/shape_one_way = false
+28/shape_one_way_margin = 0.0
+28/shapes = [  ]
+28/z_index = 0
+29/name = "4"
+29/texture = ExtResource( 16 )
+29/tex_offset = Vector2( 0, 0 )
+29/modulate = Color( 1, 1, 1, 1 )
+29/region = Rect2( 80, 48, 16, 16 )
+29/tile_mode = 0
+29/occluder_offset = Vector2( 0, 0 )
+29/navigation_offset = Vector2( 0, 0 )
+29/shape_offset = Vector2( 0, 0 )
+29/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+29/shape_one_way = false
+29/shape_one_way_margin = 0.0
+29/shapes = [  ]
+29/z_index = 0
+30/name = "5"
+30/texture = ExtResource( 16 )
+30/tex_offset = Vector2( 0, 0 )
+30/modulate = Color( 1, 1, 1, 1 )
+30/region = Rect2( 96, 48, 16, 16 )
+30/tile_mode = 0
+30/occluder_offset = Vector2( 0, 0 )
+30/navigation_offset = Vector2( 0, 0 )
+30/shape_offset = Vector2( 0, 0 )
+30/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+30/shape_one_way = false
+30/shape_one_way_margin = 0.0
+30/shapes = [  ]
+30/z_index = 0
+31/name = "6"
+31/texture = ExtResource( 16 )
+31/tex_offset = Vector2( 0, 0 )
+31/modulate = Color( 1, 1, 1, 1 )
+31/region = Rect2( 112, 48, 16, 16 )
+31/tile_mode = 0
+31/occluder_offset = Vector2( 0, 0 )
+31/navigation_offset = Vector2( 0, 0 )
+31/shape_offset = Vector2( 0, 0 )
+31/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+31/shape_one_way = false
+31/shape_one_way_margin = 0.0
+31/shapes = [  ]
+31/z_index = 0
+32/name = "7"
+32/texture = ExtResource( 16 )
+32/tex_offset = Vector2( 0, 0 )
+32/modulate = Color( 1, 1, 1, 1 )
+32/region = Rect2( 0, 64, 16, 16 )
+32/tile_mode = 0
+32/occluder_offset = Vector2( 0, 0 )
+32/navigation_offset = Vector2( 0, 0 )
+32/shape_offset = Vector2( 0, 0 )
+32/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+32/shape_one_way = false
+32/shape_one_way_margin = 0.0
+32/shapes = [  ]
+32/z_index = 0
+33/name = "8"
+33/texture = ExtResource( 16 )
+33/tex_offset = Vector2( 0, 0 )
+33/modulate = Color( 1, 1, 1, 1 )
+33/region = Rect2( 16, 64, 16, 16 )
+33/tile_mode = 0
+33/occluder_offset = Vector2( 0, 0 )
+33/navigation_offset = Vector2( 0, 0 )
+33/shape_offset = Vector2( 0, 0 )
+33/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+33/shape_one_way = false
+33/shape_one_way_margin = 0.0
+33/shapes = [  ]
+33/z_index = 0
+34/name = "9"
+34/texture = ExtResource( 16 )
+34/tex_offset = Vector2( 0, 0 )
+34/modulate = Color( 1, 1, 1, 1 )
+34/region = Rect2( 32, 64, 16, 16 )
+34/tile_mode = 0
+34/occluder_offset = Vector2( 0, 0 )
+34/navigation_offset = Vector2( 0, 0 )
+34/shape_offset = Vector2( 0, 0 )
+34/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+34/shape_one_way = false
+34/shape_one_way_margin = 0.0
+34/shapes = [  ]
+34/z_index = 0
+35/name = "0"
+35/texture = ExtResource( 16 )
+35/tex_offset = Vector2( 0, 0 )
+35/modulate = Color( 1, 1, 1, 1 )
+35/region = Rect2( 48, 64, 16, 16 )
+35/tile_mode = 0
+35/occluder_offset = Vector2( 0, 0 )
+35/navigation_offset = Vector2( 0, 0 )
+35/shape_offset = Vector2( 0, 0 )
+35/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+35/shape_one_way = false
+35/shape_one_way_margin = 0.0
+35/shapes = [  ]
+35/z_index = 0
+36/name = "!"
+36/texture = ExtResource( 16 )
+36/tex_offset = Vector2( 0, 0 )
+36/modulate = Color( 1, 1, 1, 1 )
+36/region = Rect2( 64, 64, 16, 16 )
+36/tile_mode = 0
+36/occluder_offset = Vector2( 0, 0 )
+36/navigation_offset = Vector2( 0, 0 )
+36/shape_offset = Vector2( 0, 0 )
+36/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+36/shape_one_way = false
+36/shape_one_way_margin = 0.0
+36/shapes = [  ]
+36/z_index = 0
+37/name = "@"
+37/texture = ExtResource( 16 )
+37/tex_offset = Vector2( 0, 0 )
+37/modulate = Color( 1, 1, 1, 1 )
+37/region = Rect2( 80, 64, 16, 16 )
+37/tile_mode = 0
+37/occluder_offset = Vector2( 0, 0 )
+37/navigation_offset = Vector2( 0, 0 )
+37/shape_offset = Vector2( 0, 0 )
+37/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+37/shape_one_way = false
+37/shape_one_way_margin = 0.0
+37/shapes = [  ]
+37/z_index = 0
+38/name = "#"
+38/texture = ExtResource( 16 )
+38/tex_offset = Vector2( 0, 0 )
+38/modulate = Color( 1, 1, 1, 1 )
+38/region = Rect2( 96, 64, 16, 16 )
+38/tile_mode = 0
+38/occluder_offset = Vector2( 0, 0 )
+38/navigation_offset = Vector2( 0, 0 )
+38/shape_offset = Vector2( 0, 0 )
+38/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+38/shape_one_way = false
+38/shape_one_way_margin = 0.0
+38/shapes = [  ]
+38/z_index = 0
+39/name = "$"
+39/texture = ExtResource( 16 )
+39/tex_offset = Vector2( 0, 0 )
+39/modulate = Color( 1, 1, 1, 1 )
+39/region = Rect2( 112, 64, 16, 16 )
+39/tile_mode = 0
+39/occluder_offset = Vector2( 0, 0 )
+39/navigation_offset = Vector2( 0, 0 )
+39/shape_offset = Vector2( 0, 0 )
+39/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+39/shape_one_way = false
+39/shape_one_way_margin = 0.0
+39/shapes = [  ]
+39/z_index = 0
+40/name = "%"
+40/texture = ExtResource( 16 )
+40/tex_offset = Vector2( 0, 0 )
+40/modulate = Color( 1, 1, 1, 1 )
+40/region = Rect2( 0, 80, 16, 16 )
+40/tile_mode = 0
+40/occluder_offset = Vector2( 0, 0 )
+40/navigation_offset = Vector2( 0, 0 )
+40/shape_offset = Vector2( 0, 0 )
+40/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+40/shape_one_way = false
+40/shape_one_way_margin = 0.0
+40/shapes = [  ]
+40/z_index = 0
+41/name = "^"
+41/texture = ExtResource( 16 )
+41/tex_offset = Vector2( 0, 0 )
+41/modulate = Color( 1, 1, 1, 1 )
+41/region = Rect2( 16, 80, 16, 16 )
+41/tile_mode = 0
+41/occluder_offset = Vector2( 0, 0 )
+41/navigation_offset = Vector2( 0, 0 )
+41/shape_offset = Vector2( 0, 0 )
+41/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+41/shape_one_way = false
+41/shape_one_way_margin = 0.0
+41/shapes = [  ]
+41/z_index = 0
+42/name = "&"
+42/texture = ExtResource( 16 )
+42/tex_offset = Vector2( 0, 0 )
+42/modulate = Color( 1, 1, 1, 1 )
+42/region = Rect2( 32, 80, 16, 16 )
+42/tile_mode = 0
+42/occluder_offset = Vector2( 0, 0 )
+42/navigation_offset = Vector2( 0, 0 )
+42/shape_offset = Vector2( 0, 0 )
+42/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+42/shape_one_way = false
+42/shape_one_way_margin = 0.0
+42/shapes = [  ]
+42/z_index = 0
+43/name = "*"
+43/texture = ExtResource( 16 )
+43/tex_offset = Vector2( 0, 0 )
+43/modulate = Color( 1, 1, 1, 1 )
+43/region = Rect2( 48, 80, 16, 16 )
+43/tile_mode = 0
+43/occluder_offset = Vector2( 0, 0 )
+43/navigation_offset = Vector2( 0, 0 )
+43/shape_offset = Vector2( 0, 0 )
+43/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+43/shape_one_way = false
+43/shape_one_way_margin = 0.0
+43/shapes = [  ]
+43/z_index = 0
+44/name = "("
+44/texture = ExtResource( 16 )
+44/tex_offset = Vector2( 0, 0 )
+44/modulate = Color( 1, 1, 1, 1 )
+44/region = Rect2( 64, 80, 16, 16 )
+44/tile_mode = 0
+44/occluder_offset = Vector2( 0, 0 )
+44/navigation_offset = Vector2( 0, 0 )
+44/shape_offset = Vector2( 0, 0 )
+44/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+44/shape_one_way = false
+44/shape_one_way_margin = 0.0
+44/shapes = [  ]
+44/z_index = 0
+45/name = ")"
+45/texture = ExtResource( 16 )
+45/tex_offset = Vector2( 0, 0 )
+45/modulate = Color( 1, 1, 1, 1 )
+45/region = Rect2( 80, 80, 16, 16 )
+45/tile_mode = 0
+45/occluder_offset = Vector2( 0, 0 )
+45/navigation_offset = Vector2( 0, 0 )
+45/shape_offset = Vector2( 0, 0 )
+45/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+45/shape_one_way = false
+45/shape_one_way_margin = 0.0
+45/shapes = [  ]
+45/z_index = 0
+46/name = "-"
+46/texture = ExtResource( 16 )
+46/tex_offset = Vector2( 0, 0 )
+46/modulate = Color( 1, 1, 1, 1 )
+46/region = Rect2( 96, 80, 16, 16 )
+46/tile_mode = 0
+46/occluder_offset = Vector2( 0, 0 )
+46/navigation_offset = Vector2( 0, 0 )
+46/shape_offset = Vector2( 0, 0 )
+46/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+46/shape_one_way = false
+46/shape_one_way_margin = 0.0
+46/shapes = [  ]
+46/z_index = 0
+47/name = "_"
+47/texture = ExtResource( 16 )
+47/tex_offset = Vector2( 0, 0 )
+47/modulate = Color( 1, 1, 1, 1 )
+47/region = Rect2( 112, 80, 16, 16 )
+47/tile_mode = 0
+47/occluder_offset = Vector2( 0, 0 )
+47/navigation_offset = Vector2( 0, 0 )
+47/shape_offset = Vector2( 0, 0 )
+47/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+47/shape_one_way = false
+47/shape_one_way_margin = 0.0
+47/shapes = [  ]
+47/z_index = 0
+48/name = "="
+48/texture = ExtResource( 16 )
+48/tex_offset = Vector2( 0, 0 )
+48/modulate = Color( 1, 1, 1, 1 )
+48/region = Rect2( 0, 96, 16, 16 )
+48/tile_mode = 0
+48/occluder_offset = Vector2( 0, 0 )
+48/navigation_offset = Vector2( 0, 0 )
+48/shape_offset = Vector2( 0, 0 )
+48/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+48/shape_one_way = false
+48/shape_one_way_margin = 0.0
+48/shapes = [  ]
+48/z_index = 0
+49/name = "+"
+49/texture = ExtResource( 16 )
+49/tex_offset = Vector2( 0, 0 )
+49/modulate = Color( 1, 1, 1, 1 )
+49/region = Rect2( 16, 96, 16, 16 )
+49/tile_mode = 0
+49/occluder_offset = Vector2( 0, 0 )
+49/navigation_offset = Vector2( 0, 0 )
+49/shape_offset = Vector2( 0, 0 )
+49/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+49/shape_one_way = false
+49/shape_one_way_margin = 0.0
+49/shapes = [  ]
+49/z_index = 0
+50/name = "`"
+50/texture = ExtResource( 16 )
+50/tex_offset = Vector2( 0, 0 )
+50/modulate = Color( 1, 1, 1, 1 )
+50/region = Rect2( 32, 96, 16, 16 )
+50/tile_mode = 0
+50/occluder_offset = Vector2( 0, 0 )
+50/navigation_offset = Vector2( 0, 0 )
+50/shape_offset = Vector2( 0, 0 )
+50/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+50/shape_one_way = false
+50/shape_one_way_margin = 0.0
+50/shapes = [  ]
+50/z_index = 0
+51/name = "~"
+51/texture = ExtResource( 16 )
+51/tex_offset = Vector2( 0, 0 )
+51/modulate = Color( 1, 1, 1, 1 )
+51/region = Rect2( 48, 96, 16, 16 )
+51/tile_mode = 0
+51/occluder_offset = Vector2( 0, 0 )
+51/navigation_offset = Vector2( 0, 0 )
+51/shape_offset = Vector2( 0, 0 )
+51/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+51/shape_one_way = false
+51/shape_one_way_margin = 0.0
+51/shapes = [  ]
+51/z_index = 0
+52/name = "["
+52/texture = ExtResource( 16 )
+52/tex_offset = Vector2( 0, 0 )
+52/modulate = Color( 1, 1, 1, 1 )
+52/region = Rect2( 64, 96, 16, 16 )
+52/tile_mode = 0
+52/occluder_offset = Vector2( 0, 0 )
+52/navigation_offset = Vector2( 0, 0 )
+52/shape_offset = Vector2( 0, 0 )
+52/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+52/shape_one_way = false
+52/shape_one_way_margin = 0.0
+52/shapes = [  ]
+52/z_index = 0
+53/name = "]"
+53/texture = ExtResource( 16 )
+53/tex_offset = Vector2( 0, 0 )
+53/modulate = Color( 1, 1, 1, 1 )
+53/region = Rect2( 80, 96, 16, 16 )
+53/tile_mode = 0
+53/occluder_offset = Vector2( 0, 0 )
+53/navigation_offset = Vector2( 0, 0 )
+53/shape_offset = Vector2( 0, 0 )
+53/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+53/shape_one_way = false
+53/shape_one_way_margin = 0.0
+53/shapes = [  ]
+53/z_index = 0
+54/name = "{"
+54/texture = ExtResource( 16 )
+54/tex_offset = Vector2( 0, 0 )
+54/modulate = Color( 1, 1, 1, 1 )
+54/region = Rect2( 96, 96, 16, 16 )
+54/tile_mode = 0
+54/occluder_offset = Vector2( 0, 0 )
+54/navigation_offset = Vector2( 0, 0 )
+54/shape_offset = Vector2( 0, 0 )
+54/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+54/shape_one_way = false
+54/shape_one_way_margin = 0.0
+54/shapes = [  ]
+54/z_index = 0
+55/name = "}"
+55/texture = ExtResource( 16 )
+55/tex_offset = Vector2( 0, 0 )
+55/modulate = Color( 1, 1, 1, 1 )
+55/region = Rect2( 112, 96, 16, 16 )
+55/tile_mode = 0
+55/occluder_offset = Vector2( 0, 0 )
+55/navigation_offset = Vector2( 0, 0 )
+55/shape_offset = Vector2( 0, 0 )
+55/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+55/shape_one_way = false
+55/shape_one_way_margin = 0.0
+55/shapes = [  ]
+55/z_index = 0
+56/name = "|"
+56/texture = ExtResource( 16 )
+56/tex_offset = Vector2( 0, 0 )
+56/modulate = Color( 1, 1, 1, 1 )
+56/region = Rect2( 0, 112, 16, 16 )
+56/tile_mode = 0
+56/occluder_offset = Vector2( 0, 0 )
+56/navigation_offset = Vector2( 0, 0 )
+56/shape_offset = Vector2( 0, 0 )
+56/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+56/shape_one_way = false
+56/shape_one_way_margin = 0.0
+56/shapes = [  ]
+56/z_index = 0
+57/name = "\\"
+57/texture = ExtResource( 16 )
+57/tex_offset = Vector2( 0, 0 )
+57/modulate = Color( 1, 1, 1, 1 )
+57/region = Rect2( 16, 112, 16, 16 )
+57/tile_mode = 0
+57/occluder_offset = Vector2( 0, 0 )
+57/navigation_offset = Vector2( 0, 0 )
+57/shape_offset = Vector2( 0, 0 )
+57/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+57/shape_one_way = false
+57/shape_one_way_margin = 0.0
+57/shapes = [  ]
+57/z_index = 0
+58/name = ";"
+58/texture = ExtResource( 16 )
+58/tex_offset = Vector2( 0, 0 )
+58/modulate = Color( 1, 1, 1, 1 )
+58/region = Rect2( 32, 112, 16, 16 )
+58/tile_mode = 0
+58/occluder_offset = Vector2( 0, 0 )
+58/navigation_offset = Vector2( 0, 0 )
+58/shape_offset = Vector2( 0, 0 )
+58/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+58/shape_one_way = false
+58/shape_one_way_margin = 0.0
+58/shapes = [  ]
+58/z_index = 0
+59/name = ":"
+59/texture = ExtResource( 16 )
+59/tex_offset = Vector2( 0, 0 )
+59/modulate = Color( 1, 1, 1, 1 )
+59/region = Rect2( 48, 112, 16, 16 )
+59/tile_mode = 0
+59/occluder_offset = Vector2( 0, 0 )
+59/navigation_offset = Vector2( 0, 0 )
+59/shape_offset = Vector2( 0, 0 )
+59/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+59/shape_one_way = false
+59/shape_one_way_margin = 0.0
+59/shapes = [  ]
+59/z_index = 0
+60/name = "'-opening"
+60/texture = ExtResource( 16 )
+60/tex_offset = Vector2( 0, 0 )
+60/modulate = Color( 1, 1, 1, 1 )
+60/region = Rect2( 64, 112, 16, 16 )
+60/tile_mode = 0
+60/occluder_offset = Vector2( 0, 0 )
+60/navigation_offset = Vector2( 0, 0 )
+60/shape_offset = Vector2( 0, 0 )
+60/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+60/shape_one_way = false
+60/shape_one_way_margin = 0.0
+60/shapes = [  ]
+60/z_index = 0
+61/name = "\"-opening"
+61/texture = ExtResource( 16 )
+61/tex_offset = Vector2( 0, 0 )
+61/modulate = Color( 1, 1, 1, 1 )
+61/region = Rect2( 80, 112, 16, 16 )
+61/tile_mode = 0
+61/occluder_offset = Vector2( 0, 0 )
+61/navigation_offset = Vector2( 0, 0 )
+61/shape_offset = Vector2( 0, 0 )
+61/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+61/shape_one_way = false
+61/shape_one_way_margin = 0.0
+61/shapes = [  ]
+61/z_index = 0
+62/name = ","
+62/texture = ExtResource( 16 )
+62/tex_offset = Vector2( 0, 0 )
+62/modulate = Color( 1, 1, 1, 1 )
+62/region = Rect2( 96, 112, 16, 16 )
+62/tile_mode = 0
+62/occluder_offset = Vector2( 0, 0 )
+62/navigation_offset = Vector2( 0, 0 )
+62/shape_offset = Vector2( 0, 0 )
+62/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+62/shape_one_way = false
+62/shape_one_way_margin = 0.0
+62/shapes = [  ]
+62/z_index = 0
+63/name = "."
+63/texture = ExtResource( 16 )
+63/tex_offset = Vector2( 0, 0 )
+63/modulate = Color( 1, 1, 1, 1 )
+63/region = Rect2( 112, 112, 16, 16 )
+63/tile_mode = 0
+63/occluder_offset = Vector2( 0, 0 )
+63/navigation_offset = Vector2( 0, 0 )
+63/shape_offset = Vector2( 0, 0 )
+63/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+63/shape_one_way = false
+63/shape_one_way_margin = 0.0
+63/shapes = [  ]
+63/z_index = 0
+64/name = "<"
+64/texture = ExtResource( 16 )
+64/tex_offset = Vector2( 0, 0 )
+64/modulate = Color( 1, 1, 1, 1 )
+64/region = Rect2( 0, 128, 16, 16 )
+64/tile_mode = 0
+64/occluder_offset = Vector2( 0, 0 )
+64/navigation_offset = Vector2( 0, 0 )
+64/shape_offset = Vector2( 0, 0 )
+64/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+64/shape_one_way = false
+64/shape_one_way_margin = 0.0
+64/shapes = [  ]
+64/z_index = 0
+65/name = ">"
+65/texture = ExtResource( 16 )
+65/tex_offset = Vector2( 0, 0 )
+65/modulate = Color( 1, 1, 1, 1 )
+65/region = Rect2( 16, 128, 16, 16 )
+65/tile_mode = 0
+65/occluder_offset = Vector2( 0, 0 )
+65/navigation_offset = Vector2( 0, 0 )
+65/shape_offset = Vector2( 0, 0 )
+65/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+65/shape_one_way = false
+65/shape_one_way_margin = 0.0
+65/shapes = [  ]
+65/z_index = 0
+66/name = "/"
+66/texture = ExtResource( 16 )
+66/tex_offset = Vector2( 0, 0 )
+66/modulate = Color( 1, 1, 1, 1 )
+66/region = Rect2( 32, 128, 16, 16 )
+66/tile_mode = 0
+66/occluder_offset = Vector2( 0, 0 )
+66/navigation_offset = Vector2( 0, 0 )
+66/shape_offset = Vector2( 0, 0 )
+66/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+66/shape_one_way = false
+66/shape_one_way_margin = 0.0
+66/shapes = [  ]
+66/z_index = 0
+67/name = "?"
+67/texture = ExtResource( 16 )
+67/tex_offset = Vector2( 0, 0 )
+67/modulate = Color( 1, 1, 1, 1 )
+67/region = Rect2( 48, 128, 16, 16 )
+67/tile_mode = 0
+67/occluder_offset = Vector2( 0, 0 )
+67/navigation_offset = Vector2( 0, 0 )
+67/shape_offset = Vector2( 0, 0 )
+67/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+67/shape_one_way = false
+67/shape_one_way_margin = 0.0
+67/shapes = [  ]
+67/z_index = 0
+68/name = "'-closing"
+68/texture = ExtResource( 16 )
+68/tex_offset = Vector2( 0, 0 )
+68/modulate = Color( 1, 1, 1, 1 )
+68/region = Rect2( 64, 128, 16, 16 )
+68/tile_mode = 0
+68/occluder_offset = Vector2( 0, 0 )
+68/navigation_offset = Vector2( 0, 0 )
+68/shape_offset = Vector2( 0, 0 )
+68/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+68/shape_one_way = false
+68/shape_one_way_margin = 0.0
+68/shapes = [  ]
+68/z_index = 0
+69/name = "\"-closing"
+69/texture = ExtResource( 16 )
+69/tex_offset = Vector2( 0, 0 )
+69/modulate = Color( 1, 1, 1, 1 )
+69/region = Rect2( 80, 128, 16, 16 )
+69/tile_mode = 0
+69/occluder_offset = Vector2( 0, 0 )
+69/navigation_offset = Vector2( 0, 0 )
+69/shape_offset = Vector2( 0, 0 )
+69/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+69/shape_one_way = false
+69/shape_one_way_margin = 0.0
+69/shapes = [  ]
+69/z_index = 0
+
+[sub_resource type="RectangleShape2D" id=44]
 extents = Vector2( 960, 1960 )
 
-[sub_resource type="RectangleShape2D" id=40]
+[sub_resource type="RectangleShape2D" id=45]
 extents = Vector2( 168, 1896 )
 
-[sub_resource type="AtlasTexture" id=41]
+[sub_resource type="AtlasTexture" id=46]
 atlas = ExtResource( 2 )
 region = Rect2( 0, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=42]
+[sub_resource type="AtlasTexture" id=47]
 atlas = ExtResource( 2 )
 region = Rect2( 48, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=43]
+[sub_resource type="AtlasTexture" id=48]
 atlas = ExtResource( 2 )
 region = Rect2( 96, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=44]
+[sub_resource type="AtlasTexture" id=49]
 atlas = ExtResource( 2 )
 region = Rect2( 144, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=45]
+[sub_resource type="AtlasTexture" id=50]
 atlas = ExtResource( 2 )
 region = Rect2( 192, 48, 48, 48 )
 
-[sub_resource type="SpriteFrames" id=46]
+[sub_resource type="SpriteFrames" id=51]
 animations = [ {
-"frames": [ SubResource( 41 ), SubResource( 42 ), SubResource( 43 ), SubResource( 44 ), SubResource( 45 ) ],
+"frames": [ SubResource( 46 ), SubResource( 47 ), SubResource( 48 ), SubResource( 49 ), SubResource( 50 ) ],
 "loop": true,
 "name": "default",
 "speed": 20.0
 } ]
 
-[sub_resource type="AtlasTexture" id=47]
+[sub_resource type="AtlasTexture" id=52]
 atlas = ExtResource( 2 )
 region = Rect2( 0, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=48]
+[sub_resource type="AtlasTexture" id=53]
 atlas = ExtResource( 2 )
 region = Rect2( 48, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=49]
+[sub_resource type="AtlasTexture" id=54]
 atlas = ExtResource( 2 )
 region = Rect2( 96, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=50]
+[sub_resource type="AtlasTexture" id=55]
 atlas = ExtResource( 2 )
 region = Rect2( 144, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=51]
+[sub_resource type="AtlasTexture" id=56]
 atlas = ExtResource( 2 )
 region = Rect2( 192, 0, 48, 48 )
 
-[sub_resource type="SpriteFrames" id=52]
+[sub_resource type="SpriteFrames" id=57]
 animations = [ {
-"frames": [ SubResource( 47 ), SubResource( 48 ), SubResource( 49 ), SubResource( 50 ), SubResource( 51 ) ],
+"frames": [ SubResource( 52 ), SubResource( 53 ), SubResource( 54 ), SubResource( 55 ), SubResource( 56 ) ],
 "loop": true,
 "name": "default",
 "speed": 8.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=53]
-extents = Vector2( 64, 64 )
-
-[sub_resource type="RectangleShape2D" id=54]
-extents = Vector2( 64, 64 )
-
-[sub_resource type="RectangleShape2D" id=55]
-extents = Vector2( 596, 64 )
-
-[sub_resource type="RectangleShape2D" id=56]
-extents = Vector2( 596, 64 )
-
-[sub_resource type="RectangleShape2D" id=57]
-extents = Vector2( 172, 64.0076 )
-
 [sub_resource type="RectangleShape2D" id=58]
-extents = Vector2( 172, 64 )
+extents = Vector2( 64, 64 )
 
 [sub_resource type="RectangleShape2D" id=59]
-extents = Vector2( 84, 64.0054 )
+extents = Vector2( 64, 64 )
 
 [sub_resource type="RectangleShape2D" id=60]
-extents = Vector2( 84, 64 )
+extents = Vector2( 596, 64 )
 
 [sub_resource type="RectangleShape2D" id=61]
-extents = Vector2( 960, 4.00002 )
+extents = Vector2( 596, 64 )
 
 [sub_resource type="RectangleShape2D" id=62]
-extents = Vector2( 960, 4 )
+extents = Vector2( 172, 64.0076 )
 
 [sub_resource type="RectangleShape2D" id=63]
-extents = Vector2( 960, 1980 )
+extents = Vector2( 172, 64 )
 
 [sub_resource type="RectangleShape2D" id=64]
-extents = Vector2( 960, 4 )
+extents = Vector2( 84, 64.0054 )
 
 [sub_resource type="RectangleShape2D" id=65]
-extents = Vector2( 64, 4352 )
+extents = Vector2( 84, 64 )
 
 [sub_resource type="RectangleShape2D" id=66]
-extents = Vector2( 64, 4352 )
+extents = Vector2( 960, 4.00002 )
 
 [sub_resource type="RectangleShape2D" id=67]
+extents = Vector2( 960, 4 )
+
+[sub_resource type="RectangleShape2D" id=68]
+extents = Vector2( 960, 1980 )
+
+[sub_resource type="RectangleShape2D" id=69]
+extents = Vector2( 960, 4 )
+
+[sub_resource type="RectangleShape2D" id=70]
+extents = Vector2( 64, 4352 )
+
+[sub_resource type="RectangleShape2D" id=71]
+extents = Vector2( 64, 4352 )
+
+[sub_resource type="RectangleShape2D" id=72]
 extents = Vector2( 63.9966, 960 )
 
 [node name="Main Scene" type="Node2D"]
@@ -323,6 +1336,7 @@ __meta__ = {
 }
 
 [node name="Player" type="KinematicBody2D" parent="." groups=[
+"Perchable",
 "Player",
 ]]
 position = Vector2( 384, -208 )
@@ -340,7 +1354,6 @@ animation = "player_falling"
 [node name="Camera2D" type="Camera2D" parent="Player" groups=[
 "Player",
 ]]
-visible = false
 position = Vector2( 0, -32 )
 offset = Vector2( 0, 32 )
 current = true
@@ -367,7 +1380,7 @@ shape = SubResource( 30 )
 ]]
 visible = false
 position = Vector2( -8, 0 )
-collision_mask = 126
+collision_mask = 62
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player/Area2D" groups=[
 "Player",
@@ -403,21 +1416,25 @@ stream = ExtResource( 11 )
 [node name="Butterfly 1" type="AnimatedSprite" parent="." groups=[
 "Summer",
 ]]
-position = Vector2( 128, 0 )
+position = Vector2( 252, -12 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 36 )
+frames = SubResource( 40 )
 animation = "butterfly_idle"
-offset = Vector2( 0, -2 )
+offset = Vector2( 1, -1 )
 script = ExtResource( 10 )
+FlightPathColor = Color( 1, 0, 0, 1 )
+PerchableAreaColor = Color( 1, 0, 0, 1 )
+PerchPointColor = Color( 1, 0, 0, 1 )
+LogLevel = 0
 
-[node name="LandingCollider" type="Area2D" parent="Butterfly 1"]
+[node name="PerchingCollider" type="Area2D" parent="Butterfly 1"]
 visible = false
 position = Vector2( -0.5, -0.5 )
 collision_layer = 4
 collision_mask = 47
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 1/LandingCollider"]
-shape = SubResource( 37 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 1/PerchingCollider"]
+shape = SubResource( 41 )
 
 [node name="ObstacleCollider" type="Area2D" parent="Butterfly 1"]
 visible = false
@@ -426,7 +1443,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 1/ObstacleCollider"]
-shape = SubResource( 38 )
+shape = SubResource( 42 )
 
 [node name="FlightTimer" type="Timer" parent="Butterfly 1"]
 one_shot = true
@@ -439,19 +1456,23 @@ one_shot = true
 ]]
 position = Vector2( 360, -3896 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 36 )
+frames = SubResource( 40 )
 animation = "butterfly_idle"
-offset = Vector2( 0, -2 )
+offset = Vector2( 1, -1 )
 script = ExtResource( 10 )
+FlightPathColor = Color( 0, 1, 0, 1 )
+PerchableAreaColor = Color( 0, 1, 0, 1 )
+PerchPointColor = Color( 0, 1, 0, 1 )
+LogLevel = 0
 
-[node name="LandingCollider" type="Area2D" parent="Butterfly 2"]
+[node name="PerchingCollider" type="Area2D" parent="Butterfly 2"]
 visible = false
 position = Vector2( -0.5, -0.5 )
 collision_layer = 4
 collision_mask = 47
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 2/LandingCollider"]
-shape = SubResource( 37 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 2/PerchingCollider"]
+shape = SubResource( 41 )
 
 [node name="ObstacleCollider" type="Area2D" parent="Butterfly 2"]
 visible = false
@@ -460,7 +1481,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 2/ObstacleCollider"]
-shape = SubResource( 38 )
+shape = SubResource( 42 )
 
 [node name="FlightTimer" type="Timer" parent="Butterfly 2"]
 one_shot = true
@@ -473,19 +1494,23 @@ one_shot = true
 ]]
 position = Vector2( 1273.73, 3953.35 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 36 )
+frames = SubResource( 40 )
 animation = "butterfly_idle"
-offset = Vector2( 0, -2 )
+offset = Vector2( 1, -1 )
 script = ExtResource( 10 )
+FlightPathColor = Color( 0, 0, 1, 1 )
+PerchableAreaColor = Color( 0, 0, 1, 1 )
+PerchPointColor = Color( 0, 0, 1, 1 )
+LogLevel = 0
 
-[node name="LandingCollider" type="Area2D" parent="Butterfly 3"]
+[node name="PerchingCollider" type="Area2D" parent="Butterfly 3"]
 visible = false
 position = Vector2( -0.5, -0.5 )
 collision_layer = 4
 collision_mask = 47
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 3/LandingCollider"]
-shape = SubResource( 37 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 3/PerchingCollider"]
+shape = SubResource( 41 )
 
 [node name="ObstacleCollider" type="Area2D" parent="Butterfly 3"]
 visible = false
@@ -494,7 +1519,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 3/ObstacleCollider"]
-shape = SubResource( 38 )
+shape = SubResource( 42 )
 
 [node name="FlightTimer" type="Timer" parent="Butterfly 3"]
 one_shot = true
@@ -506,7 +1531,7 @@ one_shot = true
 "Cliffs",
 ]]
 z_index = -2
-collision_layer = 66
+collision_layer = 2
 collision_mask = 13
 script = ExtResource( 4 )
 
@@ -545,16 +1570,15 @@ scale = Vector2( 8, 8 )
 tile_set = ExtResource( 3 )
 cell_size = Vector2( 16, 16 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 13
 format = 1
-tile_data = PoolIntArray( -1900543, 31, 0, -1900541, 31, 0, -1900540, 31, 2, -1900538, 31, 0, -1900536, 31, 0, -1900535, 31, 0, -1900531, 31, 0, -1900530, 34, 0, -1835007, 31, 0, -1835006, 31, 0, -1835005, 31, 131072, -1835004, 31, 131074, -1835003, 31, 0, -1835002, 31, 0, -1835001, 31, 1, -1835000, 31, 2, -1834995, 31, 0, -1834994, 34, 0, -1769470, 31, 0, -1769466, 31, 131072, -1769465, 31, 131073, -1769464, 31, 131074, -1769463, 31, 0, -1769462, 31, 0, -1769460, 31, 0, -1769458, 34, 0, -1703931, 31, 0, -1703930, 31, 0, -1703926, 31, 0, -1703924, 31, 0, -1638386, 34, 0, -1572862, 31, 0, -1572861, 31, 0, -1572852, 31, 0, -1572850, 34, 0, -1507326, 31, 0, -1507324, 31, 0, -1507323, 31, 1, -1507322, 31, 2, -1507318, 31, 0, -1507316, 31, 0, -1507314, 34, 0, -1441790, 31, 0, -1441789, 31, 0, -1441788, 31, 131072, -1441787, 31, 131073, -1441786, 31, 0, -1441785, 31, 2, -1441784, 31, 0, -1441783, 31, 0, -1441778, 34, 0, -1376253, 31, 0, -1376250, 31, 131072, -1376249, 31, 131074, -1376242, 34, 0, -1310720, 32, 0, -1310712, 31, 0, -1310710, 31, 0, -1245184, 32, 0, -1245174, 31, 0, -1245173, 31, 2, -1245172, 31, 0, -1179648, 31, 0, -1179638, 31, 131072, -1179637, 31, 131074, -1114109, 31, 0, -1114108, 31, 1, -1114107, 31, 2, -1114102, 31, 0, -1048573, 31, 65536, -1048572, 31, 65537, -1048571, 31, 65538, -1048570, 31, 0, -1048566, 31, 0, -983037, 31, 131072, -983036, 31, 0, -983035, 31, 65538, -917500, 31, 131072, -917499, 31, 131074, -851963, 31, 0, -851959, 31, 0, -851958, 31, 0, -720895, 31, 0, -720886, 33, 0, -655358, 31, 0, -655357, 31, 2, -589824, 31, 0, -589823, 31, 1, -589822, 31, 0, -589821, 31, 131074, -589819, 31, 0, -524288, 31, 131072, -524287, 31, 131073, -524286, 31, 131074, -524284, 31, 0, -524283, 31, 0, -524282, 31, 2, -458747, 31, 131072, -458746, 31, 131074, -458742, 33, 0, -327670, 31, 0, -262134, 31, 0, -262130, 34, 0, -131063, 31, 0, -131062, 31, 2, -131059, 31, 0, -65527, 31, 65536, -65526, 31, 65538, -65523, 31, 0, 7, 31, 0, 8, 31, 0, 9, 31, 131072, 10, 31, 131074, 262147, 33, 0, 327683, 33, 0, 393219, 33, 0, 458755, 33, 0, 458756, 33, 0, 589835, 33, 0, 655371, 33, 0, 655372, 33, 0, 720907, 33, 0, 720908, 33, 0, 1179650, 31, 0 )
+tile_data = PoolIntArray( -1900543, 31, 0, -1900541, 31, 0, -1900540, 31, 2, -1900538, 31, 0, -1900536, 31, 0, -1900535, 31, 0, -1900531, 31, 0, -1900530, 34, 0, -1835007, 31, 0, -1835006, 31, 0, -1835005, 31, 131072, -1835004, 31, 131074, -1835003, 31, 0, -1835002, 31, 0, -1835001, 31, 1, -1835000, 31, 2, -1834995, 31, 0, -1834994, 34, 0, -1769470, 31, 0, -1769466, 31, 131072, -1769465, 31, 131073, -1769464, 31, 131074, -1769463, 31, 0, -1769462, 31, 0, -1769460, 31, 0, -1769458, 34, 0, -1703931, 31, 0, -1703930, 31, 0, -1703926, 31, 0, -1703924, 31, 0, -1638386, 34, 0, -1572862, 31, 0, -1572861, 31, 0, -1572852, 31, 0, -1572850, 34, 0, -1507326, 31, 0, -1507324, 31, 0, -1507323, 31, 1, -1507322, 31, 2, -1507318, 31, 0, -1507316, 31, 0, -1507314, 34, 0, -1441790, 31, 0, -1441789, 31, 0, -1441788, 31, 131072, -1441787, 31, 131073, -1441786, 31, 0, -1441785, 31, 2, -1441784, 31, 0, -1441783, 31, 0, -1441778, 34, 0, -1376253, 31, 0, -1376250, 31, 131072, -1376249, 31, 131074, -1376242, 34, 0, -1310720, 32, 0, -1310712, 31, 0, -1310710, 31, 0, -1245184, 32, 0, -1245174, 31, 0, -1245173, 31, 2, -1245172, 31, 0, -1179648, 31, 0, -1179638, 31, 131072, -1179637, 31, 131074, -1114109, 31, 0, -1114108, 31, 1, -1114107, 31, 2, -1114102, 31, 0, -1048573, 31, 65536, -1048572, 31, 65537, -1048571, 31, 65538, -1048570, 31, 0, -1048566, 31, 0, -983037, 31, 131072, -983036, 31, 0, -983035, 31, 65538, -917500, 31, 131072, -917499, 31, 131074, -851963, 31, 0, -851959, 31, 0, -851958, 31, 0, -720895, 31, 0, -720886, 33, 0, -655358, 31, 0, -655357, 31, 2, -589824, 31, 0, -589823, 31, 1, -589822, 31, 0, -589821, 31, 131074, -589819, 31, 0, -524288, 31, 131072, -524287, 31, 131073, -524286, 31, 131074, -524284, 31, 0, -524283, 31, 0, -524282, 31, 2, -458747, 31, 131072, -458746, 31, 131074, -458742, 33, 0, -327670, 31, 0, -262134, 31, 0, -262130, 34, 0, -131063, 31, 0, -131062, 31, 2, -131059, 31, 0, -65527, 31, 65536, -65526, 31, 65538, -65523, 31, 0, 7, 31, 0, 8, 31, 0, 9, 31, 131072, 10, 31, 131074 )
 
 [node name="Snow" type="TileMap" parent="Upper Cliffs" groups=[
 "Cliffs",
 "Winter",
 ]]
-visible = false
 scale = Vector2( 8, 8 )
 tile_set = ExtResource( 3 )
 cell_size = Vector2( 16, 16 )
@@ -566,6 +1590,7 @@ tile_data = PoolIntArray( -1966079, 27, 0, -1966078, 28, 0, -1966077, 28, 0, -19
 [node name="Flowers" type="TileMap" parent="Upper Cliffs" groups=[
 "Cliffs",
 "Foliage",
+"Perchables",
 "Summer",
 ]]
 visible = false
@@ -578,14 +1603,64 @@ cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 32
 collision_mask = 4
 format = 1
-tile_data = PoolIntArray( -1966078, 38, 0, -1966069, 37, 0, -1966066, 36, 0, -1966065, 37, 0, -1900543, 37, 0, 2, 36, 0 )
+tile_data = PoolIntArray( -1966078, 38, 0, -1966069, 37, 0, -1966066, 36, 0, -1966065, 37, 0, -1900543, 37, 0, 3, 36, 0 )
+
+[node name="Signs" type="TileMap" parent="Upper Cliffs" groups=[
+"Cliffs",
+"Dropdownable",
+"Perchable",
+]]
+position = Vector2( 368, 24 )
+scale = Vector2( 8, 8 )
+tile_set = ExtResource( 3 )
+cell_size = Vector2( 16, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 2
+collision_mask = 29
+format = 1
+tile_data = PoolIntArray( -2031606, 42, 0 )
+
+[node name="Signs Winter Layer" type="TileMap" parent="Upper Cliffs" groups=[
+"Cliffs",
+"Winter",
+]]
+position = Vector2( 368, 24 )
+scale = Vector2( 8, 8 )
+z_index = 1
+tile_set = ExtResource( 3 )
+cell_size = Vector2( 16, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_use_parent = true
+format = 1
+tile_data = PoolIntArray( -2031606, 47, 0, 131072, 2, 0, 131073, 0, 0, 131074, 0, 0, 131075, 0, 0, 131076, 0, 0, 131077, 0, 0, 131078, 0, 0, 131079, 0, 0, 131080, 0, 0, 131081, 0, 0, 131082, 0, 0, 131083, 0, 0, 131084, 0, 0, 131085, 0, 0, 131086, 1, 0 )
+
+[node name="(10,-31)" type="Sprite" parent="Upper Cliffs" groups=[
+"Cliffs",
+]]
+visible = false
+position = Vector2( 1716, -3916 )
+scale = Vector2( 0.8, 1.12 )
+z_index = 4
+texture = ExtResource( 15 )
+
+[node name="Sign Font" type="TileMap" parent="Upper Cliffs/(10,-31)"]
+position = Vector2( -2145, 3500 )
+scale = Vector2( 1.25027, 0.892843 )
+z_index = 4
+tile_set = SubResource( 43 )
+cell_size = Vector2( 1, 1 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 0
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( -258275705, 19, 0, -258275696, 7, 0, -258275686, 4, 0, -258275670, 2, 0, -258275662, 11, 0, -258275654, 8, 0, -258275646, 5, 0, -258275637, 5, 0, -258275628, 18, 0, -256833905, 14, 0, -256833895, 5, 0, -256833878, 0, 0, -256833869, 10, 0, -256833860, 0, 0, -256833851, 8, 0, -256833843, 0, 0, -64618078, 19, 0 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs" groups=[
 "Cliffs",
 ]]
 visible = false
 position = Vector2( 960, -1880 )
-shape = SubResource( 39 )
+shape = SubResource( 44 )
 
 [node name="Waterfall" type="Area2D" parent="Upper Cliffs"]
 visible = false
@@ -595,13 +1670,13 @@ collision_mask = 5
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -1816 )
-shape = SubResource( 40 )
+shape = SubResource( 45 )
 one_way_collision = true
 
 [node name="waterfall 1" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -88 )
 scale = Vector2( 8, 7 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 1"]
 scale = Vector2( 0.125, 0.125 )
@@ -614,7 +1689,7 @@ attenuation = 8.28211
 [node name="waterfall 2" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -448 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 2"]
 scale = Vector2( 0.125, 0.125 )
@@ -627,7 +1702,7 @@ attenuation = 8.28211
 [node name="waterfall 3" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -832 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 3"]
 scale = Vector2( 0.125, 0.125 )
@@ -640,7 +1715,7 @@ attenuation = 8.28211
 [node name="waterfall 4" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -1216 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 4"]
 scale = Vector2( 0.125, 0.125 )
@@ -653,7 +1728,7 @@ attenuation = 8.28211
 [node name="waterfall 5" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -1600 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 5"]
 scale = Vector2( 0.125, 0.125 )
@@ -666,7 +1741,7 @@ attenuation = 8.28211
 [node name="waterfall 6" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -1984 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 6"]
 scale = Vector2( 0.125, 0.125 )
@@ -679,7 +1754,7 @@ attenuation = 8.28211
 [node name="waterfall 7" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -2368 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 7"]
 scale = Vector2( 0.125, 0.125 )
@@ -692,7 +1767,7 @@ attenuation = 8.28211
 [node name="waterfall 8" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -2752 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 8"]
 scale = Vector2( 0.125, 0.125 )
@@ -705,7 +1780,7 @@ attenuation = 8.28211
 [node name="waterfall 9" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -3136 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 9"]
 scale = Vector2( 0.125, 0.125 )
@@ -717,7 +1792,7 @@ attenuation = 8.28211
 [node name="waterfall 10" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1536, -3520 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 46 )
+frames = SubResource( 51 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 10"]
 scale = Vector2( 0.125, 0.125 )
@@ -731,19 +1806,19 @@ attenuation = 8.28211
 position = Vector2( 1312, -96 )
 scale = Vector2( 16, 16 )
 z_index = 1
-frames = SubResource( 52 )
+frames = SubResource( 57 )
 
 [node name="waterfall mist 2" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1704, -96 )
 scale = Vector2( 16, 16 )
 z_index = 1
-frames = SubResource( 52 )
+frames = SubResource( 57 )
 
 [node name="waterfall mist 3" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1520, -80 )
 scale = Vector2( 16, 16 )
 z_index = 1
-frames = SubResource( 52 )
+frames = SubResource( 57 )
 
 [node name="Upper Cliffs Top Ground Static Collider 1" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -752,7 +1827,7 @@ frames = SubResource( 52 )
 ]]
 visible = false
 position = Vector2( 104, -3648 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 1" groups=[
@@ -760,21 +1835,21 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 53 )
+shape = SubResource( 58 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 1" groups=[
 "Cliffs",
 "Ground",
 ]]
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 1/Area2D" groups=[
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 54 )
+shape = SubResource( 59 )
 
 [node name="Upper Cliffs Top Ground Static Collider 2" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -783,7 +1858,7 @@ shape = SubResource( 54 )
 ]]
 visible = false
 position = Vector2( 764, -3776 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 2" groups=[
@@ -791,21 +1866,21 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 55 )
+shape = SubResource( 60 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 2" groups=[
 "Cliffs",
 "Ground",
 ]]
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 2/Area2D" groups=[
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 56 )
+shape = SubResource( 61 )
 
 [node name="Upper Cliffs Top Ground Static Collider 3" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -814,7 +1889,7 @@ shape = SubResource( 56 )
 ]]
 visible = false
 position = Vector2( 1532, -3648 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 3" groups=[
@@ -822,21 +1897,21 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 57 )
+shape = SubResource( 62 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 3" groups=[
 "Cliffs",
 "Ground",
 ]]
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 3/Area2D" groups=[
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 58 )
+shape = SubResource( 63 )
 
 [node name="Upper Cliffs Top Ground Static Collider 4" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -845,7 +1920,7 @@ shape = SubResource( 58 )
 ]]
 visible = false
 position = Vector2( 1788, -3776 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 4" groups=[
@@ -853,71 +1928,87 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 59 )
+shape = SubResource( 64 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 4" groups=[
 "Cliffs",
 "Ground",
 ]]
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 4/Area2D" groups=[
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 60 )
+shape = SubResource( 65 )
 
 [node name="Upper Cliffs Top Ground Rock End Cap Static Collider 1" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 visible = false
 position = Vector2( 152, -3776 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Upper Cliffs/Upper Cliffs Top Ground Rock End Cap Static Collider 1" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 polygon = PoolVector2Array( 8, -64, 8, -56, 0, -56, 0, -48, -8, -48, -8, -24, -16, -24, -16, 8, -8, 8, -8, 16, 0, 16, 0, 40, 8, 40, 8, 56, 16, 56, 16, 64, 16, -64 )
 
 [node name="Upper Cliffs Top Ground Rock End Cap Static Collider 2" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 visible = false
 position = Vector2( 1380, -3776 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Upper Cliffs/Upper Cliffs Top Ground Rock End Cap Static Collider 2" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 polygon = PoolVector2Array( -4, -56, 4, -56, 4, -48, 12, -48, 12, -40, 20, -40, 20, 8, 12, 8, 12, 24, 4, 24, 4, 40, -4, 40, -4, 48, -12, 48, -12, 56, -20, 56, -20, 64, -20, -64, -4, -64 )
 
 [node name="Upper Cliffs Top Ground Rock End Cap Static Collider 3" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 visible = false
 position = Vector2( 1688, -3776 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Upper Cliffs/Upper Cliffs Top Ground Rock End Cap Static Collider 3" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 polygon = PoolVector2Array( 8, -64, 8, -56, 0, -56, 0, -48, -8, -48, -8, -24, -16, -24, -16, 8, -8, 8, -8, 16, 0, 16, 0, 40, 8, 40, 8, 56, 16, 56, 16, 64, 16, -64 )
 
 [node name="Upper Cliffs Top Ground Rock End Cap Static Collider 4" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 visible = false
 position = Vector2( 1892, -3776 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Upper Cliffs/Upper Cliffs Top Ground Rock End Cap Static Collider 4" groups=[
 "Cliffs",
+"Dropdownable",
+"Ground",
 ]]
 polygon = PoolVector2Array( -4, -56, 4, -56, 4, -48, 12, -48, 12, -40, 20, -40, 20, 8, 12, 8, 12, 24, 4, 24, 4, 40, -4, 40, -4, 48, -12, 48, -12, 56, -20, 56, -20, 64, -20, -64, -4, -64 )
 
@@ -929,7 +2020,7 @@ polygon = PoolVector2Array( -4, -56, 4, -56, 4, -48, 12, -48, 12, -40, 20, -40, 
 visible = false
 position = Vector2( 960, 84 )
 z_index = 1
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Bottom Ground Static Collider" groups=[
@@ -938,27 +2029,27 @@ collision_mask = 29
 "Ground",
 ]]
 rotation = 6.28319
-shape = SubResource( 61 )
+shape = SubResource( 66 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Bottom Ground Static Collider" groups=[
 "Cliffs",
 "Ground",
 ]]
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Upper Cliffs Bottom Ground Static Collider/Area2D" groups=[
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 62 )
+shape = SubResource( 67 )
 
 [node name="Lower Cliffs" type="Area2D" parent="." groups=[
 "Cliffs",
 ]]
 z_index = -2
-collision_layer = 66
+collision_layer = 2
 collision_mask = 13
 script = ExtResource( 4 )
 
@@ -983,6 +2074,7 @@ scale = Vector2( 8, 8 )
 tile_set = ExtResource( 3 )
 cell_size = Vector2( 16, 16 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_use_parent = true
 collision_layer = 66
 collision_mask = 13
 format = 1
@@ -993,13 +2085,12 @@ tile_data = PoolIntArray( 131071, 23, 0, 65536, 22, 0, 65537, 22, 0, 65538, 22, 
 "Ice",
 "Winter",
 ]]
-visible = false
 position = Vector2( 0, -128 )
 scale = Vector2( 8, 8 )
 tile_set = ExtResource( 3 )
 cell_size = Vector2( 16, 16 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 13
 format = 1
 tile_data = PoolIntArray( 196607, 31, 0, 131074, 31, 0, 131076, 31, 0, 131077, 31, 1, 131078, 31, 1, 131079, 31, 1, 131080, 31, 2, 131082, 31, 0, 131083, 31, 0, 131084, 31, 0, 131085, 33, 0, 131086, 31, 0, 131087, 34, 0, 196608, 31, 0, 196612, 31, 131072, 196613, 31, 131073, 196614, 31, 131073, 196615, 31, 131073, 196616, 31, 131074, 196619, 31, 0, 196621, 31, 0, 262144, 31, 0, 262145, 31, 2, 262153, 31, 0, 262156, 31, 0, 262158, 34, 0, 327680, 31, 131072, 327681, 31, 131074, 327688, 31, 0, 327689, 31, 2, 393216, 31, 0, 393221, 31, 0, 393224, 31, 131072, 393225, 31, 0, 393226, 31, 2, 458754, 31, 0, 458761, 31, 65536, 458762, 31, 65538, 524289, 31, 0, 524292, 31, 0, 524293, 31, 2, 524297, 31, 131072, 524298, 31, 131074, 589828, 31, 131072, 589829, 31, 131074, 589832, 31, 0, 589833, 31, 2, 589837, 31, 0, 589838, 31, 2, 655360, 31, 0, 655368, 31, 131072, 655369, 31, 131074, 655373, 31, 65536, 655374, 31, 65538, 720896, 31, 0, 720897, 31, 0, 720898, 31, 2, 720909, 31, 65536, 720910, 31, 65538, 786433, 31, 131072, 786434, 31, 131074, 786445, 31, 131072, 786446, 31, 131074, 851972, 31, 0, 851973, 31, 1, 851974, 31, 2, 851980, 31, 0, 851981, 31, 2, 917508, 31, 65536, 917509, 31, 65537, 917510, 31, 0, 917511, 31, 2, 917512, 31, 0, 917513, 31, 0, 917516, 31, 131072, 917517, 31, 0, 917518, 31, 2, 983043, 31, 0, 983044, 31, 0, 983045, 31, 131073, 983046, 31, 131073, 983047, 31, 131074, 983049, 31, 0, 983050, 31, 2, 983053, 31, 131072, 983054, 31, 131074, 1048578, 31, 0, 1048579, 31, 131072, 1048580, 31, 131074, 1048584, 31, 0, 1048585, 31, 0, 1048586, 31, 131074, 1048589, 31, 0, 1114115, 31, 0, 1114120, 31, 65536, 1114121, 31, 65538, 1114125, 31, 0, 1179656, 31, 131072, 1179657, 31, 131074, 1441802, 31, 0, 1441806, 34, 0, 1507333, 31, 0, 1507341, 31, 0, 1507342, 31, 2, 1572877, 31, 131072, 1572878, 31, 131074, 1638402, 31, 0, 1703947, 31, 0, 1769483, 31, 0, 2228223, 32, 0, 2162688, 31, 0, 2162689, 31, 0, 2162698, 31, 0, 2228226, 31, 0, 2228238, 34, 0 )
@@ -1008,7 +2099,6 @@ tile_data = PoolIntArray( 196607, 31, 0, 131074, 31, 0, 131076, 31, 0, 131077, 3
 "Cliffs",
 "Winter",
 ]]
-visible = false
 position = Vector2( 0, -128 )
 scale = Vector2( 8, 8 )
 tile_set = ExtResource( 3 )
@@ -1018,9 +2108,12 @@ format = 1
 tile_data = PoolIntArray( -3735549, 2, 0, 196607, 27, 0, 131072, 28, 0, 131073, 28, 0, 131074, 28, 0, 131075, 28, 0, 131076, 28, 0, 131077, 28, 0, 131078, 28, 0, 131079, 28, 0, 131080, 28, 0, 131081, 28, 0, 131082, 28, 0, 131083, 28, 0, 131084, 28, 0, 131085, 28, 0, 131086, 28, 0, 131087, 29, 0, 2228223, 27, 0, 2162688, 28, 0, 2162689, 28, 0, 2162690, 28, 0, 2162691, 28, 0, 2162692, 28, 0, 2162693, 28, 0, 2162694, 28, 0, 2162695, 28, 0, 2162696, 28, 0, 2162697, 28, 0, 2162698, 28, 0, 2162699, 28, 0, 2162700, 28, 0, 2162701, 28, 0, 2162702, 28, 0, 2162703, 29, 0 )
 
 [node name="Flowers" type="TileMap" parent="Lower Cliffs" groups=[
+"Cliffs",
 "Foliage",
+"Perchable",
 "Summer",
 ]]
+visible = false
 position = Vector2( -112, -56 )
 scale = Vector2( 8, 8 )
 z_index = 1
@@ -1032,12 +2125,124 @@ collision_mask = 4
 format = 1
 tile_data = PoolIntArray( 2031620, 38, 0, 2031624, 38, 0, 2031625, 36, 0, 2031629, 38, 0, 2031630, 36, 0, 2031631, 37, 0, 2097153, 38, 0, 2097157, 36, 0, 2097158, 38, 0, 2097167, 38, 0 )
 
+[node name="Signs" type="TileMap" parent="Lower Cliffs" groups=[
+"Cliffs",
+"Dropdownable",
+"Perchables",
+]]
+position = Vector2( 64, -48 )
+scale = Vector2( 8, 8 )
+tile_set = ExtResource( 3 )
+cell_size = Vector2( 16, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 2
+collision_mask = 29
+format = 1
+tile_data = PoolIntArray( 0, 45, 0, 13, 42, 0, 2031616, 46, 0, 2031627, 42, 0 )
+
+[node name="Signs Winter Layer" type="TileMap" parent="Lower Cliffs" groups=[
+"Cliffs",
+"Winter",
+]]
+position = Vector2( 64, -48 )
+scale = Vector2( 8, 8 )
+z_index = 1
+tile_set = ExtResource( 3 )
+cell_size = Vector2( 16, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_use_parent = true
+format = 1
+tile_data = PoolIntArray( -3735549, 2, 0, 0, 48, 0, 13, 47, 0, 2031616, 49, 0, 2031627, 47, 0 )
+
+[node name="(0,0)" type="Sprite" parent="Lower Cliffs" groups=[
+"Cliffs",
+]]
+visible = false
+position = Vector2( 120, 0 )
+scale = Vector2( 0.8, 1.24 )
+z_index = 4
+texture = ExtResource( 14 )
+
+[node name="Sign Font" type="TileMap" parent="Lower Cliffs/(0,0)"]
+position = Vector2( -5, 0 )
+scale = Vector2( 1.1, 1.1 )
+tile_set = SubResource( 43 )
+cell_size = Vector2( 1, 1 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 0
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( -64618078, 19, 0, -17301410, -1610612729, 0, -17301409, -1610612729, 0, -17235873, -1610612729, 0, -17170336, -1610612729, 0, -17170335, -1610612729, 0, -17104799, -1610612729, 0, -17039263, -1610612729, 0, -16973726, -1610612729, 0, -16973725, -1610612729, 0, -16908188, -1610612729, 0, -16842652, -1610612729, 0, -16842651, -1610612729, 0, -16777114, -1610612729, 0, -16711577, -1610612729, 0, -16646040, -1610612729, 0, -16646039, -1610612729, 0, -16580502, -1610612729, 0, -16514966, -1610612729, 0, -16449429, -1610612729, 0, -16383892, -1610612729, 0, -16383891, -1610612729, 0, -16383890, 7, 0, -16318355, -1610612729, 0, -16252818, -1610612729, 0, -16187281, -1610612729, 0, -16121744, -1610612729, 0, -16121743, -1610612729, 0, -16056206, -1610612729, 0, -15990669, -1610612729, 0, -15925132, -1610612729, 0, -15859595, -1610612729, 0, -15794058, -1610612729, 0, -15794057, -1610612729, 0, -15728520, -1610612729, 0, -15662984, -1610612729, 0, -15662983, -1610612729, 0, -15597446, -1610612729, 0, -15531909, -1610612729, 0, -15466372, -1610612729, 0, -14811005, -1610612729, 0, -524330, 0, 0, -458804, 18, 0, -458785, 2, 0, -458777, 17, 0, -458767, 4, 0, -458757, 3, 0, -524274, 5, 0, -524265, 0, 0, -524256, 11, 0, -524248, 11, 0, -524240, 18, 0 )
+
+[node name="(13,0)" type="Sprite" parent="Lower Cliffs" groups=[
+"Cliffs",
+]]
+visible = false
+position = Vector2( 1792, 4 )
+scale = Vector2( 0.8, 1.12 )
+z_index = 4
+texture = ExtResource( 15 )
+
+[node name="Sign Font" type="TileMap" parent="Lower Cliffs/(13,0)"]
+position = Vector2( 4, -4 )
+tile_set = SubResource( 43 )
+cell_size = Vector2( 1, 1 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 0
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( -544075464, 2, 0, -544075456, 11, 0, -544075448, 8, 0, -544075439, 12, 0, -544075428, 1, 0, -64618078, 19, 0, -17301410, -1610612729, 0, -17301409, -1610612729, 0, -17235873, -1610612729, 0, -17170336, -1610612729, 0, -17170335, -1610612729, 0, -17104799, -1610612729, 0, -17039263, -1610612729, 0, -16973726, -1610612729, 0, -16973725, -1610612729, 0, -16908188, -1610612729, 0, -16842652, -1610612729, 0, -16842651, -1610612729, 0, -16777114, -1610612729, 0, -16711577, -1610612729, 0, -16646040, -1610612729, 0, -16646039, -1610612729, 0, -16580502, -1610612729, 0, -16514966, -1610612729, 0, -16449429, -1610612729, 0, -16383892, -1610612729, 0, -16383891, -1610612729, 0, -16383890, 7, 0, -16318355, -1610612729, 0, -16252818, -1610612729, 0, -16187281, -1610612729, 0, -16121744, -1610612729, 0, -16121743, -1610612729, 0, -16056206, -1610612729, 0, -15990669, -1610612729, 0, -15925132, -1610612729, 0, -15859595, -1610612729, 0, -15794058, -1610612729, 0, -15794057, -1610612729, 0, -15728520, -1610612729, 0, -15662984, -1610612729, 0, -15662983, -1610612729, 0, -15597446, -1610612729, 0, -15531909, -1610612729, 0, -15466372, -1610612729, 0, -14811005, -1610612729, 0, -1179647, 13, 0, -1179636, 14, 0, 196584, 2, 0, 196592, 11, 0, 196600, 8, 0, 131073, 12, 0, 131083, 1, 0, 131093, 8, 0, 131101, 13, 0, 131111, 6, 0 )
+
+[node name="GOE" type="Sprite" parent="Lower Cliffs/(13,0)"]
+position = Vector2( -40, 0 )
+texture = ExtResource( 13 )
+
+[node name="(0,31)" type="Sprite" parent="Lower Cliffs" groups=[
+"Cliffs",
+]]
+visible = false
+position = Vector2( 140, 3968 )
+scale = Vector2( 0.8, 1.24 )
+z_index = 4
+texture = ExtResource( 17 )
+
+[node name="Sign Font" type="TileMap" parent="Lower Cliffs/(0,31)"]
+position = Vector2( -10, -3.22583 )
+scale = Vector2( 1.2, 1.2 )
+tile_set = SubResource( 43 )
+cell_size = Vector2( 1, 1 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 0
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( -544075464, 2, 0, -544075456, 11, 0, -544075448, 8, 0, -544075439, 12, 0, -544075428, 1, 0, -64618078, 19, 0, -17301410, -1610612729, 0, -17301409, -1610612729, 0, -17235873, -1610612729, 0, -17170336, -1610612729, 0, -17170335, -1610612729, 0, -17104799, -1610612729, 0, -17039263, -1610612729, 0, -16973726, -1610612729, 0, -16973725, -1610612729, 0, -16908188, -1610612729, 0, -16842652, -1610612729, 0, -16842651, -1610612729, 0, -16777114, -1610612729, 0, -16711577, -1610612729, 0, -16646040, -1610612729, 0, -16646039, -1610612729, 0, -16580502, -1610612729, 0, -16514966, -1610612729, 0, -16449429, -1610612729, 0, -16383892, -1610612729, 0, -16383891, -1610612729, 0, -16383890, 7, 0, -16318355, -1610612729, 0, -16252818, -1610612729, 0, -16187281, -1610612729, 0, -16121744, -1610612729, 0, -16121743, -1610612729, 0, -16056206, -1610612729, 0, -15990669, -1610612729, 0, -15925132, -1610612729, 0, -15859595, -1610612729, 0, -15794058, -1610612729, 0, -15794057, -1610612729, 0, -15728520, -1610612729, 0, -15662984, -1610612729, 0, -15662983, -1610612729, 0, -15597446, -1610612729, 0, -15531909, -1610612729, 0, -15466372, -1610612729, 0, -14811005, -1610612729, 0, -524327, 0, 0, -524318, 10, 0, -524309, 0, 0, -524300, 8, 0, -524292, 0, 0, -589814, 2, 0, -589806, 8, 0, -589797, 19, 0, -589788, 24, 0 )
+
+[node name="Sign Font 2" type="TileMap" parent="Lower Cliffs/(0,31)"]
+position = Vector2( -10, 6.45215 )
+scale = Vector2( 0.5, 0.4 )
+tile_set = SubResource( 43 )
+cell_size = Vector2( 1, 1 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+collision_layer = 0
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( -544075464, 2, 0, -544075456, 11, 0, -544075448, 8, 0, -544075439, 12, 0, -544075428, 1, 0, -64618078, 19, 0, -17301410, -1610612729, 0, -17301409, -1610612729, 0, -17235873, -1610612729, 0, -17170336, -1610612729, 0, -17170335, -1610612729, 0, -17104799, -1610612729, 0, -17039263, -1610612729, 0, -16973726, -1610612729, 0, -16973725, -1610612729, 0, -16908188, -1610612729, 0, -16842652, -1610612729, 0, -16842651, -1610612729, 0, -16777114, -1610612729, 0, -16711577, -1610612729, 0, -16646040, -1610612729, 0, -16646039, -1610612729, 0, -16580502, -1610612729, 0, -16514966, -1610612729, 0, -16449429, -1610612729, 0, -16383892, -1610612729, 0, -16383891, -1610612729, 0, -16383890, 7, 0, -16318355, -1610612729, 0, -16252818, -1610612729, 0, -16187281, -1610612729, 0, -16121744, -1610612729, 0, -16121743, -1610612729, 0, -16056206, -1610612729, 0, -15990669, -1610612729, 0, -15925132, -1610612729, 0, -15859595, -1610612729, 0, -15794058, -1610612729, 0, -15794057, -1610612729, 0, -15728520, -1610612729, 0, -15662984, -1610612729, 0, -15662983, -1610612729, 0, -15597446, -1610612729, 0, -15531909, -1610612729, 0, -15466372, -1610612729, 0, -14811005, -1610612729, 0, 655311, 44, 0, 655320, 30, 0, 655340, 5, 0, 655350, 20, 0, 589824, 17, 0, 589834, 11, 0, 589843, 14, 0, 589853, 13, 0, 589863, 6, 0, 589873, 18, 0, 589883, 45, 0 )
+
+[node name="(11,31)" type="Sprite" parent="Lower Cliffs" groups=[
+"Cliffs",
+]]
+visible = false
+position = Vector2( 1540, 3972 )
+scale = Vector2( 0.8, 1.12 )
+z_index = 4
+texture = ExtResource( 15 )
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Lower Cliffs" groups=[
 "Cliffs",
 ]]
 visible = false
 position = Vector2( 960, 2068 )
-shape = SubResource( 63 )
+shape = SubResource( 68 )
 
 [node name="Lower Cliffs Bottom Ground Static Collider" type="StaticBody2D" parent="Lower Cliffs" groups=[
 "Cliffs",
@@ -1045,55 +2250,58 @@ shape = SubResource( 63 )
 ]]
 visible = false
 position = Vector2( 960, 4052 )
-collision_layer = 66
+collision_layer = 2
 collision_mask = 29
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Lower Cliffs/Lower Cliffs Bottom Ground Static Collider" groups=[
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 64 )
+shape = SubResource( 69 )
 
 [node name="Scene Boundary - Left" type="StaticBody2D" parent="."]
+visible = false
 position = Vector2( -64, 0 )
 collision_layer = 2
-collision_mask = 13
+collision_mask = 9
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Left"]
-shape = SubResource( 65 )
+shape = SubResource( 70 )
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
 }
 
 [node name="Scene Boundary - Right" type="StaticBody2D" parent="."]
+visible = false
 position = Vector2( 1984, 0 )
 collision_layer = 2
-collision_mask = 13
+collision_mask = 9
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Right"]
-shape = SubResource( 66 )
+shape = SubResource( 71 )
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
 }
 
 [node name="Scene Boundary - Top" type="StaticBody2D" parent="."]
+visible = false
 position = Vector2( 960, -4288 )
 collision_layer = 2
-collision_mask = 13
+collision_mask = 9
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Top"]
 rotation = 1.5708
-shape = SubResource( 67 )
+shape = SubResource( 72 )
 
 [node name="AmbiencePlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 6 )
@@ -1103,18 +2311,17 @@ volume_db = -10.156
 stream = ExtResource( 9 )
 volume_db = -15.273
 
-[connection signal="body_entered" from="Butterfly 1/LandingCollider" to="Butterfly 1" method="_on_LandingCollider_body_entered"]
-[connection signal="body_exited" from="Butterfly 1/LandingCollider" to="Butterfly 1" method="_on_LandingCollider_body_exited"]
-[connection signal="body_entered" from="Butterfly 1/ObstacleCollider" to="Butterfly 1" method="_on_ObstacleCollider_body_entered"]
-[connection signal="body_exited" from="Butterfly 1/ObstacleCollider" to="Butterfly 1" method="_on_ObstacleCollider_body_exited"]
-[connection signal="body_entered" from="Butterfly 2/LandingCollider" to="Butterfly 2" method="_on_LandingCollider_body_entered"]
-[connection signal="body_exited" from="Butterfly 2/LandingCollider" to="Butterfly 2" method="_on_LandingCollider_body_exited"]
-[connection signal="body_entered" from="Butterfly 2/ObstacleCollider" to="Butterfly 2" method="_on_ObstacleCollider_body_entered"]
-[connection signal="body_exited" from="Butterfly 2/ObstacleCollider" to="Butterfly 2" method="_on_ObstacleCollider_body_exited"]
-[connection signal="body_entered" from="Butterfly 3/LandingCollider" to="Butterfly 3" method="_on_LandingCollider_body_entered"]
-[connection signal="body_exited" from="Butterfly 3/LandingCollider" to="Butterfly 3" method="_on_LandingCollider_body_exited"]
-[connection signal="body_entered" from="Butterfly 3/ObstacleCollider" to="Butterfly 3" method="_on_ObstacleCollider_body_entered"]
-[connection signal="body_exited" from="Butterfly 3/ObstacleCollider" to="Butterfly 3" method="_on_ObstacleCollider_body_exited"]
+[connection signal="body_entered" from="Player/Area2D" to="Player" method="_OnPlayerAreaColliderEntered"]
+[connection signal="body_exited" from="Player/Area2D" to="Player" method="_OnPlayerAreaColliderExited"]
+[connection signal="body_entered" from="Butterfly 1/PerchingCollider" to="Butterfly 1" method="_OnPerchingColliderEntered"]
+[connection signal="body_entered" from="Butterfly 1/ObstacleCollider" to="Butterfly 1" method="_OnObstacleColliderEntered"]
+[connection signal="body_exited" from="Butterfly 1/ObstacleCollider" to="Butterfly 1" method="_OnObstacleColliderExited"]
+[connection signal="body_entered" from="Butterfly 2/PerchingCollider" to="Butterfly 2" method="_OnPerchingColliderEntered"]
+[connection signal="body_entered" from="Butterfly 2/ObstacleCollider" to="Butterfly 2" method="_OnObstacleColliderEntered"]
+[connection signal="body_exited" from="Butterfly 2/ObstacleCollider" to="Butterfly 2" method="_OnObstacleColliderExited"]
+[connection signal="body_entered" from="Butterfly 3/PerchingCollider" to="Butterfly 3" method="_OnPerchingColliderEntered"]
+[connection signal="body_entered" from="Butterfly 3/ObstacleCollider" to="Butterfly 3" method="_OnObstacleColliderEntered"]
+[connection signal="body_exited" from="Butterfly 3/ObstacleCollider" to="Butterfly 3" method="_OnObstacleColliderExited"]
 [connection signal="area_entered" from="Upper Cliffs" to="Upper Cliffs" method="_OnCliffsEntered"]
 [connection signal="area_exited" from="Upper Cliffs" to="Upper Cliffs" method="_OnCliffsExited"]
 [connection signal="area_entered" from="Upper Cliffs/Waterfall" to="Upper Cliffs" method="_OnWaterfallEntered"]

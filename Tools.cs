@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Collections;
-using Array = Godot.Collections.Array;
 
 // ReSharper disable MemberCanBePrivate.Global
 public static class Tools
@@ -24,7 +22,7 @@ public static class Tools
     Jump
   }
 
-  private static readonly System.Collections.Generic.Dictionary <Input, string[]> Inputs = new()
+  private static readonly Dictionary <Input, string[]> Inputs = new()
   {
     { Input.Horizontal, new[] { "move_left", "move_right" } },
     { Input.Vertical, new[] { "move_up", "move_down" } },
@@ -33,14 +31,20 @@ public static class Tools
     { Input.Respawn, new[] { "respawn" } },
     { Input.Season, new[] { "season" } },
     { Input.Music, new[] { "music" } },
-    { Input.Up, new[] { "move_up" } },
+    { Input.Up, new[] { "move_up", "read_sign" } },
     { Input.Down, new[] { "move_down" } },
     { Input.Left, new[] { "move_left" } },
     { Input.Right, new[] { "move_right" } },
     { Input.Jump, new[] { "jump" } }
   };
 
+  public delegate Vector2 Transform (Vector2 point);
+  public delegate void DrawPrimitive (Vector2[] points, Color[] colors, Vector2[] uvs);
+  public delegate void DrawRect (Rect2 rect, Color color, bool filled);
+  public delegate Transform GetLocalTransform();
+  public delegate Vector2 GetGlobalScale();
   public static bool IsReleased (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionReleased (x));
+  public static bool IsPressed (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionPressed (x));
   public static bool IsOneActiveOf (Input i) => Inputs[i].Where (Godot.Input.IsActionPressed).Take (2).Count() == 1;
   public static bool IsAnyActiveOf (Input i) => Inputs[i].Any (Godot.Input.IsActionPressed);
   public static bool IsLeftArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Left][0]);
@@ -67,10 +71,47 @@ public static class Tools
   public static bool IsSafelyLessThan (float f1, float f2) => f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
   public static bool IsSafelyGreaterThan (float f1, float f2) => f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
 
-  public static bool AreColorsAlmostEqual (Color color1, Color color2, float epsilon)
+  public static bool IsAnyArrowKeyPressedExcept (Input arrow)
+  {
+    var up = IsUpArrowPressed();
+    var down = IsDownArrowPressed();
+    var left = IsLeftArrowPressed();
+    var right = IsRightArrowPressed();
+
+    // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+    return arrow switch
+    {
+      Input.Horizontal => up || down,
+      Input.Vertical => left || right,
+      Input.Up => left || right || down,
+      Input.Down => left || right || up,
+      Input.Left => right || up || down,
+      Input.Right => left || up || down,
+      _ => throw new ArgumentOutOfRangeException ($"Unsupported arrow input type: {nameof (arrow)}")
+    };
+  }
+
+  public static bool AreAlmostEqual (Color color1, Color color2, float epsilon)
   {
     return Mathf.Abs (color1.r - color2.r) < epsilon && Mathf.Abs (color1.g - color2.g) < epsilon &&
            Mathf.Abs (color1.b - color2.b) < epsilon && Mathf.Abs (color1.a - color2.a) < epsilon;
+  }
+
+  public static bool AreAlmostEqual (Vector2 vector1, Vector2 vector2, float epsilon)
+  {
+    return Mathf.Abs (vector1.x - vector2.x) < epsilon && Mathf.Abs (vector1.y - vector2.y) < epsilon;
+  }
+
+  public static bool AreAlmostEqual (float f1, float f2, float epsilon)
+  {
+    return Mathf.Abs (f1 - f2) < epsilon && Mathf.Abs (f1 - f2) < epsilon;
+  }
+
+  public static bool AlmostHasPoint (Rect2 rect, Vector2 point, float epsilon)
+  {
+    return (AreAlmostEqual (point.x, rect.Position.x, epsilon) || point.x > (double)rect.Position.x) &&
+           (AreAlmostEqual (point.y, rect.Position.y, epsilon) || point.y > (double)rect.Position.y) &&
+           point.x < rect.Position.x + (double)rect.Size.x && point.y < rect.Position.y + (double)rect.Size.y;
   }
 
   public static void LoopAudio (AudioStream a) { LoopAudio (a, 0.0f, a.GetLength()); }
@@ -160,22 +201,43 @@ public static class Tools
     return collisionRect.Extents;
   }
 
-  // ReSharper disable once SuggestBaseTypeForParameter
-  private static void OnWrongCollisionShape (Area2D area, Shape2D shape)
+  public static Vector2 RandomPointIn (Rect2 rect, RandomNumberGenerator rng, Vector2 multiple)
   {
-    GD.PrintErr (area.Name + " collision shape must be a " + typeof (RectangleShape2D) + ", not a " + shape.GetType());
+    var p = rect.Position - Vector2.One;
+
+    // @formatter:off
+    while (p.x < rect.Position.x || p.x % multiple.x != 0) p.x = rng.RandiRange (Mathf.RoundToInt (rect.Position.x), Mathf.RoundToInt (rect.End.x) - 1);
+    while (p.y < rect.Position.y || p.y % multiple.y != 0) p.y = rng.RandiRange (Mathf.RoundToInt (rect.Position.y), Mathf.RoundToInt (rect.End.y) - 1);
+    // @formatter:on
+
+    return p;
   }
 
-  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) =>
-    e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
+  public static string GetIntersectingTileName (Vector2 pos, TileMap t)
+  {
+    var id = GetIntersectingTileId (pos, t);
+
+    return id != -1 ? t.TileSet.TileGetName (id) : "";
+  }
+
+  public static string NameOf (Node body, Vector2 pos)
+  {
+    var tileName = body is TileMap tileMap ? GetIntersectingTileName (pos, tileMap) : "";
+
+    return tileName.Empty() ? body?.Name : tileName;
+  }
 
   // @formatter:off
   public static Vector2 GetCellCenterOffset (TileMap t) => t.CellSize * t.GlobalScale / 2;
   public static bool IsIntersectingAnyTile (Vector2 pos, TileMap t) => GetIntersectingTileId (pos, t) != -1;
-  public static int GetIntersectingTileId (Vector2 pos, TileMap t) => t.GetCellv (t.WorldToMap (t.ToLocal (pos)));
-  public static string GetIntersectingTileName (Vector2 pos, TileMap t) => t.TileSet.TileGetName (GetIntersectingTileId (pos, t));
+  public static int GetIntersectingTileId (Vector2 pos, TileMap t) => t.GetCellv (GetIntersectingTileCell (pos, t));
   public static Vector2 GetIntersectingTileCell (Vector2 pos, TileMap t) => t.WorldToMap (t.ToLocal (pos));
   public static Vector2 GetTileCellGlobalPosition (Vector2 cell, TileMap t) => t.ToGlobal (t.MapToWorld (cell));
+  public static string GetTileCellName (Vector2 cell, TileMap t) => GetIntersectingTileName (GetTileCellGlobalPosition (cell, t), t);
   public static Vector2 GetIntersectingTileCellGlobalPosition (Vector2 pos, TileMap t) => t.ToGlobal (t.MapToWorld (t.WorldToMap (t.ToLocal (pos))));
+  public static bool IsPositionInRange (Vector2 pos1, Vector2 pos2, Vector2 range) => Mathf.Abs(pos1.x - pos2.x) <= range.Abs().x && Mathf.Abs(pos1.y - pos2.y) <= range.Abs().y;
+  public static Vector2 RandomizeRange (RandomNumberGenerator rng, Vector2 range) => new(rng.RandiRange ((int)-range.x, (int)range.x), rng.RandiRange ((int)-range.y, (int)range.y));
+  private static void OnWrongCollisionShape (Node node, Shape2D shape) => GD.PrintErr (node.Name + " collision shape must be a " + typeof (RectangleShape2D) + ", not a " + shape.GetType());
+  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) => e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
   // @formatter:on
 }

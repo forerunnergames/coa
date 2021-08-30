@@ -77,6 +77,7 @@ public class Player : KinematicBody2D
   public enum State
   {
     Idle,
+    ReadingSign,
     Running,
     Jumping,
     ClimbingPrep,
@@ -101,22 +102,52 @@ public class Player : KinematicBody2D
   private uint _lastTotalFallingTimeMs;
   private float _highestVerticalVelocity;
   private bool _isResting;
+  private Camera2D _camera;
+  private Sprite _readableSign;
+  private TileMap _signsTileMap;
+  private bool _isInSign;
+  private float _delta;
+  private Log _log;
+
+  // @formatter:off
+
+  private static readonly Dictionary <string, int> TileNamesToDropdownFrames = new()
+  {
+    { "cliffs-sign", 16 },
+    { "cliffs-sign-arrow-right", 17 },
+    { "cliffs-sign-arrow-left", 17 }
+  };
+
+  private static readonly Dictionary <string, Vector2> SignNamesToPlayerPositions = new()
+  {
+    { "(0,0)", new Vector2 (-10.2f, 23.9f)},
+    { "(13,0)", new Vector2 (10.2f, 19.9f)},
+    { "(10,-31)", new Vector2 (10.2f, 19.9f)},
+    { "(0,31)", new Vector2 (-10.2f, 23.9f)},
+    { "(11,31)", new Vector2 (10.2f, 19.9f)}
+  };
 
   private static readonly Dictionary <State, State[]> TransitionTable = new()
   {
-    { State.Idle, new[] { State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.FreeFalling } },
-    { State.Running, new[] { State.Idle, State.Jumping, State.FreeFalling, State.ClimbingPrep } },
+    { State.Idle, new[] { State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.FreeFalling, State.ReadingSign } },
+    { State.Running, new[] { State.Idle, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign } },
     { State.Jumping, new[] { State.Idle, State.FreeFalling, State.Running } },
     { State.ClimbingPrep, new[] { State.ClimbingUp, State.Idle, State.Running, State.Jumping } },
     { State.ClimbingUp, new[] { State.FreeFalling } },
     { State.CliffHanging, new[] { State.ClimbingUp, State.Traversing, State.FreeFalling } },
     { State.Traversing, new[] { State.CliffHanging, State.FreeFalling } },
     { State.CliffArresting, new[] { State.CliffHanging, State.FreeFalling, State.Idle } },
-    { State.FreeFalling, new[] { State.CliffArresting, State.Idle, State.Running, State.Jumping } }
+    { State.FreeFalling, new[] { State.CliffArresting, State.Idle, State.Running, State.Jumping } },
+    { State.ReadingSign, new[] { State.Idle, State.Running } }
   };
+
+  // @formatter:on
 
   public override void _Ready()
   {
+    // ReSharper disable once ExplicitCallerInfoArgument
+    _log = new Log (Name);
+    _camera = GetNode <Camera2D> ("Camera2D");
     _audio = GetNode <AudioStreamPlayer> ("PlayerSoundEffectsPlayer");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     LoopAudio (_audio.Stream, CliffArrestingSoundLoopBeginSeconds, CliffArrestingSoundLoopEndSeconds);
@@ -131,7 +162,7 @@ public class Player : KinematicBody2D
 
   public override void _PhysicsProcess (float delta)
   {
-    // if (ShouldDisableFloor()) DisableFloor(); // TODO Create a separate state machine for the dropdownable floors.
+    _delta = delta;
     _stateMachine.Update();
     HorizontalVelocity();
     VerticalVelocity();
@@ -142,19 +173,32 @@ public class Player : KinematicBody2D
     CalculateFallingStats();
     PrintLine (DumpState());
     Print();
+  }
 
+  private void CheckDropDownThrough()
+  {
     for (var i = 0; i < GetSlideCount(); ++i)
     {
       var collision = GetSlideCollision (i);
 
-      if (!IsOnFloor() || !WasDownArrowPressedOnce()) continue;
-      if (collision.Collider is not StaticBody2D body) continue;
-      if (!body.IsInGroup ("Cliffs")) continue;
-      if (!body.IsInGroup ("Ground")) continue;
-      if (!body.IsInGroup ("Dropdownable")) continue;
-      if (collision.ColliderShape is not CollisionShape2D ground) continue;
+      if (_stateMachine.Is (State.ReadingSign) || !WasDownArrowPressedOnce() || collision.Collider is not Node2D node ||
+          !node.IsInGroup ("Dropdownable")) continue;
 
-      DropDownThrough (ground, delta);
+      switch (collision.Collider)
+      {
+        case PhysicsBody2D body:
+        {
+          DropDownThrough (body);
+
+          break;
+        }
+        case TileMap tileMap:
+        {
+          DropDownThrough (tileMap, collision.Position);
+
+          break;
+        }
+      }
     }
   }
 
@@ -163,6 +207,7 @@ public class Player : KinematicBody2D
   {
     if (IsReleased (Input.Text, @event)) _label.Visible = !_label.Visible;
     if (IsReleased (Input.Respawn, @event)) Respawn();
+    if (IsDownArrowPressed()) CheckDropDownThrough();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -173,6 +218,24 @@ public class Player : KinematicBody2D
     RestAfterClimbingToNewLevel();
   }
 
+  // ReSharper disable once UnusedMember.Global
+  public void _OnPlayerAreaColliderEntered (Node body)
+  {
+    if (body is not TileMap { Name: "Signs" } tileMap) return;
+
+    _isInSign = true;
+    _signsTileMap = tileMap;
+  }
+
+  // ReSharper disable once UnusedMember.Global
+  public void _OnPlayerAreaColliderExited (Node body)
+  {
+    if (body is not TileMap { Name: "Signs" }) return;
+
+    _isInSign = false;
+    if (_stateMachine.Is (State.ReadingSign)) _stateMachine.To (State.Idle);
+  }
+
   private async void RestAfterClimbingToNewLevel()
   {
     _isResting = true;
@@ -180,11 +243,98 @@ public class Player : KinematicBody2D
     _isResting = false;
   }
 
-  private async void DropDownThrough (CollisionShape2D ground, float delta)
+  private async void DropDownThrough (PhysicsBody2D body)
   {
-    ground.Disabled = true;
-    await ToSignal (GetTree().CreateTimer (delta * 3, false), "timeout");
-    ground.Disabled = false;
+    body.SetCollisionMaskBit (0, false);
+    SetCollisionMaskBit (1, false);
+    await ToSignal (GetTree().CreateTimer (_delta * 2, false), "timeout");
+    body.SetCollisionMaskBit (0, true);
+    SetCollisionMaskBit (1, true);
+  }
+
+  private async void DropDownThrough (TileMap tileMap, Vector2 collisionPosition)
+  {
+    tileMap.SetCollisionMaskBit (0, false);
+    SetCollisionMaskBit (1, false);
+    await ToSignal (GetTree().CreateTimer (SecondsToDropDownThroughTile (collisionPosition, tileMap), false), "timeout");
+    tileMap.SetCollisionMaskBit (0, true);
+    SetCollisionMaskBit (1, true);
+  }
+
+  private float SecondsToDropDownThroughTile (Vector2 collisionPosition, TileMap tileMap) =>
+    TileNamesToDropdownFrames[GetIntersectingTileName (collisionPosition, tileMap)] * _delta;
+
+  private bool SignExists()
+  {
+    var cell = GetIntersectingTileCell (Position, _signsTileMap);
+    var name = "(" + cell.x + "," + cell.y + ")";
+
+    return _signsTileMap.HasNode ("../" + name);
+  }
+
+  private void ReadSign()
+  {
+    var cell = GetIntersectingTileCell (Position, _signsTileMap);
+    var name = "(" + cell.x + "," + cell.y + ")";
+
+    if (!_signsTileMap.HasNode ("../" + name))
+    {
+      _log.Warn ($"Attempting to read non-existent sign: {name}.");
+      _stateMachine.To (State.Idle);
+
+      return;
+    }
+
+    var readableSign = _signsTileMap.GetNode <Sprite> ("../" + name);
+    GetNode <AudioStreamPlayer2D> ("../Upper Cliffs/Waterfall/waterfall 1/AudioStreamPlayer2D").Attenuation = 1.0f;
+    GetNode <AudioStreamPlayer2D> ("../Upper Cliffs/Waterfall/waterfall 2/AudioStreamPlayer2D").Attenuation = 1.0f;
+
+    for (var i = 1; i < 4; ++i)
+    {
+      var mist = GetNode <AnimatedSprite> ("../Upper Cliffs/Waterfall/waterfall mist " + i);
+      mist.ZIndex = 4;
+      mist.Modulate = new Color (Modulate.r, Modulate.g, Modulate.b, Modulate.a * 0.2f);
+    }
+
+    _signsTileMap.Visible = false;
+    _signsTileMap.GetNode <TileMap> ("../Signs Winter Layer").Visible = false;
+    readableSign.Visible = true;
+    _readableSign = readableSign;
+    _velocity = Vector2.Zero;
+
+    Position = new Vector2 (_readableSign.Position.x + SignNamesToPlayerPositions[name].x,
+      _readableSign.Position.y + SignNamesToPlayerPositions[name].y);
+
+    _camera.Zoom = Vector2.One / 10;
+    Visible = false;
+  }
+
+  private void StopReadingSign()
+  {
+    if (_readableSign == null) return;
+
+    Visible = true;
+    _readableSign.Visible = false;
+    _readableSign = null;
+    _signsTileMap.Visible = true;
+
+    _signsTileMap.GetNode <TileMap> ("../Signs Winter Layer").Visible =
+      GetNode <Cliffs> ("../Upper Cliffs").CurrentSeason == Cliffs.Season.Winter;
+
+    GD.Print ("Set signs winter layer visibility to ", _signsTileMap.GetNode <TileMap> ("../Signs Winter Layer").Visible);
+    _camera.Zoom = Vector2.One;
+    _camera.Position = new Vector2 (_camera.Position.x, -355); // TODO Does this work for any sign?
+    _camera.ForceUpdateScroll();
+    _camera.Position = new Vector2 (_camera.Position.x, -32); // TODO Does this work for any sign?
+    GetNode <AudioStreamPlayer2D> ("../Upper Cliffs/Waterfall/waterfall 1/AudioStreamPlayer2D").Attenuation = 8.28f;
+    GetNode <AudioStreamPlayer2D> ("../Upper Cliffs/Waterfall/waterfall 2/AudioStreamPlayer2D").Attenuation = 8.28f;
+
+    for (var i = 1; i < 4; ++i)
+    {
+      var mist = GetNode <AnimatedSprite> ("../Upper Cliffs/Waterfall/waterfall mist " + i);
+      mist.ZIndex = 1;
+      mist.Modulate = new Color (Modulate.r, Modulate.g, Modulate.b);
+    }
   }
 
   private void Respawn()
@@ -345,6 +495,7 @@ public class Player : KinematicBody2D
 
   // @formatter:off
   private string DumpState() =>
+    "\nState: " + _stateMachine.GetState() +
     "\nSeason: " + GetNode <Cliffs>("../Upper Cliffs").CurrentSeason +
     "\nIdle: " + _stateMachine.Is (State.Idle) +
     "\nRunning: " + _stateMachine.Is (State.Running) +
@@ -356,7 +507,7 @@ public class Player : KinematicBody2D
     "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall +
     "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
-    "\nClimbing Horizontally: " + _stateMachine.Is (State.Traversing) +
+    "\nClimbing Traversing: " + _stateMachine.Is (State.Traversing) +
     "\nFree falling: " + _stateMachine.Is (State.FreeFalling) +
     "\nIsOnFloor(): " + IsOnFloor() +
     "\nIsInCliffs: " + IsInCliffs +
@@ -373,6 +524,9 @@ public class Player : KinematicBody2D
     "\nIsDownArrowPressed(): " + IsDownArrowPressed() +
     "\nIsAnyHorizontalArrowPressed(): " + IsAnyHorizontalArrowPressed() +
     "\nIsAnyVerticalArrowPressed(): " + IsAnyVerticalArrowPressed() +
+    "\nIsFlippedHorizontally: " + _isFlippedHorizontally +
+    "\nPosition: " + Position +
+    "\nScale: " + Scale +
     "\nVelocity: " + _velocity +
     "\nVertical velocity (mph): " + _velocity.y * 0.028334573333333 +
     "\nHighest vertical velocity: " + _highestVerticalVelocity +
@@ -383,13 +537,24 @@ public class Player : KinematicBody2D
   private void InitializeStateMachine()
   {
     _stateMachine = new StateMachine <State> (TransitionTable, InitialState);
-    _stateMachine.OnTransitionTo (State.Idle, () => _sprite.Animation = IdleLeftAnimation);
     //_stateMachine.OnTransitionTo (State.Running, () => _sprite.Animation = RunAnimation);
     _stateMachine.OnTransitionTo (State.CliffHanging, () => _sprite.Animation = CliffHangingAnimation);
     _stateMachine.OnTransitionTo (State.FreeFalling, () => _sprite.Animation = FreeFallingAnimation);
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
     _stateMachine.OnTransition (State.ClimbingPrep, State.Idle, () => FlipHorizontally (_wasFlippedHorizontally));
     _stateMachine.OnTransitionTo (State.Traversing, () => _sprite.Animation = TraversingAnimation);
+
+    _stateMachine.OnTransitionFrom (State.Idle, () =>
+    {
+      _sprite.Animation = IdleLeftAnimation;
+      if (IsInGroup ("Perchable")) RemoveFromGroup ("Perchable");
+    });
+
+    _stateMachine.OnTransitionTo (State.Idle, () =>
+    {
+      _sprite.Animation = IdleLeftAnimation;
+      if (!IsInGroup ("Perchable")) AddToGroup ("Perchable");
+    });
 
     _stateMachine.OnTransitionTo (State.Jumping, () =>
     {
@@ -429,16 +594,21 @@ public class Player : KinematicBody2D
       _climbingPrepTimer.Start();
     });
 
+    _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
+    _stateMachine.OnTransitionFrom (State.ReadingSign, StopReadingSign);
+
     // TODO Move conditions into state machine conditions, leaving only input for triggers.
     // @formatter:off
     _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Idle, State.Jumping, WasJumpKeyPressed);
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign && !_isResting);
     _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
+    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && SignExists());
     _stateMachine.AddTrigger (State.Running, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && ! IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Running, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Running, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
-    _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs);
+    _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign);
+    _stateMachine.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && SignExists());
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
     _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall);
@@ -454,6 +624,8 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);
     _stateMachine.AddTrigger (State.CliffArresting, State.Idle, IsOnFloor);
+    _stateMachine.AddTrigger (State.ReadingSign, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
+    _stateMachine.AddTrigger (State.ReadingSign, State.Running, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && _isInSign);
     // @formatter:on
   }
 }
