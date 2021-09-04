@@ -270,7 +270,7 @@ public class Cliffs : Area2D
     if (_seasonChangeInProgress) return;
 
     CurrentSeason = _newSeason;
-    // _musicPlayer.Play();
+    _musicPlayer.Play();
     _log.Info ($"Current season is now: {CurrentSeason}");
   }
 
