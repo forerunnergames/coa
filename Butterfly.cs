@@ -25,7 +25,7 @@ public class Butterfly : AnimatedSprite
   [Export] public int MaxOscillationAngleVariationDegrees = 30;
   [Export] public float NearestPerchFrequency = 0.8f;
   [Export] public float PositionEpsilon = 0.01f;
-  [Export] public Log.Level LogLevel = Log.Level.All;
+  [Export] public Log.Level LogLevel = Log.Level.Off;
 
   [Export]
   public bool DrawFlightPath

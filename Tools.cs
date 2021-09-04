@@ -19,7 +19,8 @@ public static class Tools
     Down,
     Left,
     Right,
-    Jump
+    Jump,
+    Energy
   }
 
   private static readonly Dictionary <Input, string[]> Inputs = new()
@@ -35,13 +36,16 @@ public static class Tools
     { Input.Down, new[] { "move_down" } },
     { Input.Left, new[] { "move_left" } },
     { Input.Right, new[] { "move_right" } },
-    { Input.Jump, new[] { "jump" } }
+    { Input.Jump, new[] { "jump" } },
+    { Input.Energy, new[] { "energy" } }
   };
 
-  public delegate Vector2 Transform (Vector2 point);
+  // ReSharper disable once InconsistentNaming
   public delegate void DrawPrimitive (Vector2[] points, Color[] colors, Vector2[] uvs);
+  // ReSharper disable once InconsistentNaming
   public delegate void DrawRect (Rect2 rect, Color color, bool filled);
   public delegate Transform GetLocalTransform();
+  public delegate Vector2 Transform (Vector2 point);
   public delegate Vector2 GetGlobalScale();
   public static bool IsReleased (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionReleased (x));
   public static bool IsPressed (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionPressed (x));
@@ -62,6 +66,7 @@ public static class Tools
   public static bool IsEveryVerticalArrowPressed() => IsUpArrowPressed() && IsDownArrowPressed();
   public static bool IsAnyArrowKeyPressed() => IsAnyHorizontalArrowPressed() || IsAnyVerticalArrowPressed();
   public static bool IsItemKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Item][0]);
+  public static bool IsEnergyKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Energy][0]);
   public static bool WasItemKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Item][0]);
   public static bool WasJumpKeyPressed() => Godot.Input.IsActionJustPressed (Inputs[Input.Jump][0]);
   public static bool WasJumpKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Jump][0]);
