@@ -19,279 +19,255 @@
 [ext_resource path="res://sign-arrow-left-blank.png" type="Texture" id=17]
 [ext_resource path="res://ui.tscn" type="PackedScene" id=18]
 
-[sub_resource type="AtlasTexture" id=1]
-atlas = ExtResource( 7 )
-region = Rect2( 80, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=2]
-atlas = ExtResource( 7 )
-region = Rect2( 96, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=3]
-atlas = ExtResource( 7 )
-region = Rect2( 112, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=4]
-atlas = ExtResource( 7 )
-region = Rect2( 128, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=5]
-atlas = ExtResource( 7 )
-region = Rect2( 144, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=6]
+[sub_resource type="AtlasTexture" id=61]
 atlas = ExtResource( 7 )
 region = Rect2( 416, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=7]
+[sub_resource type="AtlasTexture" id=62]
 atlas = ExtResource( 7 )
 region = Rect2( 432, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=8]
+[sub_resource type="AtlasTexture" id=63]
 atlas = ExtResource( 7 )
 region = Rect2( 448, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=9]
+[sub_resource type="AtlasTexture" id=64]
 atlas = ExtResource( 7 )
 region = Rect2( 464, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=10]
-atlas = ExtResource( 7 )
-region = Rect2( 0, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=11]
-atlas = ExtResource( 7 )
-region = Rect2( 16, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=12]
-atlas = ExtResource( 7 )
-region = Rect2( 32, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=13]
-atlas = ExtResource( 7 )
-region = Rect2( 48, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=14]
-atlas = ExtResource( 7 )
-region = Rect2( 64, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=15]
-atlas = ExtResource( 7 )
-region = Rect2( 0, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=16]
-atlas = ExtResource( 7 )
-region = Rect2( 16, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=17]
-atlas = ExtResource( 7 )
-region = Rect2( 32, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=18]
-atlas = ExtResource( 7 )
-region = Rect2( 48, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=19]
-atlas = ExtResource( 7 )
-region = Rect2( 64, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=20]
-atlas = ExtResource( 7 )
-region = Rect2( 416, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=21]
-atlas = ExtResource( 7 )
-region = Rect2( 432, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=22]
-atlas = ExtResource( 7 )
-region = Rect2( 448, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=23]
-atlas = ExtResource( 7 )
-region = Rect2( 464, 0, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=24]
+[sub_resource type="AtlasTexture" id=65]
 atlas = ExtResource( 7 )
 region = Rect2( 480, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=25]
+[sub_resource type="AtlasTexture" id=66]
 atlas = ExtResource( 7 )
 region = Rect2( 496, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=26]
+[sub_resource type="AtlasTexture" id=67]
 atlas = ExtResource( 7 )
 region = Rect2( 512, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=27]
+[sub_resource type="AtlasTexture" id=68]
 atlas = ExtResource( 7 )
 region = Rect2( 528, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=28]
+[sub_resource type="AtlasTexture" id=69]
 atlas = ExtResource( 7 )
 region = Rect2( 544, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=29]
+[sub_resource type="AtlasTexture" id=70]
 atlas = ExtResource( 7 )
 region = Rect2( 560, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=30]
+[sub_resource type="AtlasTexture" id=71]
 atlas = ExtResource( 7 )
-region = Rect2( 416, 0, 16, 16 )
+region = Rect2( 0, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=31]
+[sub_resource type="AtlasTexture" id=72]
 atlas = ExtResource( 7 )
-region = Rect2( 432, 0, 16, 16 )
+region = Rect2( 16, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=32]
+[sub_resource type="AtlasTexture" id=73]
 atlas = ExtResource( 7 )
-region = Rect2( 448, 0, 16, 16 )
+region = Rect2( 32, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=33]
+[sub_resource type="AtlasTexture" id=74]
 atlas = ExtResource( 7 )
-region = Rect2( 464, 0, 16, 16 )
+region = Rect2( 48, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=34]
+[sub_resource type="AtlasTexture" id=75]
+atlas = ExtResource( 7 )
+region = Rect2( 64, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=76]
+atlas = ExtResource( 7 )
+region = Rect2( 0, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=77]
+atlas = ExtResource( 7 )
+region = Rect2( 16, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=78]
+atlas = ExtResource( 7 )
+region = Rect2( 32, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=79]
+atlas = ExtResource( 7 )
+region = Rect2( 48, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=80]
+atlas = ExtResource( 7 )
+region = Rect2( 64, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=81]
 atlas = ExtResource( 7 )
 region = Rect2( 256, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=35]
+[sub_resource type="AtlasTexture" id=82]
 atlas = ExtResource( 7 )
 region = Rect2( 272, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=36]
+[sub_resource type="AtlasTexture" id=83]
 atlas = ExtResource( 7 )
 region = Rect2( 288, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=37]
+[sub_resource type="AtlasTexture" id=84]
 atlas = ExtResource( 7 )
 region = Rect2( 304, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=38]
+[sub_resource type="AtlasTexture" id=85]
 atlas = ExtResource( 7 )
 region = Rect2( 320, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=39]
+[sub_resource type="AtlasTexture" id=86]
 atlas = ExtResource( 7 )
 region = Rect2( 336, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=40]
+[sub_resource type="AtlasTexture" id=87]
 atlas = ExtResource( 7 )
 region = Rect2( 352, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=41]
+[sub_resource type="AtlasTexture" id=88]
 atlas = ExtResource( 7 )
 region = Rect2( 368, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=42]
+[sub_resource type="AtlasTexture" id=89]
 atlas = ExtResource( 7 )
 region = Rect2( 384, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=43]
+[sub_resource type="AtlasTexture" id=90]
 atlas = ExtResource( 7 )
 region = Rect2( 400, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=44]
+[sub_resource type="AtlasTexture" id=91]
+atlas = ExtResource( 7 )
+region = Rect2( 416, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=92]
+atlas = ExtResource( 7 )
+region = Rect2( 432, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=93]
+atlas = ExtResource( 7 )
+region = Rect2( 448, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=94]
+atlas = ExtResource( 7 )
+region = Rect2( 464, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=95]
+atlas = ExtResource( 7 )
+region = Rect2( 80, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=96]
+atlas = ExtResource( 7 )
+region = Rect2( 96, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=97]
+atlas = ExtResource( 7 )
+region = Rect2( 112, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=98]
+atlas = ExtResource( 7 )
+region = Rect2( 128, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=99]
+atlas = ExtResource( 7 )
+region = Rect2( 144, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=100]
+atlas = ExtResource( 7 )
+region = Rect2( 416, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=101]
+atlas = ExtResource( 7 )
+region = Rect2( 432, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=102]
+atlas = ExtResource( 7 )
+region = Rect2( 448, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=103]
+atlas = ExtResource( 7 )
+region = Rect2( 464, 0, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=104]
 atlas = ExtResource( 7 )
 region = Rect2( 160, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=45]
+[sub_resource type="AtlasTexture" id=105]
 atlas = ExtResource( 7 )
 region = Rect2( 176, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=46]
+[sub_resource type="AtlasTexture" id=106]
 atlas = ExtResource( 7 )
 region = Rect2( 192, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=47]
+[sub_resource type="AtlasTexture" id=107]
 atlas = ExtResource( 7 )
 region = Rect2( 208, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=48]
+[sub_resource type="AtlasTexture" id=108]
 atlas = ExtResource( 7 )
 region = Rect2( 224, 0, 16, 16 )
 
-[sub_resource type="AtlasTexture" id=49]
+[sub_resource type="AtlasTexture" id=109]
 atlas = ExtResource( 7 )
 region = Rect2( 240, 0, 16, 16 )
 
-[sub_resource type="SpriteFrames" id=50]
+[sub_resource type="SpriteFrames" id=110]
 animations = [ {
-"frames": [ SubResource( 1 ), SubResource( 2 ), SubResource( 3 ), SubResource( 4 ), SubResource( 5 ) ],
-"loop": true,
-"name": "player_idle_back",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 6 ), SubResource( 7 ), SubResource( 8 ), SubResource( 9 ) ],
+"frames": [ SubResource( 61 ), SubResource( 62 ), SubResource( 63 ), SubResource( 64 ) ],
 "loop": true,
 "name": "player_traversing",
 "speed": 5.0
 }, {
-"frames": [ SubResource( 10 ), SubResource( 11 ), SubResource( 12 ), SubResource( 13 ), SubResource( 14 ) ],
-"loop": true,
-"name": "player_idle_left",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ), SubResource( 19 ) ],
-"loop": true,
-"name": "player_falling",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 20 ), SubResource( 21 ), SubResource( 22 ), SubResource( 23 ) ],
-"loop": true,
-"name": "player_cliff_hanging",
-"speed": 5.0
-}, {
-"frames": [ SubResource( 24 ), SubResource( 25 ), SubResource( 26 ), SubResource( 27 ), SubResource( 28 ), SubResource( 29 ) ],
+"frames": [ SubResource( 65 ), SubResource( 66 ), SubResource( 67 ), SubResource( 68 ), SubResource( 69 ), SubResource( 70 ) ],
 "loop": true,
 "name": "player_running",
 "speed": 10.0
 }, {
-"frames": [ SubResource( 30 ), SubResource( 31 ), SubResource( 32 ), SubResource( 33 ) ],
+"frames": [ SubResource( 71 ), SubResource( 72 ), SubResource( 73 ), SubResource( 74 ), SubResource( 75 ) ],
 "loop": true,
-"name": "player_cliff_arresting",
+"name": "player_idle_left",
 "speed": 5.0
 }, {
-"frames": [ SubResource( 34 ), SubResource( 35 ), SubResource( 36 ), SubResource( 37 ), SubResource( 38 ), SubResource( 39 ), SubResource( 40 ), SubResource( 41 ), SubResource( 42 ), SubResource( 43 ) ],
+"frames": [ SubResource( 76 ), SubResource( 77 ), SubResource( 78 ), SubResource( 79 ), SubResource( 80 ) ],
+"loop": true,
+"name": "player_falling",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 81 ), SubResource( 82 ), SubResource( 83 ), SubResource( 84 ), SubResource( 85 ), SubResource( 86 ), SubResource( 87 ), SubResource( 88 ), SubResource( 89 ), SubResource( 90 ) ],
 "loop": true,
 "name": "player_climbing_up",
 "speed": 8.0
 }, {
-"frames": [ SubResource( 44 ), SubResource( 45 ), SubResource( 46 ), SubResource( 47 ), SubResource( 48 ), SubResource( 49 ) ],
+"frames": [ SubResource( 91 ), SubResource( 92 ), SubResource( 93 ), SubResource( 94 ) ],
+"loop": true,
+"name": "player_cliff_arresting",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 95 ), SubResource( 96 ), SubResource( 97 ), SubResource( 98 ), SubResource( 99 ) ],
+"loop": true,
+"name": "player_idle_back",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 100 ), SubResource( 101 ), SubResource( 102 ), SubResource( 103 ) ],
+"loop": true,
+"name": "player_cliff_hanging",
+"speed": 5.0
+}, {
+"frames": [ SubResource( 104 ), SubResource( 105 ), SubResource( 106 ), SubResource( 107 ), SubResource( 108 ), SubResource( 109 ) ],
 "loop": true,
 "name": "player_walking",
 "speed": 8.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=51]
+[sub_resource type="RectangleShape2D" id=111]
 extents = Vector2( 24, 56 )
 
-[sub_resource type="RectangleShape2D" id=52]
+[sub_resource type="RectangleShape2D" id=112]
 extents = Vector2( 24, 56 )
-
-[sub_resource type="AtlasTexture" id=53]
-atlas = ExtResource( 5 )
-region = Rect2( 64, 80, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=54]
-atlas = ExtResource( 5 )
-region = Rect2( 80, 80, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=55]
-atlas = ExtResource( 5 )
-region = Rect2( 64, 80, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=56]
-atlas = ExtResource( 5 )
-region = Rect2( 80, 80, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=57]
-atlas = ExtResource( 5 )
-region = Rect2( 64, 80, 16, 16 )
-
-[sub_resource type="AtlasTexture" id=58]
-atlas = ExtResource( 5 )
-region = Rect2( 80, 80, 16, 16 )
 
 [sub_resource type="AtlasTexture" id=59]
 atlas = ExtResource( 5 )
@@ -301,36 +277,60 @@ region = Rect2( 64, 80, 16, 16 )
 atlas = ExtResource( 5 )
 region = Rect2( 80, 80, 16, 16 )
 
-[sub_resource type="SpriteFrames" id=61]
+[sub_resource type="AtlasTexture" id=113]
+atlas = ExtResource( 5 )
+region = Rect2( 64, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=114]
+atlas = ExtResource( 5 )
+region = Rect2( 80, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=115]
+atlas = ExtResource( 5 )
+region = Rect2( 64, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=116]
+atlas = ExtResource( 5 )
+region = Rect2( 80, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=117]
+atlas = ExtResource( 5 )
+region = Rect2( 64, 80, 16, 16 )
+
+[sub_resource type="AtlasTexture" id=118]
+atlas = ExtResource( 5 )
+region = Rect2( 80, 80, 16, 16 )
+
+[sub_resource type="SpriteFrames" id=119]
 animations = [ {
-"frames": [ SubResource( 53 ), SubResource( 54 ) ],
-"loop": true,
-"name": "butterfly_idle",
-"speed": 2.0
-}, {
-"frames": [ SubResource( 55 ), SubResource( 56 ) ],
-"loop": true,
-"name": "butterfly_flying",
-"speed": 8.5
-}, {
-"frames": [ SubResource( 57 ), SubResource( 58 ) ],
-"loop": true,
-"name": "butterfly_perching",
-"speed": 12.0
-}, {
 "frames": [ SubResource( 59 ), SubResource( 60 ) ],
 "loop": true,
 "name": "butterfly_evading",
 "speed": 12.0
+}, {
+"frames": [ SubResource( 113 ), SubResource( 114 ) ],
+"loop": true,
+"name": "butterfly_idle",
+"speed": 2.0
+}, {
+"frames": [ SubResource( 115 ), SubResource( 116 ) ],
+"loop": true,
+"name": "butterfly_flying",
+"speed": 8.5
+}, {
+"frames": [ SubResource( 117 ), SubResource( 118 ) ],
+"loop": true,
+"name": "butterfly_perching",
+"speed": 12.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=62]
+[sub_resource type="RectangleShape2D" id=120]
 extents = Vector2( 0.5, 0.5 )
 
-[sub_resource type="CircleShape2D" id=63]
+[sub_resource type="CircleShape2D" id=121]
 radius = 7.0
 
-[sub_resource type="TileSet" id=64]
+[sub_resource type="TileSet" id=122]
 0/name = "A"
 0/texture = ExtResource( 16 )
 0/tex_offset = Vector2( 0, 0 )
@@ -1312,114 +1312,114 @@ radius = 7.0
 69/shapes = [  ]
 69/z_index = 0
 
-[sub_resource type="RectangleShape2D" id=65]
+[sub_resource type="RectangleShape2D" id=123]
 extents = Vector2( 960, 1960 )
 
-[sub_resource type="RectangleShape2D" id=66]
+[sub_resource type="RectangleShape2D" id=124]
 extents = Vector2( 172, 4 )
 
-[sub_resource type="RectangleShape2D" id=67]
+[sub_resource type="RectangleShape2D" id=125]
 extents = Vector2( 172, 1920 )
 
-[sub_resource type="AtlasTexture" id=68]
+[sub_resource type="AtlasTexture" id=126]
 atlas = ExtResource( 2 )
 region = Rect2( 0, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=69]
+[sub_resource type="AtlasTexture" id=127]
 atlas = ExtResource( 2 )
 region = Rect2( 48, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=70]
+[sub_resource type="AtlasTexture" id=128]
 atlas = ExtResource( 2 )
 region = Rect2( 96, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=71]
+[sub_resource type="AtlasTexture" id=129]
 atlas = ExtResource( 2 )
 region = Rect2( 144, 48, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=72]
+[sub_resource type="AtlasTexture" id=130]
 atlas = ExtResource( 2 )
 region = Rect2( 192, 48, 48, 48 )
 
-[sub_resource type="SpriteFrames" id=73]
+[sub_resource type="SpriteFrames" id=131]
 animations = [ {
-"frames": [ SubResource( 68 ), SubResource( 69 ), SubResource( 70 ), SubResource( 71 ), SubResource( 72 ) ],
+"frames": [ SubResource( 126 ), SubResource( 127 ), SubResource( 128 ), SubResource( 129 ), SubResource( 130 ) ],
 "loop": true,
 "name": "default",
 "speed": 20.0
 } ]
 
-[sub_resource type="AtlasTexture" id=74]
+[sub_resource type="AtlasTexture" id=132]
 atlas = ExtResource( 2 )
 region = Rect2( 0, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=75]
+[sub_resource type="AtlasTexture" id=133]
 atlas = ExtResource( 2 )
 region = Rect2( 48, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=76]
+[sub_resource type="AtlasTexture" id=134]
 atlas = ExtResource( 2 )
 region = Rect2( 96, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=77]
+[sub_resource type="AtlasTexture" id=135]
 atlas = ExtResource( 2 )
 region = Rect2( 144, 0, 48, 48 )
 
-[sub_resource type="AtlasTexture" id=78]
+[sub_resource type="AtlasTexture" id=136]
 atlas = ExtResource( 2 )
 region = Rect2( 192, 0, 48, 48 )
 
-[sub_resource type="SpriteFrames" id=79]
+[sub_resource type="SpriteFrames" id=137]
 animations = [ {
-"frames": [ SubResource( 74 ), SubResource( 75 ), SubResource( 76 ), SubResource( 77 ), SubResource( 78 ) ],
+"frames": [ SubResource( 132 ), SubResource( 133 ), SubResource( 134 ), SubResource( 135 ), SubResource( 136 ) ],
 "loop": true,
 "name": "default",
 "speed": 8.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=80]
+[sub_resource type="RectangleShape2D" id=138]
 extents = Vector2( 64, 64 )
 
-[sub_resource type="RectangleShape2D" id=81]
+[sub_resource type="RectangleShape2D" id=139]
 extents = Vector2( 64, 64 )
 
-[sub_resource type="RectangleShape2D" id=82]
+[sub_resource type="RectangleShape2D" id=140]
 extents = Vector2( 596, 64 )
 
-[sub_resource type="RectangleShape2D" id=83]
+[sub_resource type="RectangleShape2D" id=141]
 extents = Vector2( 596, 64 )
 
-[sub_resource type="RectangleShape2D" id=84]
+[sub_resource type="RectangleShape2D" id=142]
 extents = Vector2( 172, 64 )
 
-[sub_resource type="RectangleShape2D" id=85]
+[sub_resource type="RectangleShape2D" id=143]
 extents = Vector2( 172, 64 )
 
-[sub_resource type="RectangleShape2D" id=86]
+[sub_resource type="RectangleShape2D" id=144]
 extents = Vector2( 84, 64.0054 )
 
-[sub_resource type="RectangleShape2D" id=87]
+[sub_resource type="RectangleShape2D" id=145]
 extents = Vector2( 84, 64 )
 
-[sub_resource type="RectangleShape2D" id=88]
-extents = Vector2( 1920, 4.00002 )
+[sub_resource type="RectangleShape2D" id=146]
+extents = Vector2( 960, 4.00013 )
 
-[sub_resource type="RectangleShape2D" id=89]
-extents = Vector2( 1920, 4 )
-
-[sub_resource type="RectangleShape2D" id=90]
-extents = Vector2( 960, 1980 )
-
-[sub_resource type="RectangleShape2D" id=91]
+[sub_resource type="RectangleShape2D" id=147]
 extents = Vector2( 960, 4 )
 
-[sub_resource type="RectangleShape2D" id=92]
+[sub_resource type="RectangleShape2D" id=148]
+extents = Vector2( 960, 1980 )
+
+[sub_resource type="RectangleShape2D" id=149]
+extents = Vector2( 960, 4 )
+
+[sub_resource type="RectangleShape2D" id=150]
 extents = Vector2( 64, 4352 )
 
-[sub_resource type="RectangleShape2D" id=93]
+[sub_resource type="RectangleShape2D" id=151]
 extents = Vector2( 64, 4352 )
 
-[sub_resource type="RectangleShape2D" id=94]
+[sub_resource type="RectangleShape2D" id=152]
 extents = Vector2( 63.9966, 960 )
 
 [node name="Main Scene" type="Node2D"]
@@ -1445,14 +1445,14 @@ script = ExtResource( 1 )
 "Player",
 ]]
 scale = Vector2( 8, 8 )
-frames = SubResource( 50 )
+frames = SubResource( 110 )
 animation = "player_falling"
 
 [node name="Camera2D" type="Camera2D" parent="Player" groups=[
 "Player",
 ]]
 current = true
-limit_left = -2048
+limit_left = 0
 limit_top = -4608
 limit_right = 1920
 limit_bottom = 4480
@@ -1468,7 +1468,7 @@ drag_margin_bottom = 0.59
 ]]
 visible = false
 position = Vector2( -8, 0 )
-shape = SubResource( 51 )
+shape = SubResource( 111 )
 
 [node name="Chest" type="RayCast2D" parent="Player"]
 rotation = 1.5708
@@ -1491,7 +1491,7 @@ collision_mask = 62
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player/Area2D" groups=[
 "Player",
 ]]
-shape = SubResource( 52 )
+shape = SubResource( 112 )
 
 [node name="EnergyTimer" type="Timer" parent="Player"]
 process_mode = 0
@@ -1514,7 +1514,7 @@ stream = ExtResource( 11 )
 ]]
 position = Vector2( 252, -12 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 61 )
+frames = SubResource( 119 )
 animation = "butterfly_idle"
 offset = Vector2( 1, -1 )
 script = ExtResource( 10 )
@@ -1529,7 +1529,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 1/PerchingCollider"]
-shape = SubResource( 62 )
+shape = SubResource( 120 )
 
 [node name="ObstacleCollider" type="Area2D" parent="Butterfly 1"]
 visible = false
@@ -1538,7 +1538,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 1/ObstacleCollider"]
-shape = SubResource( 63 )
+shape = SubResource( 121 )
 
 [node name="FlightTimer" type="Timer" parent="Butterfly 1"]
 one_shot = true
@@ -1551,7 +1551,7 @@ one_shot = true
 ]]
 position = Vector2( 360, -3896 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 61 )
+frames = SubResource( 119 )
 animation = "butterfly_idle"
 offset = Vector2( 1, -1 )
 script = ExtResource( 10 )
@@ -1566,7 +1566,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 2/PerchingCollider"]
-shape = SubResource( 62 )
+shape = SubResource( 120 )
 
 [node name="ObstacleCollider" type="Area2D" parent="Butterfly 2"]
 visible = false
@@ -1575,7 +1575,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 2/ObstacleCollider"]
-shape = SubResource( 63 )
+shape = SubResource( 121 )
 
 [node name="FlightTimer" type="Timer" parent="Butterfly 2"]
 one_shot = true
@@ -1588,7 +1588,7 @@ one_shot = true
 ]]
 position = Vector2( 1273.73, 3953.35 )
 scale = Vector2( 8, 8 )
-frames = SubResource( 61 )
+frames = SubResource( 119 )
 animation = "butterfly_idle"
 offset = Vector2( 1, -1 )
 script = ExtResource( 10 )
@@ -1603,7 +1603,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 3/PerchingCollider"]
-shape = SubResource( 62 )
+shape = SubResource( 120 )
 
 [node name="ObstacleCollider" type="Area2D" parent="Butterfly 3"]
 visible = false
@@ -1612,7 +1612,7 @@ collision_layer = 4
 collision_mask = 47
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Butterfly 3/ObstacleCollider"]
-shape = SubResource( 63 )
+shape = SubResource( 121 )
 
 [node name="FlightTimer" type="Timer" parent="Butterfly 3"]
 one_shot = true
@@ -1637,7 +1637,7 @@ cell_size = Vector2( 16, 16 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_use_parent = true
 format = 1
-tile_data = PoolIntArray( -1966079, 21, 0, -1966078, 21, 1, -1966077, 21, 1, -1966076, 21, 1, -1966075, 21, 1, -1966074, 21, 1, -1966073, 21, 1, -1966072, 21, 1, -1966071, 21, 1, -1966070, 21, 2, -1966067, 21, 0, -1966066, 21, 2, -1900544, 21, 65536, -1900543, 21, 65537, -1900542, 21, 65537, -1900541, 21, 65537, -1900540, 21, 65537, -1900539, 21, 65537, -1900538, 21, 65537, -1900537, 21, 65537, -1900536, 21, 65537, -1900535, 21, 65537, -1900534, 21, 65537, -1900533, 21, 65537, -1900532, 21, 1, -1900531, 21, 1, -1900530, 21, 2, -1835008, 21, 65536, -1835007, 21, 65537, -1835006, 21, 65537, -1835005, 21, 65537, -1835004, 21, 65537, -1835003, 21, 65537, -1835002, 21, 65537, -1835001, 21, 65537, -1835000, 21, 65537, -1834999, 21, 65537, -1834998, 21, 65537, -1834997, 21, 65537, -1834996, 21, 65537, -1834995, 21, 65537, -1834994, 21, 65538, -1769472, 21, 65536, -1769471, 21, 65537, -1769470, 21, 65537, -1769469, 21, 65537, -1769468, 21, 65537, -1769467, 21, 65537, -1769466, 21, 65537, -1769465, 21, 65537, -1769464, 21, 65537, -1769463, 21, 65537, -1769462, 21, 65537, -1769461, 21, 65537, -1769460, 21, 65537, -1769459, 21, 65537, -1769458, 21, 65538, -1703936, 21, 65536, -1703935, 21, 65537, -1703934, 21, 65537, -1703933, 21, 65537, -1703932, 21, 65537, -1703931, 21, 65537, -1703930, 21, 65537, -1703929, 21, 65537, -1703928, 21, 65537, -1703927, 21, 65537, -1703926, 21, 65537, -1703925, 21, 65537, -1703924, 21, 65537, -1703923, 21, 65537, -1703922, 21, 65538, -1638400, 21, 65536, -1638399, 21, 65537, -1638398, 21, 65537, -1638397, 21, 65537, -1638396, 21, 65537, -1638395, 21, 65537, -1638394, 21, 65537, -1638393, 21, 65537, -1638392, 21, 65537, -1638391, 21, 65537, -1638390, 21, 65537, -1638389, 21, 65537, -1638388, 21, 65537, -1638387, 21, 65537, -1638386, 21, 65538, -1572864, 21, 65536, -1572863, 21, 65537, -1572862, 21, 65537, -1572861, 21, 65537, -1572860, 21, 65537, -1572859, 21, 65537, -1572858, 21, 65537, -1572857, 21, 65537, -1572856, 21, 65537, -1572855, 21, 65537, -1572854, 21, 65537, -1572853, 21, 65537, -1572852, 21, 65537, -1572851, 21, 65537, -1572850, 21, 65538, -1507328, 21, 65536, -1507327, 21, 65537, -1507326, 21, 65537, -1507325, 21, 65537, -1507324, 21, 65537, -1507323, 21, 65537, -1507322, 21, 65537, -1507321, 21, 65537, -1507320, 21, 65537, -1507319, 21, 65537, -1507318, 21, 65537, -1507317, 21, 65537, -1507316, 21, 65537, -1507315, 21, 65537, -1507314, 21, 65538, -1441792, 21, 65536, -1441791, 21, 65537, -1441790, 21, 65537, -1441789, 21, 65537, -1441788, 21, 65537, -1441787, 21, 65537, -1441786, 21, 65537, -1441785, 21, 65537, -1441784, 21, 65537, -1441783, 21, 65537, -1441782, 21, 65537, -1441781, 21, 65537, -1441780, 21, 65537, -1441779, 21, 65537, -1441778, 21, 65538, -1376256, 21, 65536, -1376255, 21, 65537, -1376254, 21, 65537, -1376253, 21, 65537, -1376252, 21, 65537, -1376251, 21, 65537, -1376250, 21, 65537, -1376249, 21, 65537, -1376248, 21, 65537, -1376247, 21, 65537, -1376246, 21, 65537, -1376245, 21, 65537, -1376244, 21, 65537, -1376243, 21, 65537, -1376242, 21, 65538, -1310720, 21, 65536, -1310719, 21, 65537, -1310718, 21, 65537, -1310717, 21, 65537, -1310716, 21, 65537, -1310715, 21, 65537, -1310714, 21, 65537, -1310713, 21, 65537, -1310712, 21, 65537, -1310711, 21, 65537, -1310710, 21, 65537, -1310709, 21, 65537, -1310708, 21, 65537, -1310707, 21, 65537, -1310706, 21, 65538, -1245184, 21, 65536, -1245183, 21, 65537, -1245182, 21, 65537, -1245181, 21, 65537, -1245180, 21, 65537, -1245179, 21, 65537, -1245178, 21, 65537, -1245177, 21, 65537, -1245176, 21, 65537, -1245175, 21, 65537, -1245174, 21, 65537, -1245173, 21, 65537, -1245172, 21, 65537, -1245171, 21, 65537, -1245170, 21, 65538, -1179648, 21, 65536, -1179647, 21, 65537, -1179646, 21, 65537, -1179645, 21, 65537, -1179644, 21, 65537, -1179643, 21, 65537, -1179642, 21, 65537, -1179641, 21, 65537, -1179640, 21, 65537, -1179639, 21, 65537, -1179638, 21, 65537, -1179637, 21, 65537, -1179636, 21, 65537, -1179635, 21, 65537, -1179634, 21, 65538, -1114112, 21, 65536, -1114111, 21, 65537, -1114110, 21, 65537, -1114109, 21, 65537, -1114108, 21, 65537, -1114107, 21, 65537, -1114106, 21, 65537, -1114105, 21, 65537, -1114104, 21, 65537, -1114103, 21, 65537, -1114102, 21, 65537, -1114101, 21, 65537, -1114100, 21, 65537, -1114099, 21, 65537, -1114098, 21, 65538, -1048576, 21, 65536, -1048575, 21, 65537, -1048574, 21, 65537, -1048573, 21, 65537, -1048572, 21, 65537, -1048571, 21, 65537, -1048570, 21, 65537, -1048569, 21, 65537, -1048568, 21, 65537, -1048567, 21, 65537, -1048566, 21, 65537, -1048565, 21, 65537, -1048564, 21, 65537, -1048563, 21, 65537, -1048562, 21, 65538, -983040, 21, 65536, -983039, 21, 65537, -983038, 21, 65537, -983037, 21, 65537, -983036, 21, 65537, -983035, 21, 65537, -983034, 21, 65537, -983033, 21, 65537, -983032, 21, 65537, -983031, 21, 65537, -983030, 21, 65537, -983029, 21, 65537, -983028, 21, 65537, -983027, 21, 65537, -983026, 21, 65538, -917504, 21, 65536, -917503, 21, 65537, -917502, 21, 65537, -917501, 21, 65537, -917500, 21, 65537, -917499, 21, 65537, -917498, 21, 65537, -917497, 21, 65537, -917496, 21, 65537, -917495, 21, 65537, -917494, 21, 65537, -917493, 21, 65537, -917492, 21, 65537, -917491, 21, 65537, -917490, 21, 65538, -851968, 21, 65536, -851967, 21, 65537, -851966, 21, 65537, -851965, 21, 65537, -851964, 21, 65537, -851963, 21, 65537, -851962, 21, 65537, -851961, 21, 65537, -851960, 21, 65537, -851959, 21, 65537, -851958, 21, 65537, -851957, 21, 65537, -851956, 21, 65537, -851955, 21, 65537, -851954, 21, 65538, -786432, 21, 65536, -786431, 21, 65537, -786430, 21, 65537, -786429, 21, 65537, -786428, 21, 65537, -786427, 21, 65537, -786426, 21, 65537, -786425, 21, 65537, -786424, 21, 65537, -786423, 21, 65537, -786422, 21, 65537, -786421, 21, 65537, -786420, 21, 65537, -786419, 21, 65537, -786418, 21, 65538, -720896, 21, 65536, -720895, 21, 65537, -720894, 21, 65537, -720893, 21, 65537, -720892, 21, 65537, -720891, 21, 65537, -720890, 21, 65537, -720889, 21, 65537, -720888, 21, 65537, -720887, 21, 65537, -720886, 21, 65537, -720885, 21, 65537, -720884, 21, 65537, -720883, 21, 65537, -720882, 21, 65538, -655360, 21, 65536, -655359, 21, 65537, -655358, 21, 65537, -655357, 21, 65537, -655356, 21, 65537, -655355, 21, 65537, -655354, 21, 65537, -655353, 21, 65537, -655352, 21, 65537, -655351, 21, 65537, -655350, 21, 65537, -655349, 21, 65537, -655348, 21, 65537, -655347, 21, 65537, -655346, 21, 65538, -589824, 21, 65536, -589823, 21, 65537, -589822, 21, 65537, -589821, 21, 65537, -589820, 21, 65537, -589819, 21, 65537, -589818, 21, 65537, -589817, 21, 65537, -589816, 21, 65537, -589815, 21, 65537, -589814, 21, 65537, -589813, 21, 65537, -589812, 21, 65537, -589811, 21, 65537, -589810, 21, 65538, -524288, 21, 65536, -524287, 21, 65537, -524286, 21, 65537, -524285, 21, 65537, -524284, 21, 65537, -524283, 21, 65537, -524282, 21, 65537, -524281, 21, 65537, -524280, 21, 65537, -524279, 21, 65537, -524278, 21, 65537, -524277, 21, 65537, -524276, 21, 65537, -524275, 21, 65537, -524274, 21, 65538, -458752, 21, 65536, -458751, 21, 65537, -458750, 21, 65537, -458749, 21, 65537, -458748, 21, 65537, -458747, 21, 65537, -458746, 21, 65537, -458745, 21, 65537, -458744, 21, 65537, -458743, 21, 65537, -458742, 21, 65537, -458741, 21, 65537, -458740, 21, 65537, -458739, 21, 65537, -458738, 21, 65538, -393216, 21, 65536, -393215, 21, 65537, -393214, 21, 65537, -393213, 21, 65537, -393212, 21, 65537, -393211, 21, 65537, -393210, 21, 65537, -393209, 21, 65537, -393208, 21, 65537, -393207, 21, 65537, -393206, 21, 65537, -393205, 21, 65537, -393204, 21, 65537, -393203, 21, 65537, -393202, 21, 65538, -327680, 21, 65536, -327679, 21, 65537, -327678, 21, 65537, -327677, 21, 65537, -327676, 21, 65537, -327675, 21, 65537, -327674, 21, 65537, -327673, 21, 65537, -327672, 21, 65537, -327671, 21, 65537, -327670, 21, 65537, -327669, 21, 65537, -327668, 21, 65537, -327667, 21, 65537, -327666, 21, 65538, -262144, 21, 65536, -262143, 21, 65537, -262142, 21, 65537, -262141, 21, 65537, -262140, 21, 65537, -262139, 21, 65537, -262138, 21, 65537, -262137, 21, 65537, -262136, 21, 65537, -262135, 21, 65537, -262134, 21, 65537, -262133, 21, 65537, -262132, 21, 65537, -262131, 21, 65537, -262130, 21, 65538, -196608, 21, 65536, -196607, 21, 65537, -196606, 21, 65537, -196605, 21, 65537, -196604, 21, 65537, -196603, 21, 65537, -196602, 21, 65537, -196601, 21, 65537, -196600, 21, 65537, -196599, 21, 65537, -196598, 21, 65537, -196597, 21, 65537, -196596, 21, 65537, -196595, 21, 65537, -196594, 21, 65538, -131072, 21, 65536, -131071, 21, 65537, -131070, 21, 65537, -131069, 21, 65537, -131068, 21, 65537, -131067, 21, 65537, -131066, 21, 65537, -131065, 21, 65537, -131064, 21, 65537, -131063, 21, 65537, -131062, 21, 65537, -131061, 21, 65537, -131060, 21, 65537, -131059, 21, 65537, -131058, 21, 65538, -65536, 21, 0, -65535, 21, 131073, -65534, 21, 131073, -65533, 21, 131073, -65532, 21, 131073, -65531, 21, 131073, -65530, 21, 131073, -65529, 21, 131073, -65528, 21, 131073, -65527, 21, 131073, -65526, 21, 131073, -65525, 21, 131073, -65524, 21, 131073, -65523, 21, 131073, -65522, 21, 131074, 65521, 35, 0, 65522, 35, 0, 65523, 35, 0, 65524, 35, 0, 65525, 35, 0, 65526, 35, 0, 65527, 35, 0, 65528, 35, 0, 65529, 35, 0, 65530, 35, 0, 65531, 35, 0, 65532, 35, 0, 65533, 35, 0, 65534, 35, 0, 65535, 35, 0, 0, 35, 0, 1, 35, 0, 2, 35, 0, 3, 35, 0, 4, 35, 0, 5, 35, 0, 6, 35, 0, 7, 35, 0, 8, 35, 0, 9, 35, 0, 10, 35, 0, 11, 35, 0, 12, 35, 0, 13, 35, 0, 14, 35, 0 )
+tile_data = PoolIntArray( -1966079, 21, 0, -1966078, 21, 1, -1966077, 21, 1, -1966076, 21, 1, -1966075, 21, 1, -1966074, 21, 1, -1966073, 21, 1, -1966072, 21, 1, -1966071, 21, 1, -1966070, 21, 2, -1966067, 21, 0, -1966066, 21, 2, -1900544, 21, 65536, -1900543, 21, 65537, -1900542, 21, 65537, -1900541, 21, 65537, -1900540, 21, 65537, -1900539, 21, 65537, -1900538, 21, 65537, -1900537, 21, 65537, -1900536, 21, 65537, -1900535, 21, 65537, -1900534, 21, 65537, -1900533, 21, 65537, -1900532, 21, 1, -1900531, 21, 1, -1900530, 21, 2, -1835008, 21, 65536, -1835007, 21, 65537, -1835006, 21, 65537, -1835005, 21, 65537, -1835004, 21, 65537, -1835003, 21, 65537, -1835002, 21, 65537, -1835001, 21, 65537, -1835000, 21, 65537, -1834999, 21, 65537, -1834998, 21, 65537, -1834997, 21, 65537, -1834996, 21, 65537, -1834995, 21, 65537, -1834994, 21, 65538, -1769472, 21, 65536, -1769471, 21, 65537, -1769470, 21, 65537, -1769469, 21, 65537, -1769468, 21, 65537, -1769467, 21, 65537, -1769466, 21, 65537, -1769465, 21, 65537, -1769464, 21, 65537, -1769463, 21, 65537, -1769462, 21, 65537, -1769461, 21, 65537, -1769460, 21, 65537, -1769459, 21, 65537, -1769458, 21, 65538, -1703936, 21, 65536, -1703935, 21, 65537, -1703934, 21, 65537, -1703933, 21, 65537, -1703932, 21, 65537, -1703931, 21, 65537, -1703930, 21, 65537, -1703929, 21, 65537, -1703928, 21, 65537, -1703927, 21, 65537, -1703926, 21, 65537, -1703925, 21, 65537, -1703924, 21, 65537, -1703923, 21, 65537, -1703922, 21, 65538, -1638400, 21, 65536, -1638399, 21, 65537, -1638398, 21, 65537, -1638397, 21, 65537, -1638396, 21, 65537, -1638395, 21, 65537, -1638394, 21, 65537, -1638393, 21, 65537, -1638392, 21, 65537, -1638391, 21, 65537, -1638390, 21, 65537, -1638389, 21, 65537, -1638388, 21, 65537, -1638387, 21, 65537, -1638386, 21, 65538, -1572864, 21, 65536, -1572863, 21, 65537, -1572862, 21, 65537, -1572861, 21, 65537, -1572860, 21, 65537, -1572859, 21, 65537, -1572858, 21, 65537, -1572857, 21, 65537, -1572856, 21, 65537, -1572855, 21, 65537, -1572854, 21, 65537, -1572853, 21, 65537, -1572852, 21, 65537, -1572851, 21, 65537, -1572850, 21, 65538, -1507328, 21, 65536, -1507327, 21, 65537, -1507326, 21, 65537, -1507325, 21, 65537, -1507324, 21, 65537, -1507323, 21, 65537, -1507322, 21, 65537, -1507321, 21, 65537, -1507320, 21, 65537, -1507319, 21, 65537, -1507318, 21, 65537, -1507317, 21, 65537, -1507316, 21, 65537, -1507315, 21, 65537, -1507314, 21, 65538, -1441792, 21, 65536, -1441791, 21, 65537, -1441790, 21, 65537, -1441789, 21, 65537, -1441788, 21, 65537, -1441787, 21, 65537, -1441786, 21, 65537, -1441785, 21, 65537, -1441784, 21, 65537, -1441783, 21, 65537, -1441782, 21, 65537, -1441781, 21, 65537, -1441780, 21, 65537, -1441779, 21, 65537, -1441778, 21, 65538, -1376256, 21, 65536, -1376255, 21, 65537, -1376254, 21, 65537, -1376253, 21, 65537, -1376252, 21, 65537, -1376251, 21, 65537, -1376250, 21, 65537, -1376249, 21, 65537, -1376248, 21, 65537, -1376247, 21, 65537, -1376246, 21, 65537, -1376245, 21, 65537, -1376244, 21, 65537, -1376243, 21, 65537, -1376242, 21, 65538, -1310720, 21, 65536, -1310719, 21, 65537, -1310718, 21, 65537, -1310717, 21, 65537, -1310716, 21, 65537, -1310715, 21, 65537, -1310714, 21, 65537, -1310713, 21, 65537, -1310712, 21, 65537, -1310711, 21, 65537, -1310710, 21, 65537, -1310709, 21, 65537, -1310708, 21, 65537, -1310707, 21, 65537, -1310706, 21, 65538, -1245184, 21, 65536, -1245183, 21, 65537, -1245182, 21, 65537, -1245181, 21, 65537, -1245180, 21, 65537, -1245179, 21, 65537, -1245178, 21, 65537, -1245177, 21, 65537, -1245176, 21, 65537, -1245175, 21, 65537, -1245174, 21, 65537, -1245173, 21, 65537, -1245172, 21, 65537, -1245171, 21, 65537, -1245170, 21, 65538, -1179648, 21, 65536, -1179647, 21, 65537, -1179646, 21, 65537, -1179645, 21, 65537, -1179644, 21, 65537, -1179643, 21, 65537, -1179642, 21, 65537, -1179641, 21, 65537, -1179640, 21, 65537, -1179639, 21, 65537, -1179638, 21, 65537, -1179637, 21, 65537, -1179636, 21, 65537, -1179635, 21, 65537, -1179634, 21, 65538, -1114112, 21, 65536, -1114111, 21, 65537, -1114110, 21, 65537, -1114109, 21, 65537, -1114108, 21, 65537, -1114107, 21, 65537, -1114106, 21, 65537, -1114105, 21, 65537, -1114104, 21, 65537, -1114103, 21, 65537, -1114102, 21, 65537, -1114101, 21, 65537, -1114100, 21, 65537, -1114099, 21, 65537, -1114098, 21, 65538, -1048576, 21, 65536, -1048575, 21, 65537, -1048574, 21, 65537, -1048573, 21, 65537, -1048572, 21, 65537, -1048571, 21, 65537, -1048570, 21, 65537, -1048569, 21, 65537, -1048568, 21, 65537, -1048567, 21, 65537, -1048566, 21, 65537, -1048565, 21, 65537, -1048564, 21, 65537, -1048563, 21, 65537, -1048562, 21, 65538, -983040, 21, 65536, -983039, 21, 65537, -983038, 21, 65537, -983037, 21, 65537, -983036, 21, 65537, -983035, 21, 65537, -983034, 21, 65537, -983033, 21, 65537, -983032, 21, 65537, -983031, 21, 65537, -983030, 21, 65537, -983029, 21, 65537, -983028, 21, 65537, -983027, 21, 65537, -983026, 21, 65538, -917504, 21, 65536, -917503, 21, 65537, -917502, 21, 65537, -917501, 21, 65537, -917500, 21, 65537, -917499, 21, 65537, -917498, 21, 65537, -917497, 21, 65537, -917496, 21, 65537, -917495, 21, 65537, -917494, 21, 65537, -917493, 21, 65537, -917492, 21, 65537, -917491, 21, 65537, -917490, 21, 65538, -851968, 21, 65536, -851967, 21, 65537, -851966, 21, 65537, -851965, 21, 65537, -851964, 21, 65537, -851963, 21, 65537, -851962, 21, 65537, -851961, 21, 65537, -851960, 21, 65537, -851959, 21, 65537, -851958, 21, 65537, -851957, 21, 65537, -851956, 21, 65537, -851955, 21, 65537, -851954, 21, 65538, -786432, 21, 65536, -786431, 21, 65537, -786430, 21, 65537, -786429, 21, 65537, -786428, 21, 65537, -786427, 21, 65537, -786426, 21, 65537, -786425, 21, 65537, -786424, 21, 65537, -786423, 21, 65537, -786422, 21, 65537, -786421, 21, 65537, -786420, 21, 65537, -786419, 21, 65537, -786418, 21, 65538, -720896, 21, 65536, -720895, 21, 65537, -720894, 21, 65537, -720893, 21, 65537, -720892, 21, 65537, -720891, 21, 65537, -720890, 21, 65537, -720889, 21, 65537, -720888, 21, 65537, -720887, 21, 65537, -720886, 21, 65537, -720885, 21, 65537, -720884, 21, 65537, -720883, 21, 65537, -720882, 21, 65538, -655360, 21, 65536, -655359, 21, 65537, -655358, 21, 65537, -655357, 21, 65537, -655356, 21, 65537, -655355, 21, 65537, -655354, 21, 65537, -655353, 21, 65537, -655352, 21, 65537, -655351, 21, 65537, -655350, 21, 65537, -655349, 21, 65537, -655348, 21, 65537, -655347, 21, 65537, -655346, 21, 65538, -589824, 21, 65536, -589823, 21, 65537, -589822, 21, 65537, -589821, 21, 65537, -589820, 21, 65537, -589819, 21, 65537, -589818, 21, 65537, -589817, 21, 65537, -589816, 21, 65537, -589815, 21, 65537, -589814, 21, 65537, -589813, 21, 65537, -589812, 21, 65537, -589811, 21, 65537, -589810, 21, 65538, -524288, 21, 65536, -524287, 21, 65537, -524286, 21, 65537, -524285, 21, 65537, -524284, 21, 65537, -524283, 21, 65537, -524282, 21, 65537, -524281, 21, 65537, -524280, 21, 65537, -524279, 21, 65537, -524278, 21, 65537, -524277, 21, 65537, -524276, 21, 65537, -524275, 21, 65537, -524274, 21, 65538, -458752, 21, 65536, -458751, 21, 65537, -458750, 21, 65537, -458749, 21, 65537, -458748, 21, 65537, -458747, 21, 65537, -458746, 21, 65537, -458745, 21, 65537, -458744, 21, 65537, -458743, 21, 65537, -458742, 21, 65537, -458741, 21, 65537, -458740, 21, 65537, -458739, 21, 65537, -458738, 21, 65538, -393216, 21, 65536, -393215, 21, 65537, -393214, 21, 65537, -393213, 21, 65537, -393212, 21, 65537, -393211, 21, 65537, -393210, 21, 65537, -393209, 21, 65537, -393208, 21, 65537, -393207, 21, 65537, -393206, 21, 65537, -393205, 21, 65537, -393204, 21, 65537, -393203, 21, 65537, -393202, 21, 65538, -327680, 21, 65536, -327679, 21, 65537, -327678, 21, 65537, -327677, 21, 65537, -327676, 21, 65537, -327675, 21, 65537, -327674, 21, 65537, -327673, 21, 65537, -327672, 21, 65537, -327671, 21, 65537, -327670, 21, 65537, -327669, 21, 65537, -327668, 21, 65537, -327667, 21, 65537, -327666, 21, 65538, -262144, 21, 65536, -262143, 21, 65537, -262142, 21, 65537, -262141, 21, 65537, -262140, 21, 65537, -262139, 21, 65537, -262138, 21, 65537, -262137, 21, 65537, -262136, 21, 65537, -262135, 21, 65537, -262134, 21, 65537, -262133, 21, 65537, -262132, 21, 65537, -262131, 21, 65537, -262130, 21, 65538, -196608, 21, 65536, -196607, 21, 65537, -196606, 21, 65537, -196605, 21, 65537, -196604, 21, 65537, -196603, 21, 65537, -196602, 21, 65537, -196601, 21, 65537, -196600, 21, 65537, -196599, 21, 65537, -196598, 21, 65537, -196597, 21, 65537, -196596, 21, 65537, -196595, 21, 65537, -196594, 21, 65538, -131072, 21, 65536, -131071, 21, 65537, -131070, 21, 65537, -131069, 21, 65537, -131068, 21, 65537, -131067, 21, 65537, -131066, 21, 65537, -131065, 21, 65537, -131064, 21, 65537, -131063, 21, 65537, -131062, 21, 65537, -131061, 21, 65537, -131060, 21, 65537, -131059, 21, 65537, -131058, 21, 65538, -65536, 21, 0, -65535, 21, 131073, -65534, 21, 131073, -65533, 21, 131073, -65532, 21, 131073, -65531, 21, 131073, -65530, 21, 131073, -65529, 21, 131073, -65528, 21, 131073, -65527, 21, 131073, -65526, 21, 131073, -65525, 21, 131073, -65524, 21, 131073, -65523, 21, 131073, -65522, 21, 131074, 0, 35, 0, 1, 35, 0, 2, 35, 0, 3, 35, 0, 4, 35, 0, 5, 35, 0, 6, 35, 0, 7, 35, 0, 8, 35, 0, 9, 35, 0, 10, 35, 0, 11, 35, 0, 12, 35, 0, 13, 35, 0, 14, 35, 0 )
 
 [node name="Grass" type="TileMap" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -1742,7 +1742,7 @@ texture = ExtResource( 15 )
 position = Vector2( -2145, 3500 )
 scale = Vector2( 1.25027, 0.892843 )
 z_index = 4
-tile_set = SubResource( 64 )
+tile_set = SubResource( 122 )
 cell_size = Vector2( 1, 1 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 0
@@ -1755,7 +1755,7 @@ tile_data = PoolIntArray( -258275705, 19, 0, -258275696, 7, 0, -258275686, 4, 0,
 ]]
 visible = false
 position = Vector2( 960, -1880 )
-shape = SubResource( 65 )
+shape = SubResource( 123 )
 
 [node name="Waterfall" type="Area2D" parent="Upper Cliffs"]
 z_index = 1
@@ -1777,17 +1777,17 @@ collision_mask = 29
 "Winter",
 ]]
 position = Vector2( 8, -212 )
-shape = SubResource( 66 )
+shape = SubResource( 124 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -1840 )
-shape = SubResource( 67 )
+shape = SubResource( 125 )
 one_way_collision = true
 
 [node name="waterfall 1" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -88 )
 scale = Vector2( 8.16667, 7 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 1"]
 scale = Vector2( 0.125, 0.125 )
@@ -1800,7 +1800,7 @@ attenuation = 8.28211
 [node name="waterfall 2" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -448 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 2"]
 scale = Vector2( 0.125, 0.125 )
@@ -1813,7 +1813,7 @@ attenuation = 8.28211
 [node name="waterfall 3" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -832 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 3"]
 scale = Vector2( 0.125, 0.125 )
@@ -1826,7 +1826,7 @@ attenuation = 8.28211
 [node name="waterfall 4" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -1216 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 4"]
 scale = Vector2( 0.125, 0.125 )
@@ -1839,7 +1839,7 @@ attenuation = 8.28211
 [node name="waterfall 5" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -1600 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 5"]
 scale = Vector2( 0.125, 0.125 )
@@ -1852,7 +1852,7 @@ attenuation = 8.28211
 [node name="waterfall 6" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -1984 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 6"]
 scale = Vector2( 0.125, 0.125 )
@@ -1865,7 +1865,7 @@ attenuation = 8.28211
 [node name="waterfall 7" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -2368 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 7"]
 scale = Vector2( 0.125, 0.125 )
@@ -1878,7 +1878,7 @@ attenuation = 8.28211
 [node name="waterfall 8" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -2752 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 8"]
 scale = Vector2( 0.125, 0.125 )
@@ -1891,7 +1891,7 @@ attenuation = 8.28211
 [node name="waterfall 9" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -3136 )
 scale = Vector2( 8.16667, 8 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 9"]
 scale = Vector2( 0.125, 0.125 )
@@ -1903,7 +1903,7 @@ attenuation = 8.28211
 [node name="waterfall 10" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 position = Vector2( 1532, -3544 )
 scale = Vector2( 8.16667, 9 )
-frames = SubResource( 73 )
+frames = SubResource( 131 )
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Upper Cliffs/Waterfall/waterfall 10"]
 scale = Vector2( 0.125, 0.125 )
@@ -1918,21 +1918,21 @@ visible = false
 position = Vector2( 1312, -96 )
 scale = Vector2( 16, 16 )
 z_index = 1
-frames = SubResource( 79 )
+frames = SubResource( 137 )
 
 [node name="waterfall mist 2" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 visible = false
 position = Vector2( 1704, -96 )
 scale = Vector2( 16, 16 )
 z_index = 1
-frames = SubResource( 79 )
+frames = SubResource( 137 )
 
 [node name="waterfall mist 3" type="AnimatedSprite" parent="Upper Cliffs/Waterfall"]
 visible = false
 position = Vector2( 1520, -80 )
 scale = Vector2( 16, 16 )
 z_index = 1
-frames = SubResource( 79 )
+frames = SubResource( 137 )
 
 [node name="Upper Cliffs Top Ground Static Collider 1" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -1949,7 +1949,7 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 80 )
+shape = SubResource( 138 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 1" groups=[
@@ -1963,7 +1963,7 @@ collision_mask = 29
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 81 )
+shape = SubResource( 139 )
 
 [node name="Upper Cliffs Top Ground Static Collider 2" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -1980,7 +1980,7 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 82 )
+shape = SubResource( 140 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 2" groups=[
@@ -1994,7 +1994,7 @@ collision_mask = 29
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 83 )
+shape = SubResource( 141 )
 
 [node name="Upper Cliffs Top Ground Static Collider 3" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -2011,7 +2011,7 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 84 )
+shape = SubResource( 142 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 3" groups=[
@@ -2025,7 +2025,7 @@ collision_mask = 29
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 85 )
+shape = SubResource( 143 )
 
 [node name="Upper Cliffs Top Ground Static Collider 4" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -2042,7 +2042,7 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
-shape = SubResource( 86 )
+shape = SubResource( 144 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Top Ground Static Collider 4" groups=[
@@ -2056,7 +2056,7 @@ collision_mask = 29
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 87 )
+shape = SubResource( 145 )
 
 [node name="Upper Cliffs Top Ground Rock End Cap Static Collider 1" type="StaticBody2D" parent="Upper Cliffs" groups=[
 "Cliffs",
@@ -2135,7 +2135,8 @@ polygon = PoolVector2Array( -4, -56, 4, -56, 4, -48, 12, -48, 12, -40, 20, -40, 
 "Dropdownable",
 "Ground",
 ]]
-position = Vector2( 0, 84 )
+visible = false
+position = Vector2( 296, 84 )
 z_index = 1
 collision_layer = 2
 collision_mask = 29
@@ -2145,14 +2146,16 @@ collision_mask = 29
 "Dropdownable",
 "Ground",
 ]]
+position = Vector2( 664, 0 )
 rotation = 6.28319
-shape = SubResource( 88 )
+shape = SubResource( 146 )
 one_way_collision = true
 
 [node name="Area2D" type="Area2D" parent="Upper Cliffs/Upper Cliffs Bottom Ground Static Collider" groups=[
 "Cliffs",
 "Ground",
 ]]
+position = Vector2( 664, -4 )
 collision_layer = 2
 collision_mask = 29
 
@@ -2160,7 +2163,8 @@ collision_mask = 29
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 89 )
+position = Vector2( 0, 4 )
+shape = SubResource( 147 )
 
 [node name="Lower Cliffs" type="Area2D" parent="." groups=[
 "Cliffs",
@@ -2284,7 +2288,7 @@ texture = ExtResource( 14 )
 
 [node name="Sign Font" type="TileMap" parent="Lower Cliffs/(0,0)"]
 position = Vector2( -5, 0 )
-tile_set = SubResource( 64 )
+tile_set = SubResource( 122 )
 cell_size = Vector2( 1, 1 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 0
@@ -2303,7 +2307,7 @@ texture = ExtResource( 15 )
 
 [node name="Sign Font" type="TileMap" parent="Lower Cliffs/(13,0)"]
 position = Vector2( 4, -4 )
-tile_set = SubResource( 64 )
+tile_set = SubResource( 122 )
 cell_size = Vector2( 1, 1 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 0
@@ -2327,7 +2331,7 @@ texture = ExtResource( 17 )
 [node name="Sign Font" type="TileMap" parent="Lower Cliffs/(0,31)"]
 position = Vector2( -10, -3.22583 )
 scale = Vector2( 1.2, 1.2 )
-tile_set = SubResource( 64 )
+tile_set = SubResource( 122 )
 cell_size = Vector2( 1, 1 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 0
@@ -2338,7 +2342,7 @@ tile_data = PoolIntArray( -544075464, 2, 0, -544075456, 11, 0, -544075448, 8, 0,
 [node name="Sign Font 2" type="TileMap" parent="Lower Cliffs/(0,31)"]
 position = Vector2( -10, 6.45215 )
 scale = Vector2( 0.5, 0.4 )
-tile_set = SubResource( 64 )
+tile_set = SubResource( 122 )
 cell_size = Vector2( 1, 1 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 0
@@ -2360,7 +2364,7 @@ texture = ExtResource( 15 )
 ]]
 visible = false
 position = Vector2( 960, 2068 )
-shape = SubResource( 90 )
+shape = SubResource( 148 )
 
 [node name="Lower Cliffs Bottom Ground Static Collider" type="StaticBody2D" parent="Lower Cliffs" groups=[
 "Cliffs",
@@ -2375,11 +2379,12 @@ collision_mask = 29
 "Cliffs",
 "Ground",
 ]]
-shape = SubResource( 91 )
+shape = SubResource( 149 )
 
-[node name="Scene Boundary - Left" type="StaticBody2D" parent="."]
-visible = false
-position = Vector2( -1984, 64 )
+[node name="Scene Boundary - Left" type="StaticBody2D" parent="." groups=[
+"Walls",
+]]
+position = Vector2( -64, 0 )
 collision_layer = 2
 collision_mask = 9
 __meta__ = {
@@ -2388,14 +2393,15 @@ __meta__ = {
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Left"]
-shape = SubResource( 92 )
+shape = SubResource( 150 )
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
 }
 
-[node name="Scene Boundary - Right" type="StaticBody2D" parent="."]
-visible = false
+[node name="Scene Boundary - Right" type="StaticBody2D" parent="." groups=[
+"Walls",
+]]
 position = Vector2( 1984, 0 )
 collision_layer = 2
 collision_mask = 9
@@ -2405,7 +2411,7 @@ __meta__ = {
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Right"]
-shape = SubResource( 93 )
+shape = SubResource( 151 )
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -2419,7 +2425,7 @@ collision_mask = 9
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Scene Boundary - Top"]
 rotation = 1.5708
-shape = SubResource( 94 )
+shape = SubResource( 152 )
 
 [node name="AmbiencePlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 6 )
