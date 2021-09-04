@@ -192,16 +192,16 @@ public class Player : KinematicBody2D
       return;
     }
 
-    if (_stateMachine.Is (State.Running) || _stateMachine.Is (State.ClimbingUp) && _energy > 0)
+    if (_stateMachine.Is (State.Running) || IsSpeedClimbing() && _energy > 0)
     {
       _energy -= 1;
       _energyMeter.Value = _energy;
-      _energyTimer.WaitTime = _stateMachine.Is (State.ClimbingUp) ? 1.0f / GetClimbingSpeedBoost() : _energyTimer.WaitTime;
+      _energyTimer.WaitTime = IsSpeedClimbing() ? 0.5f : _energyTimer.WaitTime;
 
       return;
     }
 
-    if (_stateMachine.Is (State.Running) || _stateMachine.Is (State.ClimbingUp) || _energy == MaxEnergy) return;
+    if (_stateMachine.Is (State.Running) || IsSpeedClimbing() || _energy == MaxEnergy) return;
 
     _energy += 1;
     _energyMeter.Value = _energy;
@@ -373,6 +373,8 @@ public class Player : KinematicBody2D
     GlobalPosition = new Vector2 (952, -4032);
   }
 
+  private bool IsSpeedClimbing() => _stateMachine.Is (State.ClimbingUp) && IsEnergyKeyPressed();
+  private static int GetClimbingSpeedBoost() => IsEnergyKeyPressed() ? 2 : 1;
   private bool IsMoving() => IsMovingHorizontally() || IsMovingVertically();
   private bool IsMovingVertically() => Mathf.Abs (_velocity.y) > VelocityEpsilon;
   private bool IsMovingHorizontally() => Mathf.Abs (_velocity.x) > VelocityEpsilon;
@@ -470,8 +472,6 @@ public class Player : KinematicBody2D
     }
   }
 
-  private static int GetClimbingSpeedBoost() => IsEnergyKeyPressed() ? 2 : 1;
-
   private bool IsHittingWall()
   {
     return _rayChest.GetCollider() is StaticBody2D collider1 && collider1.IsInGroup ("Walls") ||
@@ -551,6 +551,7 @@ public class Player : KinematicBody2D
     "\nClimbing prep: " + _stateMachine.Is (State.ClimbingPrep) +
     "\nClimbing prep timer: " + _climbingPrepTimer.TimeLeft +
     "\nClimbing up: " + _stateMachine.Is (State.ClimbingUp) +
+    "\nIsSpeedClimbing: " + IsSpeedClimbing() +
     "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
     "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall +
     "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
@@ -664,7 +665,7 @@ public class Player : KinematicBody2D
     _stateMachine.OnTransitionTo (State.ClimbingUp, () =>
     {
       _sprite.Animation = ClimbingUpAnimation;
-      _energyTimer.Start (1.0f / GetClimbingSpeedBoost());
+      _energyTimer.Start (0.15f);
       FlipHorizontally (false);
     });
 
@@ -695,7 +696,7 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
     _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall);
-    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting || _energy == 0);
+    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting || IsEnergyKeyPressed() && _energy == 0);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsEnergyKeyPressed() && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsEnergyKeyPressed() && _energy > 0 && IsOnFloor());

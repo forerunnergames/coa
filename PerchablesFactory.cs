@@ -23,6 +23,22 @@ public static class PerchablesFactory
         new(new Vector2 (16, 16), new Vector2 (8, 8)),
         new(new Vector2 (24, 8), new Vector2 (72, 8)),
         new(new Vector2 (96, 16), new Vector2 (24, 8))}},
+    { "cliffs-sign-arrow-left", new List <Rect2> {
+        new(new Vector2 (0, 32), new Vector2 (8, 8)),
+        new(new Vector2 (8, 24), new Vector2 (8, 8)),
+        new(new Vector2 (16, 16), new Vector2 (8, 8)),
+        new(new Vector2 (24, 8), new Vector2 (8, 8)),
+        new(new Vector2 (32, 0), new Vector2 (16, 8)),
+        new(new Vector2 (48, 16), new Vector2 (72, 8)),
+        new(new Vector2 (120, 24), new Vector2 (8, 8))}},
+    { "cliffs-sign-arrow-right", new List <Rect2> {
+        new(new Vector2 (0, 24), new Vector2 (8, 8)),
+        new(new Vector2 (8, 16), new Vector2 (72, 8)),
+        new(new Vector2 (80, 0), new Vector2 (16, 8)),
+        new(new Vector2 (96, 8), new Vector2 (8, 8)),
+        new(new Vector2 (104, 16), new Vector2 (8, 8)),
+        new(new Vector2 (112, 24), new Vector2 (8, 8)),
+        new(new Vector2 (120, 32), new Vector2 (8, 8))}},
     { "Player", new List <Rect2> {
         new(new Vector2 (-40, -16), new Vector2 (8, 8)),
         new(new Vector2 (-32, -40), new Vector2 (8, 8)),
