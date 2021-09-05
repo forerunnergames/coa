@@ -42,6 +42,7 @@ public static class Tools
 
   // ReSharper disable once InconsistentNaming
   public delegate void DrawPrimitive (Vector2[] points, Color[] colors, Vector2[] uvs);
+
   // ReSharper disable once InconsistentNaming
   public delegate void DrawRect (Rect2 rect, Color color, bool filled);
   public delegate Transform GetLocalTransform();
@@ -59,6 +60,7 @@ public static class Tools
   public static bool WasUpArrowReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Up][0]);
   public static bool WasUpArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Up][0]);
   public static bool IsDownArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Down][0]);
+  public static bool WasDownArrowReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Down][0]);
   public static bool WasDownArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Down][0]);
   public static bool IsAnyHorizontalArrowPressed() => IsLeftArrowPressed() || IsRightArrowPressed();
   public static bool IsEveryHorizontalArrowPressed() => IsLeftArrowPressed() && IsRightArrowPressed();
@@ -191,9 +193,9 @@ public static class Tools
     }
   }
 
-  public static Vector2 GetExtents (Area2D area)
+  public static Vector2 GetExtents (Area2D area, string colliderName)
   {
-    var collisionShape = area.GetNode <CollisionShape2D> ("CollisionShape2D");
+    var collisionShape = area.GetNode <CollisionShape2D> (colliderName);
 
     // ReSharper disable once InvertIf
     if (collisionShape.Shape is not RectangleShape2D collisionRect)
