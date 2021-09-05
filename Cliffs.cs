@@ -19,12 +19,8 @@ public class Cliffs : Area2D
 
   private Area2D _playerArea;
   private Rect2 _playerRect;
-  private Rect2 _cliffsRect;
   private Vector2 _playerExtents;
-  private Vector2 _cliffsExtents;
   private Vector2 _playerPosition;
-  private Vector2 _cliffsPosition;
-  private CollisionShape2D _cliffsCollider;
   private bool _isPlayerIntersectingCliffs;
   private bool _isPlayerInWaterfall;
   private AudioStreamPlayer _ambiencePlayer;
@@ -39,11 +35,13 @@ public class Cliffs : Area2D
   private readonly Dictionary <Season, AudioStream> _ambience = new();
   private readonly Dictionary <Season, float> _musicVolumes = new();
   private readonly Dictionary <Season, float> _ambienceVolumes = new();
+  private readonly List <CollisionShape2D> _colliders = new();
   private Color _clearColor;
   private bool _seasonChangeInProgress;
   private Season _newSeason;
   private bool _fadeIn;
   private bool _skipFade;
+  private Rect2 _cliffRect;
   private Log _log;
 
   public override void _Ready()
@@ -64,9 +62,15 @@ public class Cliffs : Area2D
     _musicVolumes.Add (Season.Summer, -25);
     _ambiencePlayer = GetNode <AudioStreamPlayer> ("../AmbiencePlayer");
     _musicPlayer = GetNode <AudioStreamPlayer> ("../MusicPlayer");
-    _cliffsCollider = GetNode <CollisionShape2D> ("CollisionShape2D");
-    _cliffsPosition = _cliffsCollider.GlobalPosition;
     _iceTileMap = GetNode <TileMap> ("Ice");
+    _colliders.Add (GetNode <CollisionShape2D> ("Extents 1"));
+
+    if (Name == "Upper Cliffs")
+    {
+      _colliders.Add (GetNode <CollisionShape2D> ("Extents 2"));
+      _colliders.Add (GetNode <CollisionShape2D> ("Extents 3"));
+    }
+
     InitializeSeasons();
   }
 
@@ -111,6 +115,7 @@ public class Cliffs : Area2D
 
     _playerArea = area;
     _isPlayerIntersectingCliffs = true;
+    _log.Debug ($"{area.GetParent().Name} entered {Name}.");
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -121,23 +126,24 @@ public class Cliffs : Area2D
     _playerArea = area;
     _isPlayerIntersectingCliffs = false;
     GetNode <Player> ("../Player").IsInCliffs = false;
+    _log.Debug ($"{area.GetParent().Name} exited {Name}.");
   }
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnCliffsGroundEntered (Area2D area)
+  public void _OnUpperCliffsGroundEntered (Area2D area)
   {
-    if (!area.IsInGroup ("Player")) return;
+    if (!area.IsInGroup ("Player") || Name != "Upper Cliffs") return;
 
-    _log.Debug ($"{area.GetParent().Name} entered ground of {Name}.");
+    _log.Debug ($"{area.GetParent().Name} entered ground of {Name}. Ground name: {area.Name}");
     GetNode <Player> ("../Player").IsInGround = true;
   }
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnCliffsGroundExited (Area2D area)
+  public void _OnUpperCliffsGroundExited (Area2D area)
   {
-    if (!area.IsInGroup ("Player")) return;
+    if (!area.IsInGroup ("Player") || Name != "Upper Cliffs") return;
 
-    _log.Debug ($"{area.GetParent().Name} exited ground of {Name}.");
+    _log.Debug ($"{area.GetParent().Name} exited ground of {Name}. Ground name: {area.Name}");
     GetNode <Player> ("../Player").IsInGround = false;
   }
 
@@ -280,17 +286,28 @@ public class Cliffs : Area2D
 
     // @formatter:off
 
-    _playerExtents = GetExtents (_playerArea);
-    _cliffsExtents = GetExtents (this);
+    _playerExtents = GetExtents (_playerArea, "CollisionShape2D");
     _playerPosition = _playerArea.GlobalPosition;
-    _cliffsPosition = _cliffsCollider.GlobalPosition;
-
     _playerRect.Position = _playerPosition - _playerExtents;
     _playerRect.Size = _playerExtents * 2;
-    _cliffsRect.Position = _cliffsPosition - _cliffsExtents;
-    _cliffsRect.Size = _cliffsExtents * 2;
 
-    GetNode <Player> ("../Player").IsInCliffs = _isPlayerIntersectingCliffs && _cliffsRect.Encloses (_playerRect);
+    var anyCliffEnclosesPlayer = false;
+
+    // TODO Must combine extents to see if the player is enclosed by multiple rects.
+    foreach (var collider in _colliders)
+    {
+      var extents = (collider.Shape as RectangleShape2D)?.Extents ?? Vector2.Zero;
+      _cliffRect.Position = collider.GlobalPosition - extents;
+      _cliffRect.Size = extents * 2;
+
+      if (!_cliffRect.Encloses (_playerRect)) continue;
+
+      anyCliffEnclosesPlayer = true;
+
+      break;
+    }
+
+    GetNode <Player> ("../Player").IsInCliffs = _isPlayerIntersectingCliffs && anyCliffEnclosesPlayer;
 
     _topLeft = _playerArea.GlobalPosition - _playerExtents;
     _bottomRight = _playerArea.GlobalPosition + _playerExtents;
@@ -304,7 +321,6 @@ public class Cliffs : Area2D
                                                          IsIntersectingAnyTile (_bottomRight, _iceTileMap) ||
                                                          IsIntersectingAnyTile (_topRight, _iceTileMap) ||
                                                          IsIntersectingAnyTile (_bottomLeft, _iceTileMap));
-
     // @formatter:on
   }
 

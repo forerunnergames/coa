@@ -42,6 +42,7 @@ public class Player : KinematicBody2D
   [Export] public string ClimbingPrepAnimation = "player_idle_back";
   [Export] public string FreeFallingAnimation = "player_falling";
   [Export] public string ClimbingUpAnimation = "player_climbing_up";
+  [Export] public string ClimbingDownAnimation = "player_climbing_down";
   [Export] public string CliffHangingAnimation = "player_cliff_hanging";
   [Export] public string TraversingAnimation = "player_traversing";
   [Export] public string CliffArrestingAnimation = "player_cliff_arresting";
@@ -85,6 +86,7 @@ public class Player : KinematicBody2D
     Jumping,
     ClimbingPrep,
     ClimbingUp,
+    ClimbingDown,
     CliffHanging,
     Traversing,
     CliffArresting,
@@ -107,6 +109,7 @@ public class Player : KinematicBody2D
   private uint _elapsedFallingTimeMs;
   private uint _lastTotalFallingTimeMs;
   private float _highestVerticalVelocity;
+  private bool _isDroppingDown;
   private bool _isResting;
   private bool _wasRunning;
   private Camera2D _camera;
@@ -115,6 +118,7 @@ public class Player : KinematicBody2D
   private Sprite _readableSign;
   private TileMap _signsTileMap;
   private bool _isInSign;
+  private bool _letGo;
   private float _delta;
   private Log _log;
 
@@ -129,16 +133,17 @@ public class Player : KinematicBody2D
 
   private static readonly Dictionary <State, State[]> TransitionTable = new()
   {
-    { State.Idle, new[] { State.Walking, State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.FreeFalling, State.ReadingSign } },
+    { State.Idle, new[] { State.Walking, State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.ClimbingDown, State.FreeFalling, State.ReadingSign } },
     { State.Walking, new[] { State.Idle, State.Running, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign } },
     { State.Running, new[] { State.Idle, State.Walking, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign } },
     { State.Jumping, new[] { State.Idle, State.FreeFalling, State.Walking } },
     { State.ClimbingPrep, new[] { State.ClimbingUp, State.Idle, State.Walking, State.Jumping } },
-    { State.ClimbingUp, new[] { State.FreeFalling } },
-    { State.CliffHanging, new[] { State.ClimbingUp, State.Traversing, State.FreeFalling } },
+    { State.ClimbingUp, new[] { State.ClimbingDown, State.CliffHanging, State.FreeFalling } },
+    { State.ClimbingDown, new[] { State.ClimbingUp, State.CliffHanging, State.FreeFalling, State.Idle } },
+    { State.CliffHanging, new[] { State.ClimbingUp, State.ClimbingDown, State.Traversing, State.FreeFalling } },
     { State.Traversing, new[] { State.CliffHanging, State.FreeFalling } },
     { State.CliffArresting, new[] { State.CliffHanging, State.FreeFalling, State.Idle } },
-    { State.FreeFalling, new[] { State.CliffArresting, State.Idle, State.Walking, State.Running, State.Jumping } },
+    { State.FreeFalling, new[] { State.CliffArresting, State.CliffHanging, State.Idle, State.Walking, State.Running, State.Jumping } },
     { State.ReadingSign, new[] { State.Idle, State.Walking, State.Running } }
   };
 
@@ -220,7 +225,15 @@ public class Player : KinematicBody2D
   {
     if (!area.IsInGroup ("Player")) return;
 
-    RestAfterClimbingToNewLevel();
+    if (_stateMachine.Is (State.ClimbingUp)) RestAfterClimbingToNewLevel();
+  }
+
+  // ReSharper disable once UnusedMember.Global
+  public void _OnCliffEdgeExited (Node body)
+  {
+    if (!body.IsInGroup ("Player")) return;
+
+    _stateMachine.ToIf (State.CliffHanging, _stateMachine.Is (State.FreeFalling));
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -277,20 +290,24 @@ public class Player : KinematicBody2D
 
   private async void DropDownThrough (PhysicsBody2D body)
   {
+    _isDroppingDown = true;
     body.SetCollisionMaskBit (0, false);
     SetCollisionMaskBit (1, false);
     await ToSignal (GetTree().CreateTimer (_delta * 2, false), "timeout");
     body.SetCollisionMaskBit (0, true);
     SetCollisionMaskBit (1, true);
+    _isDroppingDown = false;
   }
 
   private async void DropDownThrough (TileMap tileMap, Vector2 collisionPosition)
   {
+    _isDroppingDown = true;
     tileMap.SetCollisionMaskBit (0, false);
     SetCollisionMaskBit (1, false);
     await ToSignal (GetTree().CreateTimer (SecondsToDropDownThroughTile (collisionPosition, tileMap), false), "timeout");
     tileMap.SetCollisionMaskBit (0, true);
     SetCollisionMaskBit (1, true);
+    _isDroppingDown = false;
   }
 
   private float SecondsToDropDownThroughTile (Vector2 collisionPosition, TileMap tileMap) =>
@@ -371,6 +388,7 @@ public class Player : KinematicBody2D
   {
     _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
     GlobalPosition = new Vector2 (952, -4032);
+    _sprite.Animation = IdleLeftAnimation;
   }
 
   private bool IsSpeedClimbing() => _stateMachine.Is (State.ClimbingUp) && IsEnergyKeyPressed();
@@ -461,6 +479,7 @@ public class Player : KinematicBody2D
     // @formatter:off
     if (_stateMachine.Is (State.Jumping) && WasJumpKeyReleased() && IsMovingUp()) _velocity.y = 0.0f;
     if (_stateMachine.Is (State.ClimbingUp)) _velocity.y = _sprite.Frame is 3 or 8 ? -VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
+    if (_stateMachine.Is (State.ClimbingDown)) _velocity.y = _sprite.Frame is 3 or 8 ? VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
     if (_stateMachine.Is (State.Traversing)) _velocity.y = 0.0f;
     if (_stateMachine.Is (State.CliffHanging)) _velocity.y = 0.0f;
     // @formatter:on
@@ -551,6 +570,7 @@ public class Player : KinematicBody2D
     "\nClimbing prep: " + _stateMachine.Is (State.ClimbingPrep) +
     "\nClimbing prep timer: " + _climbingPrepTimer.TimeLeft +
     "\nClimbing up: " + _stateMachine.Is (State.ClimbingUp) +
+    "\nClimbing down: " + _stateMachine.Is (State.ClimbingDown) +
     "\nIsSpeedClimbing: " + IsSpeedClimbing() +
     "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
     "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall +
@@ -588,9 +608,7 @@ public class Player : KinematicBody2D
   {
     _stateMachine = new StateMachine <State> (TransitionTable, InitialState);
     _stateMachine.OnTransitionTo (State.CliffHanging, () => _sprite.Animation = CliffHangingAnimation);
-    _stateMachine.OnTransitionTo (State.FreeFalling, () => _sprite.Animation = FreeFallingAnimation);
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
-    _stateMachine.OnTransition (State.ClimbingPrep, State.Idle, () => FlipHorizontally (_wasFlippedHorizontally));
     _stateMachine.OnTransitionTo (State.Traversing, () => _sprite.Animation = TraversingAnimation);
     _stateMachine.OnTransition (State.Walking, State.Idle, () => _sprite.Animation = IdleLeftAnimation);
     _stateMachine.OnTransition (State.Running, State.Idle, () => _sprite.Animation = IdleLeftAnimation);
@@ -637,6 +655,12 @@ public class Player : KinematicBody2D
       PrintLine ("Sound effects: Playing cliff arresting sound.");
     });
 
+    _stateMachine.OnTransition (State.ClimbingPrep, State.Idle, () =>
+    {
+      _sprite.Animation = IdleLeftAnimation;
+      FlipHorizontally (_wasFlippedHorizontally);
+    });
+
     _stateMachine.OnTransitionTo (State.ClimbingPrep, () =>
     {
       _sprite.Animation = ClimbingPrepAnimation;
@@ -669,6 +693,22 @@ public class Player : KinematicBody2D
       FlipHorizontally (false);
     });
 
+    _stateMachine.OnTransitionTo (State.ClimbingDown, () =>
+    {
+      _sprite.Animation = ClimbingDownAnimation;
+      FlipHorizontally (false);
+    });
+
+    _stateMachine.OnTransitionTo (State.FreeFalling, () =>
+    {
+      _sprite.Animation = FreeFallingAnimation;
+
+      if (!WasJumpKeyPressed()) return;
+
+      _letGo = true;
+    });
+
+    _stateMachine.OnTransitionFrom (State.FreeFalling, () => _letGo = false);
     _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
     _stateMachine.OnTransitionFrom (State.ReadingSign, StopReadingSign);
     _stateMachine.OnTransition (State.ReadingSign, State.Idle, () => AnimationDelay (IdleLeftAnimation, State.Idle));
@@ -679,8 +719,9 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsEnergyKeyPressed() && _energy > 0 && !IsHittingWall());
     _stateMachine.AddTrigger (State.Idle, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign && !_isResting);
-    _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
-    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && SignExists());
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs && !_isDroppingDown);
+    _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => !IsDownArrowPressed() && IsMovingDown() && !IsOnFloor());
+    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && SignExists() && !_isResting);
     _stateMachine.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Walking, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsEnergyKeyPressed() && _energy > 0 && IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Walking, State.Jumping, WasJumpKeyPressed);
@@ -696,15 +737,23 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
     _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall);
-    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasUpArrowReleased() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting || IsEnergyKeyPressed() && _energy == 0);
+    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting || IsEnergyKeyPressed() && _energy == 0);
+    _stateMachine.AddTrigger (State.ClimbingUp, State.CliffHanging, () => WasUpArrowReleased() && !IsDownArrowPressed() && (IsInCliffs || IsInGround));
+    _stateMachine.AddTrigger (State.ClimbingUp, State.ClimbingDown, () => WasUpArrowReleased() && IsDownArrowPressed() && (IsInCliffs || IsInGround));
+    _stateMachine.AddTrigger (State.ClimbingDown, State.CliffHanging, () => WasDownArrowReleased() && !IsUpArrowPressed() && (IsInCliffs || IsInGround));
+    _stateMachine.AddTrigger (State.ClimbingDown, State.Idle, IsOnFloor);
+    _stateMachine.AddTrigger (State.ClimbingDown, State.ClimbingUp, () => WasDownArrowReleased() && IsUpArrowPressed() && (IsInCliffs || IsInGround));
+    _stateMachine.AddTrigger (State.ClimbingDown, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsEnergyKeyPressed() && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsEnergyKeyPressed() && _energy > 0 && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging,()=> !IsOnFloor() && IsInGround && IsInCliffs && !_letGo && !IsTouchingCliffIce && !IsInFrozenWaterfall);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
-    _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasDownArrowPressedOnce);
+    _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, IsDownArrowPressed);
+    _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasDownArrowPressedOnce() || !IsInCliffs || IsTouchingCliffIce || IsInFrozenWaterfall);
+    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs || IsTouchingCliffIce || IsInFrozenWaterfall);
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);
