@@ -3,7 +3,6 @@ using Godot;
 using static Tools;
 using Input = Tools.Input;
 
-// TODO Bug: Climbing to cliff gap above waterfall still thinks IsFullyIntersectingCliffs is true.
 // TODO Stop polling and have event-based input state changes only.
 // TODO Check if item being used for cliff arresting is pickaxe. For now it's the default and only item.
 // TODO Create _isPreparingToCliffArrest, which is true when attempting cliff arresting, but falling hasn't
@@ -12,7 +11,6 @@ using Input = Tools.Input;
 // TODO   so that the pickaxe sinks into the cliff when CliffArrestingActivationVelocity is reached.
 // TODO   The cliff arresting sound effect will need to be adjusted as well to not begin until
 // TODO   _isPreparingToCliffArrest is complete (may resolve itself automatically).
-// TODO Climbing down? Or leave out?
 // Climbing terminology:
 // Cliff arresting: Using pickaxe to slow a cliff fall
 // Cliffhanging: Attached to a cliff above the ground, not moving
@@ -54,6 +52,11 @@ public class Player : KinematicBody2D
   [Export] public float CliffArrestingSoundLoopEndSeconds = 3.8f;
   [Export] public float CliffArrestingSoundVelocityPitchScaleModulation = 4.0f;
   [Export] public float CliffArrestingSoundMinPitchScale = 2.0f;
+  [Export] public float ClimbingUpToNewLevelRestTimeSeconds = 1.0f;
+  [Export] public float FinishedReadingSignAnimationDelaySeconds = 0.5f;
+  [Export] public int EnergyMeterUnits = 20;
+  [Export] public int EnergyMeterReplenishTimeSeconds = 10;
+  [Export] public int EnergyMeterDepletionTimeSeconds = 3;
   [Export] public State InitialState = State.Idle;
   // @formatter:on
 
@@ -101,6 +104,8 @@ public class Player : KinematicBody2D
   private Timer _energyTimer = null!;
   private Timer _climbingPrepTimer = null!;
   private int _energy;
+  private float _energyMeterReplenishRatePerUnit;
+  private float _energyMeterDepletionRatePerUnit;
   private bool _isFlippedHorizontally;
   private bool _wasFlippedHorizontally;
   private readonly List <string> _printLines = new();
@@ -112,13 +117,15 @@ public class Player : KinematicBody2D
   private bool _isDroppingDown;
   private bool _isResting;
   private bool _wasRunning;
+  private bool _wasInCliffEdge;
+  private bool _justRespawned;
   private Camera2D _camera;
   private RayCast2D _rayChest;
   private RayCast2D _rayFeet;
   private Sprite _readableSign;
   private TileMap _signsTileMap;
+  private string _currentAnimation;
   private bool _isInSign;
-  private bool _letGo;
   private float _delta;
   private Log _log;
 
@@ -167,6 +174,8 @@ public class Player : KinematicBody2D
     _energyTimer = GetNode <Timer> ("EnergyTimer");
     _climbingPrepTimer = GetNode <Timer> ("ClimbingReadyTimer");
     _energy = MaxEnergy;
+    _energyMeterReplenishRatePerUnit = (float)EnergyMeterReplenishTimeSeconds / EnergyMeterUnits;
+    _energyMeterDepletionRatePerUnit = (float)EnergyMeterDepletionTimeSeconds / EnergyMeterUnits;
     _sprite.Animation = IdleLeftAnimation;
     _sprite.Play();
     InitializeStateMachine();
@@ -178,6 +187,7 @@ public class Player : KinematicBody2D
     _stateMachine.Update();
     HorizontalVelocity();
     VerticalVelocity();
+    Animations();
     SoundEffects();
     if (Mathf.Abs (_velocity.x) < VelocityEpsilon) _velocity.x = 0.0f;
     if (Mathf.Abs (_velocity.y) < VelocityEpsilon) _velocity.y = 0.0f;
@@ -185,34 +195,20 @@ public class Player : KinematicBody2D
     CalculateFallingStats();
     PrintLine (DumpState());
     Print();
-  }
 
-  // ReSharper disable once UnusedMember.Global
-  public void _OnEnergyTimerTimeout()
-  {
-    if (!_stateMachine.Is (State.Running) && !_stateMachine.Is (State.ClimbingUp) && _energy == MaxEnergy)
+    if (_stateMachine.Is (State.ClimbingUp) && IsEnergyKeyPressed() && _energy > 0 &&
+        !Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterDepletionRatePerUnit))
     {
-      _energyTimer.Stop();
-
-      return;
+      _energyTimer.Start (_energyMeterDepletionRatePerUnit);
     }
 
-    if (_stateMachine.Is (State.Running) || IsSpeedClimbing() && _energy > 0)
+    if (_stateMachine.Is (State.ClimbingUp) && !IsEnergyKeyPressed() && _energy < MaxEnergy &&
+        !Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterReplenishRatePerUnit))
     {
-      _energy -= 1;
-      _energyMeter.Value = _energy;
-      _energyTimer.WaitTime = IsSpeedClimbing() ? 0.5f : _energyTimer.WaitTime;
-
-      return;
+      _energyTimer.Start (_energyMeterReplenishRatePerUnit);
     }
-
-    if (_stateMachine.Is (State.Running) || IsSpeedClimbing() || _energy == MaxEnergy) return;
-
-    _energy += 1;
-    _energyMeter.Value = _energy;
   }
 
-  // Godot input callback
   public override void _UnhandledInput (InputEvent @event)
   {
     if (IsReleased (Input.Text, @event)) _label.Visible = !_label.Visible;
@@ -221,19 +217,47 @@ public class Player : KinematicBody2D
   }
 
   // ReSharper disable once UnusedMember.Global
+  public void _OnEnergyTimerTimeout()
+  {
+    if (!_stateMachine.Is (State.Running) && !IsSpeedClimbing() && _energy == MaxEnergy)
+    {
+      _energyTimer.Stop();
+
+      return;
+    }
+
+    if ((_stateMachine.Is (State.Running) || IsSpeedClimbing()) && _energy > 0)
+    {
+      _energy -= 1;
+      _energyMeter.Value = _energy;
+
+      return;
+    }
+
+    if ((_stateMachine.Is (State.Running) || IsSpeedClimbing()) && _energy == MaxEnergy) return;
+
+    _energy += 1;
+    _energyMeter.Value = _energy;
+  }
+
+  // ReSharper disable once UnusedMember.Global
   public void _OnCliffsGroundExited (Area2D area)
   {
-    if (!area.IsInGroup ("Player")) return;
+    if (!area.IsInGroup ("Player") || !_stateMachine.Is (State.ClimbingUp)) return;
 
-    if (_stateMachine.Is (State.ClimbingUp)) RestAfterClimbingToNewLevel();
+    _log.Debug ("Cliff grounds exited");
+
+    RestAfterClimbingToNewLevel();
   }
 
   // ReSharper disable once UnusedMember.Global
   public void _OnCliffEdgeExited (Node body)
   {
-    if (!body.IsInGroup ("Player")) return;
+    if (!body.IsInGroup ("Player") || !_stateMachine.Is (State.FreeFalling) || _justRespawned) return;
 
-    _stateMachine.ToIf (State.CliffHanging, _stateMachine.Is (State.FreeFalling));
+    _log.Debug ("Cliff edge exited");
+
+    _wasInCliffEdge = true;
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -281,13 +305,6 @@ public class Player : KinematicBody2D
     }
   }
 
-  private async void RestAfterClimbingToNewLevel()
-  {
-    _isResting = true;
-    await ToSignal (GetTree().CreateTimer (1.0f, false), "timeout");
-    _isResting = false;
-  }
-
   private async void DropDownThrough (PhysicsBody2D body)
   {
     _isDroppingDown = true;
@@ -312,6 +329,13 @@ public class Player : KinematicBody2D
 
   private float SecondsToDropDownThroughTile (Vector2 collisionPosition, TileMap tileMap) =>
     TileNamesToDropdownFrames[GetIntersectingTileName (collisionPosition, tileMap)] * _delta;
+
+  private async void RestAfterClimbingToNewLevel()
+  {
+    _isResting = true;
+    await ToSignal (GetTree().CreateTimer (ClimbingUpToNewLevelRestTimeSeconds, false), "timeout");
+    _isResting = false;
+  }
 
   private bool SignExists()
   {
@@ -389,6 +413,7 @@ public class Player : KinematicBody2D
     _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
     GlobalPosition = new Vector2 (952, -4032);
     _sprite.Animation = IdleLeftAnimation;
+    _justRespawned = true;
   }
 
   private bool IsSpeedClimbing() => _stateMachine.Is (State.ClimbingUp) && IsEnergyKeyPressed();
@@ -509,6 +534,48 @@ public class Player : KinematicBody2D
     Scale = scale;
   }
 
+  private async void Animations()
+  {
+    if (_currentAnimation == _sprite.Animation) return;
+
+    _currentAnimation = _sprite.Animation;
+
+    // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
+    await ToSignal (GetTree(), "idle_frame");
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 1/Area2D").SetBlockSignals (true);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 2/Area2D").SetBlockSignals (true);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 3/Area2D").SetBlockSignals (true);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 4/Area2D").SetBlockSignals (true);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Bottom Ground Static Collider/Area2D").SetBlockSignals (true);
+    await ToSignal (GetTree(), "idle_frame");
+    _sprite.GetNode <Area2D> ("Area2D").SetBlockSignals (true);
+    GetNode <Area2D> ("../Upper Cliffs").SetBlockSignals (true);
+    GetNode <Area2D> ("../Upper Cliffs/Waterfall").SetBlockSignals (true);
+    GetNode <Area2D> ("../Lower Cliffs").SetBlockSignals (true);
+    // End workaround
+
+    foreach (var node in _sprite.GetNode <Area2D> ("Area2D").GetChildren())
+    {
+      if (node is not CollisionShape2D collider) continue;
+
+      collider.Disabled = collider.Name != _sprite.Animation;
+    }
+
+    // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
+    await ToSignal (GetTree(), "idle_frame");
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 1/Area2D").SetBlockSignals (false);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 2/Area2D").SetBlockSignals (false);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 3/Area2D").SetBlockSignals (false);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 4/Area2D").SetBlockSignals (false);
+    GetNode <Area2D> ("../Upper Cliffs/Upper Cliffs Bottom Ground Static Collider/Area2D").SetBlockSignals (false);
+    await ToSignal (GetTree(), "idle_frame");
+    _sprite.GetNode <Area2D> ("Area2D").SetBlockSignals (false);
+    GetNode <Area2D> ("../Upper Cliffs").SetBlockSignals (false);
+    GetNode <Area2D> ("../Upper Cliffs/Waterfall").SetBlockSignals (false);
+    GetNode <Area2D> ("../Lower Cliffs").SetBlockSignals (false);
+    // End workaround
+  }
+
   private void SoundEffects()
   {
     if (_stateMachine.Is (State.CliffArresting))
@@ -538,9 +605,9 @@ public class Player : KinematicBody2D
     }
   }
 
-  private async void AnimationDelay (string toAnimation, State toState)
+  private async void AnimationDelay (string toAnimation, State toState, float delaySeconds)
   {
-    await ToSignal (GetTree().CreateTimer (0.5f, false), "timeout");
+    await ToSignal (GetTree().CreateTimer (delaySeconds, false), "timeout");
     if (_stateMachine.Is (toState)) _sprite.Animation = toAnimation;
   }
 
@@ -582,7 +649,12 @@ public class Player : KinematicBody2D
     "\nIsHittingWall(): " + IsHittingWall() +
     "\nIsInCliffs: " + IsInCliffs +
     "\nIsInGround: " + IsInGround +
-    "\nIsFullyIntersectingCliffs: " + IsInCliffs +
+    "\n_isInSign: " + _isInSign +
+    "\n_isResting: " + _isResting +
+    "\n_wasRunning: " + _wasRunning +
+    "\n_wasInCliffEdge: " + _wasInCliffEdge +
+    "\n_isDroppingDown: " + _isDroppingDown +
+    "\n_justRespawned: " + _justRespawned +
     "\nIsInMotion(): " + IsMoving() +
     "\nIsMovingDown(): " + IsMovingDown() +
     "\nIsMovingUp(): " + IsMovingUp() +
@@ -607,22 +679,38 @@ public class Player : KinematicBody2D
   private void InitializeStateMachine()
   {
     _stateMachine = new StateMachine <State> (TransitionTable, InitialState);
-    _stateMachine.OnTransitionTo (State.CliffHanging, () => _sprite.Animation = CliffHangingAnimation);
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
     _stateMachine.OnTransitionTo (State.Traversing, () => _sprite.Animation = TraversingAnimation);
     _stateMachine.OnTransition (State.Walking, State.Idle, () => _sprite.Animation = IdleLeftAnimation);
     _stateMachine.OnTransition (State.Running, State.Idle, () => _sprite.Animation = IdleLeftAnimation);
+    _stateMachine.OnTransition (State.FreeFalling, State.Idle, () => _sprite.Animation = IdleLeftAnimation);
+    _stateMachine.OnTransitionTo (State.FreeFalling, () => _sprite.Animation = FreeFallingAnimation);
     _stateMachine.OnTransition (State.CliffArresting, State.Idle, () => _sprite.Animation = IdleLeftAnimation);
 
     _stateMachine.OnTransitionFrom (State.Idle, () =>
     {
-      if (IsInGroup ("Perchable")) RemoveFromGroup ("Perchable");
+      if (IsInGroup ("Perchable Parent")) RemoveFromGroup ("Perchable Parent");
+      if (_sprite.IsInGroup ("Perchable")) _sprite.RemoveFromGroup ("Perchable");
     });
 
     _stateMachine.OnTransitionTo (State.Idle, () =>
     {
-      if (!IsInGroup ("Perchable")) AddToGroup ("Perchable");
+      if (!IsInGroup ("Perchable Parent")) AddToGroup ("Perchable Parent");
+      if (!_sprite.IsInGroup ("Perchable")) _sprite.AddToGroup ("Perchable");
       _wasRunning = false;
+    });
+
+    _stateMachine.OnTransitionFrom (State.CliffHanging, () =>
+    {
+      if (IsInGroup ("Perchable Parent")) RemoveFromGroup ("Perchable Parent");
+      if (_sprite.IsInGroup ("Perchable")) _sprite.RemoveFromGroup ("Perchable");
+    });
+
+    _stateMachine.OnTransitionTo (State.CliffHanging, () =>
+    {
+      _sprite.Animation = CliffHangingAnimation;
+      if (!IsInGroup ("Perchable Parent")) AddToGroup ("Perchable Parent");
+      if (!_sprite.IsInGroup ("Perchable")) _sprite.AddToGroup ("Perchable");
     });
 
     _stateMachine.OnTransitionTo (State.Walking, () =>
@@ -671,25 +759,24 @@ public class Player : KinematicBody2D
 
     _stateMachine.OnTransitionFrom (State.Running, () =>
     {
-      if (_energy < MaxEnergy) _energyTimer.Start (0.5f);
+      if (_energy < MaxEnergy) _energyTimer.Start (_energyMeterReplenishRatePerUnit);
     });
 
     _stateMachine.OnTransitionTo (State.Running, () =>
     {
       _sprite.Animation = RunAnimation;
-      _energyTimer.Start (0.15f);
+      _energyTimer.Start (_energyMeterDepletionRatePerUnit);
       _wasRunning = true;
     });
 
     _stateMachine.OnTransitionFrom (State.ClimbingUp, () =>
     {
-      if (_energy < MaxEnergy) _energyTimer.Start (0.5f);
+      if (_energy < MaxEnergy) _energyTimer.Start (_energyMeterReplenishRatePerUnit);
     });
 
     _stateMachine.OnTransitionTo (State.ClimbingUp, () =>
     {
       _sprite.Animation = ClimbingUpAnimation;
-      _energyTimer.Start (0.15f);
       FlipHorizontally (false);
     });
 
@@ -699,22 +786,19 @@ public class Player : KinematicBody2D
       FlipHorizontally (false);
     });
 
-    _stateMachine.OnTransitionTo (State.FreeFalling, () =>
+    _stateMachine.OnTransitionFrom (State.FreeFalling, () =>
     {
-      _sprite.Animation = FreeFallingAnimation;
-
-      if (!WasJumpKeyPressed()) return;
-
-      _letGo = true;
+      _wasInCliffEdge = false;
+      _justRespawned = false;
     });
 
-    _stateMachine.OnTransitionFrom (State.FreeFalling, () => _letGo = false);
-    _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
+    // @formatter:off
+
     _stateMachine.OnTransitionFrom (State.ReadingSign, StopReadingSign);
-    _stateMachine.OnTransition (State.ReadingSign, State.Idle, () => AnimationDelay (IdleLeftAnimation, State.Idle));
+    _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
+    _stateMachine.OnTransition (State.ReadingSign, State.Idle, () => AnimationDelay (IdleLeftAnimation, State.Idle, FinishedReadingSignAnimationDelaySeconds));
 
     // TODO Move conditions into state machine conditions, leaving only input for triggers.
-    // @formatter:off
     _stateMachine.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsEnergyKeyPressed());
     _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsEnergyKeyPressed() && _energy > 0 && !IsHittingWall());
     _stateMachine.AddTrigger (State.Idle, State.Jumping, WasJumpKeyPressed);
@@ -748,12 +832,12 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsEnergyKeyPressed() && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsEnergyKeyPressed() && _energy > 0 && IsOnFloor());
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
-    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging,()=> !IsOnFloor() && IsInGround && IsInCliffs && !_letGo && !IsTouchingCliffIce && !IsInFrozenWaterfall);
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && (IsInCliffs || IsInGround));
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, IsDownArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs || IsTouchingCliffIce || IsInFrozenWaterfall);
+    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !IsInGround || IsTouchingCliffIce || IsInFrozenWaterfall);
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);
@@ -761,6 +845,7 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.ReadingSign, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
     _stateMachine.AddTrigger (State.ReadingSign, State.Walking, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsEnergyKeyPressed() && _isInSign);
     _stateMachine.AddTrigger (State.ReadingSign, State.Running, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsEnergyKeyPressed() && _energy > 0 && _isInSign);
+
     // @formatter:on
   }
 }

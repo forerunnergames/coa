@@ -39,13 +39,17 @@ public static class PerchablesFactory
         new(new Vector2 (104, 16), new Vector2 (8, 8)),
         new(new Vector2 (112, 24), new Vector2 (8, 8)),
         new(new Vector2 (120, 32), new Vector2 (8, 8))}},
-    { "Player", new List <Rect2> {
+    { "player_idle_left", new List <Rect2> {
         new(new Vector2 (-40, -16), new Vector2 (8, 8)),
         new(new Vector2 (-32, -40), new Vector2 (8, 8)),
         new(new Vector2 (-24, -48), new Vector2 (40, 8)),
         new(new Vector2 (24, -48), new Vector2 (24, 8)),
-        new(new Vector2 (50, -40), new Vector2 (8, 8)),
-        new(new Vector2 (58, -32), new Vector2 (8, 8))}}
+        new(new Vector2 (48, -40), new Vector2 (8, 8)),
+        new(new Vector2 (56, -32), new Vector2 (8, 8))}},
+    { "player_cliff_hanging", new List <Rect2> {
+        new(new Vector2 (-40, -64), new Vector2 (24, 8)),
+        new(new Vector2 (-16, -56), new Vector2 (24, 8)),
+        new(new Vector2 (8, -64), new Vector2 (24, 8))}}
   };
   // @formatter:on
 
@@ -53,11 +57,10 @@ public static class PerchablesFactory
   {
     return node switch
     {
-      KinematicBody2D => new List <IPerchable>
-      {
-        new KinematicPerch (node.Name, new Vector2 (node.Position), drawPrefs, new List <Rect2> (NamesToPerchableAreas[node.Name]),
-          positionEpsilon)
-      },
+      AnimatedSprite sprite => new List <IPerchable> (from string animationName in sprite.Frames.GetAnimationNames()
+        where NamesToPerchableAreas.ContainsKey (animationName)
+        select new AnimatedSpritePerch (animationName, new Vector2 (node.GlobalPosition), drawPrefs,
+          new List <Rect2> (NamesToPerchableAreas[animationName]), positionEpsilon)),
       TileMap tileMap => new List <IPerchable> (tileMap.GetUsedCells().Cast <Vector2>()
         .Select (cell => new { cell, tileName = GetTileCellName (cell, tileMap) }).Select (@t =>
           new TilePerch (tileMap.Name, @t.tileName, GetTileCellGlobalPosition (@t.cell, tileMap), @t.cell, drawPrefs,
