@@ -133,6 +133,7 @@ public class Butterfly : AnimatedSprite
   private readonly float _ninety = Mathf.Deg2Rad (90);
   private readonly List <IPerchable> _perches = new();
   private readonly List <IPerchable> _perchesUnvisited = new();
+  private readonly List <IPerchable> _unperchablePerches = new();
   private readonly List <Node2D> _perchableNodes = new();
   private readonly PerchableDrawPrefs _perchableDrawPrefs = new();
   private Log _log;
@@ -183,29 +184,28 @@ public class Butterfly : AnimatedSprite
   {
     if (!Visible) return;
 
+    _perchableNodes.Clear();
     foreach (Node2D node in GetTree().GetNodesInGroup ("Perchable")) _perchableNodes.Add (node);
 
     foreach (var node in _perchableNodes)
     {
-      if (node is not KinematicBody2D) continue;
+      if (node is not AnimatedSprite sprite) continue;
 
-      foreach (var perch in _perches.Where (x => x.Name == node.Name))
+      foreach (var perch in _perches.Where (x => x.Name == sprite.Animation))
       {
-        if (!AreAlmostEqual (perch.GlobalOrigin, node.Position, PositionEpsilon))
+        if (!AreAlmostEqual (perch.GlobalOrigin, node.GlobalPosition, PositionEpsilon))
         {
-          _log.Debug ($"Updating outdated perch position from: {perch.GlobalOrigin} to  {node.Position}");
-          perch.GlobalOrigin = node.Position;
+          _log.Debug ($"Updating outdated perch position from: {perch.GlobalOrigin} to  {node.GlobalPosition}");
+          perch.GlobalOrigin = node.GlobalPosition;
         }
 
+        // @formatter:off
         // x & y are intentionally reversed here, see: https://github.com/godotengine/godot/issues/17405
-        if (Mathf.Sign (node.Scale.y) == -1 && !perch.FlippedHorizontally)
-        {
-          perch.FlipHorizontally();
-        }
-
-        if (Mathf.Sign (node.Scale.x) == -1 && !perch.FlippedVertically) perch.FlipVertically();
-        if (Mathf.Sign (node.Scale.y) == 1 && perch.FlippedHorizontally) perch.FlipHorizontally();
-        if (Mathf.Sign (node.Scale.x) == 1 && perch.FlippedVertically) perch.FlipVertically();
+        if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.y) == -1 && !perch.FlippedHorizontally) perch.FlipHorizontally();
+        if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.x) == -1 && !perch.FlippedVertically) perch.FlipVertically();
+        if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.y) == 1 && perch.FlippedHorizontally) perch.FlipHorizontally();
+        if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.x) == 1 && perch.FlippedVertically) perch.FlipVertically();
+        // @formatter:on
 
         if (!perch.Disabled) continue;
 
@@ -214,21 +214,27 @@ public class Butterfly : AnimatedSprite
       }
     }
 
-    foreach (var perch in _perches.Where (x =>
-      _perchableNodes.All (y => x.Name != y.Name && !x.HasParentName (y.Name)) && !x.Disabled))
-    {
-      _log.Debug ($"Disabling un-perchable perch: {perch}");
-      _log.Debug ($"Perchable nodes: {_perchableNodes.Count}.");
-      perch.Disabled = true;
+    _unperchablePerches.Clear();
 
-      if (_perch.Name != perch.Name) continue;
+    _unperchablePerches.AddRange (_perches.Where (x => _perchableNodes.All (y =>
+      (y is AnimatedSprite sprite && x.Name != sprite.Animation || y is TileMap && !x.HasParentName (y.Name)) && !x.Disabled)));
+
+    // Don't disable the default perch if it would cause all perches to become disabled.
+    _unperchablePerches.RemoveAll (x => _unperchablePerches.Count == _perches.Count && x.Name == "Default");
+
+    foreach (var unperchablePerch in _unperchablePerches)
+    {
+      _log.Debug ($"Disabling un-perchable perch: {unperchablePerch}");
+      _log.Debug ($"Perchable nodes: {_perchableNodes.Count}.");
+      unperchablePerch.Disabled = true;
+
+      if (_perch.Name != unperchablePerch.Name) continue;
 
       var previousState = _stateMachine.GetState();
       _stateMachine.To (State.Flying);
       if (previousState != State.Idle) StartMoving();
     }
 
-    _perchableNodes.Clear();
     if (_stateMachine.Is (State.Flying)) Fly (delta);
     if (_stateMachine.Is (State.Evading)) Evade (delta);
     if (_stateMachine.Is (State.Perching)) Perch (delta);
@@ -243,18 +249,29 @@ public class Butterfly : AnimatedSprite
   }
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnPerchingColliderEntered (Node body)
+  public void _OnPerchingBodyColliderEntered (Node body)
   {
     if (!body.IsInGroup ("Perchable")) return;
 
-    _log.All ($"Entering perch: {NameOf (body, Position)}.");
+    _log.All ($"Entering body perch: {NameOf (body, Position)}.");
     _perchingBody = body;
   }
 
   // ReSharper disable once UnusedMember.Global
+  public void _OnPerchingAreaColliderEntered (Area2D area)
+  {
+    if (!area.IsInGroup ("Player") || area.GetParent() is not AnimatedSprite sprite) return;
+
+    _log.All ($"Entering area perch: {NameOf (sprite, Position)}.");
+    _perchingBody = sprite;
+  }
+
+  // @formatter:off
+
+  // ReSharper disable once UnusedMember.Global
   public void _OnObstacleColliderEntered (Node body)
   {
-    if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Ground")) return;
+    if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Perchable Parent") || body.IsInGroup ("Ground")) return;
 
     _log.Debug ($"Encountered obstacle: {NameOf (body, Position)}.");
     _stateMachine.To (State.Evading);
@@ -263,11 +280,13 @@ public class Butterfly : AnimatedSprite
   // ReSharper disable once UnusedMember.Global
   public void _OnObstacleColliderExited (Node body)
   {
-    if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Ground")) return;
+    if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Perchable Parent") || body.IsInGroup ("Ground")) return;
 
     _log.Debug ($"Evaded obstacle: {NameOf (body, Position)}.");
     _stateMachine.To (State.Flying);
   }
+
+  // @formatter:on
 
   private void Fly (float delta)
   {
@@ -349,10 +368,10 @@ public class Butterfly : AnimatedSprite
 
         break;
       }
-      case KinematicBody2D body:
+      case AnimatedSprite sprite:
       {
-        position = body.Position;
-        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (_perchingBody.Name, position));
+        position = sprite.GlobalPosition;
+        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (sprite.Animation, position));
 
         break;
       }

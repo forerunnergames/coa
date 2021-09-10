@@ -10,6 +10,7 @@ public class CatmullRom
   public Color DrawColor { get => _drawColor == null ? Colors.White : _drawColor[0]; set => _drawColor = new[] { value }; }
   public bool DrawPath { get; set; }
 
+  // ReSharper disable once MemberCanBePrivate.Global
   public List <Vector2> Path
   {
     get => _path;
@@ -31,6 +32,7 @@ public class CatmullRom
 
   public CatmullRom (List <Vector2> path, Transform globalTransform)
   {
+    if (path.Count < 4) path = FixPartialPath (path);
     _globalTransform = globalTransform;
     Path = path;
   }
@@ -118,5 +120,34 @@ public class CatmullRom
 
     _splineLengths.Add (splineLength);
     Length = _splineLengths.Sum();
+  }
+
+  private static List <Vector2> FixPartialPath (List <Vector2> path)
+  {
+    if (path.Count == 0)
+    {
+      for (var i = 0; i < 4; ++i)
+      {
+        path.Add (Vector2.Zero);
+      }
+    }
+
+    if (path.Count == 1)
+    {
+      for (var i = 0; i < 3; ++i)
+      {
+        path.Add (path[0]);
+      }
+    }
+
+    if (path.Count == 2)
+    {
+      path.Insert (0, path[0]);
+      path.Add (path[2]);
+    }
+
+    if (path.Count == 3) path.Insert (1, path[1]);
+
+    return path;
   }
 }

@@ -42,6 +42,7 @@ public abstract class AbstractPerch : IPerchable
     _positionEpsilon = positionEpsilon;
     DrawPrefs = drawPrefs;
     GlobalOrigin = globalOrigin;
+    UpdateGlobalPerchableAreas (GlobalOrigin);
   }
 
   public void Draw (DrawRect draw, Vector2 perchPoint, GetLocalTransform getLocalTransform, GetGlobalScale getGlobalScale)

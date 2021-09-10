@@ -3,11 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-// TODO Implement State Conditions for entering / exiting
 // TODO Implement per-frame delegate actions that repeat while in a specific state.
-// TODO Automatically transition states if exit condition is true and only one transition has true enter condition
-// TODO if (MustTransitionFrom (State.CliffHanging) &&
-// TODO AllTransitionsInvalidExcept (State.FreeFalling)) // then transition to FreeFall
 // 1. Child states can be pushed and popped from a parent state.
 // 2. Child state can transition to new parent state.
 // 3. Parent states cannot be pushed / popped.

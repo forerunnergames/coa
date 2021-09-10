@@ -205,7 +205,7 @@ public static class Tools
       return Vector2.Zero;
     }
 
-    return collisionRect.Extents;
+    return collisionRect.Extents * area.GlobalScale.Abs();
   }
 
   public static Vector2 RandomPointIn (Rect2 rect, RandomNumberGenerator rng, Vector2 multiple)
@@ -245,6 +245,234 @@ public static class Tools
   public static bool IsPositionInRange (Vector2 pos1, Vector2 pos2, Vector2 range) => Mathf.Abs(pos1.x - pos2.x) <= range.Abs().x && Mathf.Abs(pos1.y - pos2.y) <= range.Abs().y;
   public static Vector2 RandomizeRange (RandomNumberGenerator rng, Vector2 range) => new(rng.RandiRange ((int)-range.x, (int)range.x), rng.RandiRange ((int)-range.y, (int)range.y));
   private static void OnWrongCollisionShape (Node node, Shape2D shape) => GD.PrintErr (node.Name + " collision shape must be a " + typeof (RectangleShape2D) + ", not a " + shape.GetType());
+  public static bool IsEnclosedBy (Rect2 original, IReadOnlyCollection <Rect2> overlaps) => overlaps.Aggregate (new List <Rect2> { original }, (x, _) => GetUncoveredRects (x, overlaps)).Count == 0;
+  public static bool IsEnclosedBy (Rect2 rect1, Rect2 rect2) => rect1.Position.x >= rect2.Position.x && rect1.End.x <= rect2.End.x && rect1.Position.y >= rect2.Position.y && rect1.End.y <= rect2.End.y;
   public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) => e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
   // @formatter:on
+
+  private static List <Rect2> GetUncoveredRects (IEnumerable <Rect2> originals, IReadOnlyCollection <Rect2> overlaps)
+  {
+    return originals.Where (x => !overlaps.Any (y => IsEnclosedBy (x, y))).Aggregate (new List <Rect2>(),
+      (a, x) => overlaps.Any (y => x.Intersects (y))
+        ? overlaps.Where (y => x.Intersects (y)).Aggregate (a, (b, y) => b.Union (GetUncoveredRects (x, y)).ToList())
+        : a.Union (new List <Rect2> { x }).ToList());
+  }
+
+  private static IEnumerable <Rect2> GetUncoveredRects (Rect2 original, Rect2 overlap)
+  {
+    overlap = original.Clip (overlap);
+    List <Rect2> uncoveredRects = new();
+    var x1 = overlap.Position.x;
+    var y1 = overlap.Position.y;
+    var x2 = overlap.End.x;
+    var y2 = overlap.End.y;
+    var x3 = original.Position.x;
+    var y3 = original.Position.y;
+    var x4 = original.End.x;
+    var y4 = original.End.y;
+    var w1 = overlap.Size.x;
+    var w2 = original.Size.x;
+    var w3 = w2 - w1;
+    var w4 = x4 - x2;
+    var w5 = x1 - x3;
+    var h1 = overlap.Size.y;
+    var h2 = original.Size.y;
+    var h3 = h2 - h1;
+    var h4 = y4 - y2;
+    var h5 = y1 - y3;
+    var left = Mathf.IsEqualApprox (x1, x3);
+    var right = Mathf.IsEqualApprox (x2, x4);
+    var top = Mathf.IsEqualApprox (y1, y3);
+    var bottom = Mathf.IsEqualApprox (y2, y4);
+    float x;
+    float y;
+    float w;
+    float h;
+
+    // ReSharper disable once ConvertIfStatementToSwitchStatement
+    if (left && right && top)
+    {
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (left && right && bottom)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (left && top && bottom)
+    {
+      x = x2;
+      y = y3;
+      w = w3;
+      h = h2;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (right && top && bottom)
+    {
+      x = x3;
+      y = y3;
+      w = w3;
+      h = h2;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (left && right)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h5;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h4;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (top && bottom)
+    {
+      x = x3;
+      y = y3;
+      w = w5;
+      h = h2;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x2;
+      y = y3;
+      w = w4;
+      h = h2;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (left && top)
+    {
+      x = x2;
+      y = y3;
+      w = w3;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (right && top)
+    {
+      x = x3;
+      y = y3;
+      w = w3;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (left && bottom)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x2;
+      y = y1;
+      w = w3;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (right && bottom)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y1;
+      w = w3;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (top)
+    {
+      x = x3;
+      y = y3;
+      w = w5;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x2;
+      y = y3;
+      w = w4;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (bottom)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h3;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y1;
+      w = w5;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x2;
+      y = y1;
+      w = w4;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (left)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h5;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x1;
+      y = y1;
+      w = w3;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h4;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+    else if (right)
+    {
+      x = x3;
+      y = y3;
+      w = w2;
+      h = h5;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y1;
+      w = w3;
+      h = h1;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+      x = x3;
+      y = y2;
+      w = w2;
+      h = h4;
+      uncoveredRects.Add (new Rect2 (x, y, w, h));
+    }
+
+    return uncoveredRects;
+  }
 }
