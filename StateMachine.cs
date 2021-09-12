@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 // TODO Implement per-frame delegate actions that repeat while in a specific state.
+// TODO Implement Godot callback triggers or allow the state machine to register / listen for emitted signals.
 // 1. Child states can be pushed and popped from a parent state.
 // 2. Child state can transition to new parent state.
 // 3. Parent states cannot be pushed / popped.
@@ -14,7 +15,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private T _currentState;
   private T _parentState;
   private readonly T _initialState;
-  private static readonly T AnyState = (T) (object) -1;
+  private static readonly T AnyState = (T)(object)-1;
   private readonly Dictionary <T, HashSet <T>> _transitionTable;
   private readonly Stack <T> _childStates = new();
   private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionAction>> _actions = new();
@@ -232,15 +233,11 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       return false;
     }
 
-    // ReSharper disable once InvertIf
-    if (!CanTransitionTo (to))
-    {
-      _log.Warn ($"Ignoring invalid transition from {ToString (_currentState)} to {ToString (to)}.");
+    if (CanTransitionTo (to)) return true;
 
-      return false;
-    }
+    _log.Warn ($"Ignoring invalid transition from {ToString (_currentState)} to {ToString (to)}.");
 
-    return true;
+    return false;
   }
 
   private void ExecuteChangeState (T to)

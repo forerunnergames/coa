@@ -40,10 +40,7 @@ public static class Tools
     { Input.Energy, new[] { "energy" } }
   };
 
-  // ReSharper disable once InconsistentNaming
   public delegate void DrawPrimitive (Vector2[] points, Color[] colors, Vector2[] uvs);
-
-  // ReSharper disable once InconsistentNaming
   public delegate void DrawRect (Rect2 rect, Color color, bool filled);
   public delegate Transform GetLocalTransform();
   public delegate Vector2 Transform (Vector2 point);
@@ -85,7 +82,6 @@ public static class Tools
     var left = IsLeftArrowPressed();
     var right = IsRightArrowPressed();
 
-    // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
     return arrow switch
     {
       Input.Horizontal => up || down,
@@ -94,7 +90,7 @@ public static class Tools
       Input.Down => left || right || up,
       Input.Left => right || up || down,
       Input.Right => left || up || down,
-      _ => throw new ArgumentOutOfRangeException ($"Unsupported arrow input type: {nameof (arrow)}")
+      _ => false
     };
   }
 
@@ -193,21 +189,6 @@ public static class Tools
     }
   }
 
-  public static Vector2 GetExtents (Area2D area, string colliderName)
-  {
-    var collisionShape = area.GetNode <CollisionShape2D> (colliderName);
-
-    // ReSharper disable once InvertIf
-    if (collisionShape.Shape is not RectangleShape2D collisionRect)
-    {
-      OnWrongCollisionShape (area, collisionShape.Shape);
-
-      return Vector2.Zero;
-    }
-
-    return collisionRect.Extents * area.GlobalScale.Abs();
-  }
-
   public static Vector2 RandomPointIn (Rect2 rect, RandomNumberGenerator rng, Vector2 multiple)
   {
     var p = rect.Position - Vector2.One;
@@ -220,35 +201,66 @@ public static class Tools
     return p;
   }
 
-  public static string GetIntersectingTileName (Vector2 pos, TileMap t)
+  public static Rect2 GetAreaColliderRect (Area2D area, CollisionShape2D collider)
   {
-    var id = GetIntersectingTileId (pos, t);
+    if (!area.HasNode (collider.Name) || collider.Shape is not RectangleShape2D rect) return new Rect2();
+
+    var extents = rect.Extents * area.GlobalScale.Abs();
+
+    return new Rect2 (collider.GlobalPosition - extents, extents * 2);
+  }
+
+  public static string GetTileName (Vector2 cell, TileMap t)
+  {
+    var id = t.GetCellv (cell);
 
     return id != -1 ? t.TileSet.TileGetName (id) : "";
   }
 
-  public static string NameOf (Node body, Vector2 pos)
+  public static Vector2 GetTileCellAtCenterOf (Area2D area, CollisionShape2D collider, TileMap t)
   {
-    var tileName = body is TileMap tileMap ? GetIntersectingTileName (pos, tileMap) : "";
+    var rect = GetAreaColliderRect (area, collider);
 
-    return tileName.Empty() ? body?.Name : tileName;
+    return GetTileCellAtAnyOf (new List <Vector2> { t.WorldToMap (t.ToLocal (rect.Position + rect.Size / 2)) }, t);
+  }
+
+  public static Vector2 GetIntersectingTileCell (Area2D area, CollisionShape2D collider, TileMap t)
+  {
+    var rect = GetAreaColliderRect (area, collider);
+
+    var cornerCells = new List <Vector2>
+    {
+      t.WorldToMap (t.ToLocal (rect.Position)),
+      t.WorldToMap (t.ToLocal (new Vector2 (rect.End.x - 1, rect.Position.y))),
+      t.WorldToMap (t.ToLocal (new Vector2 (rect.Position.x, rect.End.y - 1))),
+      t.WorldToMap (t.ToLocal (rect.End - Vector2.One))
+    };
+
+    return GetTileCellAtAnyOf (cornerCells, t);
   }
 
   // @formatter:off
-  public static Vector2 GetCellCenterOffset (TileMap t) => t.CellSize * t.GlobalScale / 2;
-  public static bool IsIntersectingAnyTile (Vector2 pos, TileMap t) => GetIntersectingTileId (pos, t) != -1;
-  public static int GetIntersectingTileId (Vector2 pos, TileMap t) => t.GetCellv (GetIntersectingTileCell (pos, t));
-  public static Vector2 GetIntersectingTileCell (Vector2 pos, TileMap t) => t.WorldToMap (t.ToLocal (pos));
-  public static Vector2 GetTileCellGlobalPosition (Vector2 cell, TileMap t) => t.ToGlobal (t.MapToWorld (cell));
-  public static string GetTileCellName (Vector2 cell, TileMap t) => GetIntersectingTileName (GetTileCellGlobalPosition (cell, t), t);
-  public static Vector2 GetIntersectingTileCellGlobalPosition (Vector2 pos, TileMap t) => t.ToGlobal (t.MapToWorld (t.WorldToMap (t.ToLocal (pos))));
-  public static bool IsPositionInRange (Vector2 pos1, Vector2 pos2, Vector2 range) => Mathf.Abs(pos1.x - pos2.x) <= range.Abs().x && Mathf.Abs(pos1.y - pos2.y) <= range.Abs().y;
-  public static Vector2 RandomizeRange (RandomNumberGenerator rng, Vector2 range) => new(rng.RandiRange ((int)-range.x, (int)range.x), rng.RandiRange ((int)-range.y, (int)range.y));
-  private static void OnWrongCollisionShape (Node node, Shape2D shape) => GD.PrintErr (node.Name + " collision shape must be a " + typeof (RectangleShape2D) + ", not a " + shape.GetType());
+  public static bool LessThan (Vector2 v1, Vector2 v2) => v1.x < v2.x && v1.y < v2.y;
+  public static bool GreaterThan (Vector2 v1, Vector2 v2) => v1.x > v2.x && v1.y > v2.y;
+  public static bool LessThanOrEqual (Vector2 v1, Vector2 v2) => v1.x <= v2.x && v1.y <= v2.y;
+  public static bool GreaterThanOrEqual (Vector2 v1, Vector2 v2) => v1.x >= v2.x && v1.y >= v2.y;
   public static bool IsEnclosedBy (Rect2 original, IReadOnlyCollection <Rect2> overlaps) => overlaps.Aggregate (new List <Rect2> { original }, (x, _) => GetUncoveredRects (x, overlaps)).Count == 0;
   public static bool IsEnclosedBy (Rect2 rect1, Rect2 rect2) => rect1.Position.x >= rect2.Position.x && rect1.End.x <= rect2.End.x && rect1.Position.y >= rect2.Position.y && rect1.End.y <= rect2.End.y;
+  public static Vector2 GetTileCellAtCenterOf (Area2D area, string colliderName, TileMap t) => GetTileCellAtCenterOf (area, area.GetNode <CollisionShape2D> (colliderName), t);
+  public static bool IsIntersectingAnyTile (Area2D area, string colliderName, TileMap t) => IsIntersectingAnyTile (area, area.GetNode <CollisionShape2D> (colliderName), t);
+  public static bool IsIntersectingAnyTile (Area2D area, CollisionShape2D collider, TileMap t) => GetIntersectingTileId (area, collider, t) != -1;
+  public static int GetIntersectingTileId (Area2D area, CollisionShape2D collider, TileMap t) => t.GetCellv (GetIntersectingTileCell (area, collider, t));
+  public static string GetIntersectingTileName (Area2D area, CollisionShape2D collider, TileMap t) => GetTileName (GetIntersectingTileCell (area, collider, t), t);
+  public static string GetIntersectingTileName (Area2D area, string colliderName, TileMap t) => GetIntersectingTileName (area, area.GetNode <CollisionShape2D> (colliderName), t);
+  public static Vector2 GetIntersectingTileCell (Area2D area, string colliderName, TileMap t) => GetIntersectingTileCell (area, area.GetNode <CollisionShape2D> (colliderName), t);
+  public static Vector2 GetTileCellGlobalPosition (Vector2 cell, TileMap t) => t.ToGlobal (t.MapToWorld (cell));
+  public static Vector2 GetIntersectingTileCellGlobalPosition (Area2D area, CollisionShape2D collider, TileMap t) => GetTileCellGlobalPosition (GetIntersectingTileCell (area, collider, t), t);
   public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) => e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
   // @formatter:on
+
+  private static Vector2 GetTileCellAtAnyOf (IReadOnlyCollection <Vector2> cells, TileMap t) =>
+    t.GetUsedCells().Cast <Vector2>().FirstOrDefault (a =>
+      cells.Any (b => GreaterThanOrEqual (b, a) && LessThan (b - a, (t.CellSize.Inverse() * 16.0f).Round())));
 
   private static List <Rect2> GetUncoveredRects (IEnumerable <Rect2> originals, IReadOnlyCollection <Rect2> overlaps)
   {
