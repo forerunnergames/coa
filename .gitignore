@@ -5,3 +5,7 @@
 .mono/
 data_*/
 mono_crash.*
+tests/.mono/
+tests/logs/
+tests/metadata/
+tests/results.xml
