@@ -25,7 +25,6 @@ public class Cliffs : Area2D
   private Vector2 _playerPosition;
   private string _playerAnimation;
   private CollisionShape2D _playerAnimationCollider;
-  private bool _isPlayerIntersectingCliffs;
   private bool _isPlayerInWaterfall;
   private AudioStreamPlayer _ambiencePlayer;
   private AudioStreamPlayer _musicPlayer;
@@ -42,6 +41,7 @@ public class Cliffs : Area2D
   private Color _clearColor;
   private bool _seasonChangeInProgress;
   private Season _newSeason;
+  private Season _playerSeason;
   private bool _fadeIn;
   private bool _skipFade;
   private Log _log;
@@ -105,25 +105,6 @@ public class Cliffs : Area2D
     _log.Info ($"Player exited waterfall.");
     _isPlayerInWaterfall = false;
     _player.IsInFrozenWaterfall = false;
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnCliffsEntered (Area2D area)
-  {
-    if (!area.IsInGroup ("Player")) return;
-
-    _isPlayerIntersectingCliffs = true;
-    _log.Debug ($"Player entered {Name}.");
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnCliffsExited (Area2D area)
-  {
-    if (!area.IsInGroup ("Player")) return;
-
-    _isPlayerIntersectingCliffs = false;
-    _player.IsInCliffs = false;
-    _log.Debug ($"Player exited {Name}.");
   }
 
   private void InitializeSeasons()
@@ -257,16 +238,17 @@ public class Cliffs : Area2D
 
   private void UpdatePlayer()
   {
-    if (!_isPlayerIntersectingCliffs || _playerSprite.Animation == _playerAnimation &&
-      AreAlmostEqual (_playerAnimationCollider.GlobalPosition, _playerPosition, 0.001f)) return;
+    if (_playerSeason == CurrentSeason && _playerSprite.Animation == _playerAnimation &&
+        AreAlmostEqual (_playerAnimationCollider.GlobalPosition, _playerPosition, 0.001f)) return;
 
+    _playerSeason = CurrentSeason;
     _playerAnimation = _playerSprite.Animation;
     _playerAnimationCollider = _playerArea.GetNode <CollisionShape2D> (_playerAnimation);
     _playerPosition = _playerAnimationCollider.GlobalPosition;
     _playerRect = GetAreaColliderRect (_playerArea, _playerAnimationCollider);
     _cliffRects.Clear();
     _cliffRects.AddRange (_colliders.Select (x => GetAreaColliderRect (this, x)));
-    _player.IsInCliffs = _isPlayerIntersectingCliffs && IsEnclosedBy (_playerRect, _cliffRects);
+    _player.IsInCliffs = IsEnclosedBy (_playerRect, _cliffRects);
     _player.IsTouchingCliffIce = _iceTileMap.Visible && IsIntersectingAnyTile (_playerArea, _playerAnimationCollider, _iceTileMap);
   }
 

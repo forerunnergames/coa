@@ -544,7 +544,6 @@ public class Player : KinematicBody2D
     for (var i = 1; i <= 6; ++i) _cliffs.GetNode <Area2D> ("Ground " + i + "/Area2D").SetBlockSignals (true);
     await ToSignal (GetTree(), "idle_frame");
     _sprite.GetNode <Area2D> ("Area2D").SetBlockSignals (true);
-    _cliffs.SetBlockSignals (true);
     _waterfall.SetBlockSignals (true);
     // End workaround
 
@@ -560,7 +559,6 @@ public class Player : KinematicBody2D
     for (var i = 1; i <= 6; ++i) _cliffs.GetNode <Area2D> ("Ground " + i + "/Area2D").SetBlockSignals (false);
     await ToSignal (GetTree(), "idle_frame");
     _sprite.GetNode <Area2D> ("Area2D").SetBlockSignals (false);
-    _cliffs.SetBlockSignals (false);
     _waterfall.SetBlockSignals (false);
     // End workaround
   }
