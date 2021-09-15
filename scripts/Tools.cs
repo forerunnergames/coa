@@ -255,8 +255,13 @@ public static class Tools
   public static Vector2 GetIntersectingTileCell (Area2D area, string colliderName, TileMap t) => GetIntersectingTileCell (area, area.GetNode <CollisionShape2D> (colliderName), t);
   public static Vector2 GetTileCellGlobalPosition (Vector2 cell, TileMap t) => t.ToGlobal (t.MapToWorld (cell));
   public static Vector2 GetIntersectingTileCellGlobalPosition (Area2D area, CollisionShape2D collider, TileMap t) => GetTileCellGlobalPosition (GetIntersectingTileCell (area, collider, t), t);
-  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", Func <T, string> f = null) => e.Select (f ?? (s => s.ToString())).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
   // @formatter:on
+
+  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", string prepend = "", string append = "",
+    Func <T, string> f = null)
+  {
+    return e.Select (f ?? (s => prepend + s + append)).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
+  }
 
   private static Vector2 GetTileCellAtAnyOf (IReadOnlyCollection <Vector2> cells, TileMap t) =>
     t.GetUsedCells().Cast <Vector2>().FirstOrDefault (a =>

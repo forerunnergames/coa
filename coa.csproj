@@ -4,6 +4,6 @@
         <LangVersion>9.0</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-      <Folder Include="assets\music" />
+      <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     </ItemGroup>
 </Project>

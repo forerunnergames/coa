@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -12,6 +13,7 @@ using System.Runtime.CompilerServices;
 // 4. Initial state is a parent state.
 public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 {
+  public Log.Level LogLevel { set => _log.CurrentLevel = value; }
   private T _currentState;
   private T _parentState;
   private readonly T _initialState;
@@ -20,6 +22,10 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private readonly Stack <T> _childStates = new();
   private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionAction>> _actions = new();
   private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionTrigger>> _triggers = new();
+  private readonly List <T> _triggeredFromStates = new();
+  private readonly List <T> _triggeredToStates = new();
+  private readonly List <T> _fromStates = new();
+  private readonly List <T> _toStates = new();
   private readonly Log _log;
 
   // ReSharper disable once ExplicitCallerInfoArgument
@@ -31,9 +37,33 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   // ReSharper disable once ExplicitCallerInfoArgument
   private StateMachine (Dictionary <T, HashSet <T>> transitionTable, T initialState, [CallerFilePath] string name = "")
   {
-    if (transitionTable.ContainsKey (AnyState) || transitionTable.Values.Any (x => x.Any (y => Equals (y, AnyState))))
+    if (typeof (T).IsEnumDefined (-1))
     {
-      throw new ArgumentException ($"{nameof (transitionTable)} cannot contain wildcard {ToString (AnyState)}");
+      throw new ArgumentException (
+        $"States cannot contain [{typeof (T).GetEnumName (-1)}] having same value as {ToString (AnyState)}.");
+    }
+
+    if (transitionTable.ContainsKey (AnyState))
+    {
+      throw new ArgumentException (
+        $"Transition table key [{transitionTable.GetEntry (AnyState).Key}] cannot have same value as {ToString (AnyState)}.");
+    }
+
+    if (transitionTable.Values.Any (x => x.Any (y => Equals (y, AnyState))))
+    {
+      throw new ArgumentException (
+        $"Transition table values [{Tools.ToString (transitionTable.Values.First (x => x.Any (y => Equals (y, AnyState))))}] " +
+        $"cannot contain same value as {ToString (AnyState)}.");
+    }
+
+    if (initialState.Equals (AnyState))
+    {
+      throw new ArgumentException ($"Initial state [{initialState}] cannot have same value as {ToString (AnyState)}.");
+    }
+
+    if (!transitionTable.ContainsKey (initialState))
+    {
+      throw new ArgumentException ($"Initial state [{initialState}] not found in transition table.");
     }
 
     _log = new Log (name);
@@ -41,78 +71,117 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     _currentState = initialState;
     _parentState = initialState;
     _transitionTable = transitionTable;
-    _log.Info ($"Initial state: {_initialState}");
+    _log.Info ($"Initial state: {ToString (_initialState)}");
   }
 
   public T GetState() => _currentState;
   public bool Is (T state) => Equals (_currentState, state);
-  public void OnTransitionTo (T to, IStateMachine <T>.TransitionAction action) => OnTransition (AnyState, to, action);
-  public void OnTransitionFrom (T from, IStateMachine <T>.TransitionAction action) => OnTransition (from, AnyState, action);
+
+  public void OnTransitionTo (T to, IStateMachine <T>.TransitionAction action)
+  {
+    if (to.Equals (AnyState)) throw new ArgumentException ($"Transition to {ToString (to)} cannot contain {ToString (AnyState)}.");
+
+    AddWildcardableTransition (AnyState, to, action);
+  }
+
+  public void OnTransitionFrom (T from, IStateMachine <T>.TransitionAction action)
+  {
+    if (from.Equals (AnyState))
+    {
+      throw new ArgumentException ($"Transition from {ToString (from)} cannot contain {ToString (AnyState)}.");
+    }
+
+    AddWildcardableTransition (from, AnyState, action);
+  }
 
   public void OnTransition (T from, T to, IStateMachine <T>.TransitionAction action)
   {
-    if (!HasWildcards (from, to) && !CanTransition (from, to))
+    if (from.Equals (AnyState) || to.Equals (AnyState))
     {
-      _log.Warn ($"Ignoring invalid transition from {ToString (from)} to {ToString (to)}.");
-
-      return;
+      throw new ArgumentException ($"Transition from {ToString (from)} to {ToString (to)} cannot contain {ToString (AnyState)}.");
     }
 
-    if (!_actions.ContainsKey (from)) _actions.Add (from, new Dictionary <T, IStateMachine <T>.TransitionAction>());
+    AddWildcardableTransition (from, to, action);
+  }
 
-    if (_actions[from].ContainsKey (to))
-    {
-      throw new ArgumentException ($"Transition action from {ToString (from)} to {ToString (to)} already exists.");
-    }
+  public void AddTriggerTo (T to, IStateMachine <T>.TransitionTrigger trigger)
+  {
+    if (to.Equals (AnyState)) throw new ArgumentException ($"Trigger to {ToString (to)} cannot contain {ToString (AnyState)}.");
 
-    _actions[from].Add (to, action);
+    AddWildcardableTrigger (AnyState, to, trigger);
   }
 
   public void AddTrigger (T from, T to, IStateMachine <T>.TransitionTrigger trigger)
   {
-    if (HasWildcards (to))
+    if (from.Equals (AnyState) || to.Equals (AnyState))
     {
-      throw new ArgumentException (
-        $"Trigger from {ToString (from)} to {ToString (to)} cannot contain a destination wildcard {ToString (AnyState)}.");
+      throw new ArgumentException ($"Trigger from {ToString (from)} to {ToString (to)} cannot contain {ToString (AnyState)}.");
     }
 
-    if (!HasWildcards (from, to) && !CanTransition (from, to))
-    {
-      _log.Warn ($"Ignoring invalid trigger from {ToString (from)} to {ToString (to)}.");
-
-      return;
-    }
-
-    if (!_triggers.ContainsKey (from)) _triggers.Add (from, new Dictionary <T, IStateMachine <T>.TransitionTrigger>());
-
-    if (_triggers[from].ContainsKey (to))
-    {
-      throw new ArgumentException ($"Trigger from {ToString (from)} to {ToString (to)} already exists.");
-    }
-
-    _triggers[from].Add (to, trigger);
+    AddWildcardableTrigger (from, to, trigger);
   }
 
   public void Update()
   {
-    if (!_triggers.ContainsKey (_currentState)) return;
+    if (!_triggers.ContainsKey (_currentState) && !_triggers.ContainsKey (AnyState)) return;
 
-    var triggeredStates = _triggers[_currentState].Keys.Where (to => _triggers[_currentState][to]()).ToList();
+    _fromStates.Clear();
+    _fromStates.Add (_currentState);
+    _fromStates.Add (AnyState);
+    _triggeredFromStates.Clear();
+    _triggeredToStates.Clear();
 
-    switch (triggeredStates.Count)
+    foreach (var fromState in ImmutableList.CreateRange (_fromStates))
     {
-      case 0:
-        break;
-      case 1:
-        TriggerState (triggeredStates.Single());
+      if (!_triggers.ContainsKey (fromState)) continue;
+
+      foreach (var toState in _triggers[fromState].Keys.Where (to => _triggers[fromState][to]()))
+      {
+        _triggeredFromStates.Add (fromState);
+        _triggeredToStates.Add (toState);
+      }
+    }
+
+    if (_triggeredFromStates.Count == 0 || _triggeredToStates.Count == 0) return;
+
+    if (_triggeredFromStates.Count > 1 || _triggeredToStates.Count > 1)
+    {
+      _log.Warn ($"Ignoring multiple valid triggers from {ToString (_currentState)} to [{Tools.ToString (_triggeredToStates)}].");
+
+      return;
+    }
+
+    TriggerState (_triggeredFromStates.Single(), _triggeredToStates.Single());
+  }
+
+  public void Reset (IStateMachine <T>.ResetOption resetOption)
+  {
+    // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+    switch (resetOption)
+    {
+      case IStateMachine <T>.ResetOption.ExecuteTransitionActions when !CanTransition (_currentState, _initialState):
+        _log.Warn ($"Not executing transition actions during reset because transition {ToString (_currentState)} => " +
+                   $"{ToString (_initialState)} is invalid.");
+
+        _log.Debug ($"Ignoring invalid trigger from {ToString (_currentState)} => {ToString (_initialState)}.");
 
         break;
-      default:
-        _log.Warn (
-          $"Ignoring multiple valid triggers from {ToString (_currentState)} to {Tools.ToString (triggeredStates, f: ToString)}.");
+      case IStateMachine <T>.ResetOption.IgnoreTransitionActions
+        when HasTransitionAction (_currentState, _initialState) || HasTransitionAction (AnyState, _initialState):
+        _log.Debug ($"Ignoring valid transition actions during reset transition {ToString (_currentState)} => " +
+                    $"{ToString (_initialState)}");
+
+        break;
+      case IStateMachine <T>.ResetOption.ExecuteTransitionActions when CanTransition (_currentState, _initialState):
+        TriggerState (_currentState, _initialState);
 
         break;
     }
+
+    _currentState = _initialState;
+    _parentState = _initialState;
+    _childStates.Clear();
+    _log.Info ("Reset state machine.");
   }
 
   public void To (T to)
@@ -171,20 +240,12 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     ExecuteChangeState (to);
   }
 
-  public void Reset (IStateMachine <T>.ResetOption resetOption)
-  {
-    if (resetOption == IStateMachine <T>.ResetOption.ExecuteTransitionActions) TriggerState (_initialState);
-    _currentState = _initialState;
-    _parentState = _initialState;
-    _childStates.Clear();
-    _log.Info ("Reset state machine.");
-  }
-
   public void PopIf (bool condition)
   {
     if (condition) Pop();
   }
 
+  // @formatter:off
   public void PopIf (T state, bool condition) => PopIf (Is (state) && condition);
   public void PopIf (T state) => PopIf (Is (state));
   private bool IsReversible (T state) => CanTransition (state, _currentState);
@@ -192,11 +253,52 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private bool CanPop() => IsCurrentChild (_currentState);
   private bool IsCurrentChild (T state) => _childStates.Count > 0 && Equals (state, _childStates.Peek());
   private bool CanTransitionTo (T to) => CanTransition (_currentState, to);
-  private bool CanTransition (T from, T to) => _transitionTable.TryGetValue (@from, out var toStates) && toStates.Contains (to);
-  private bool HasTransitionAction (T from, T to) => _actions.TryGetValue (@from, out var actions) && actions.ContainsKey (to);
-  private string PrintStates() => $"States:\nChildren:\n{Tools.ToString (_childStates, "\n")}\nParent:\n{_parentState}";
+  private bool CanTransition (T from, T to) => _transitionTable.TryGetValue (from, out var toStates) && toStates.Contains (to);
+  private bool HasTransitionAction (T from, T to) => _actions.TryGetValue (from, out var actions) && actions.ContainsKey (to);
   private static bool HasWildcards (params T[] states) => states.Any (state => Equals (state, AnyState));
-  private static string ToString (T t) => Equals (t, AnyState) ? nameof (AnyState) : t.ToString();
+  private string PrintStates() => $"States:\nChildren:\n{Tools.ToString (_childStates, "\n", "[", "]")}\nParent:\n{ToString (_parentState)}";
+  private static string ToString (T t) => Equals (t, AnyState) ? $"internal wildcard state [{nameof (AnyState)} = -1]" : $"[{t.ToString()}]";
+  // @formatter:on
+
+  private void AddWildcardableTransition (T from, T to, IStateMachine <T>.TransitionAction action)
+  {
+    if (!HasWildcards (from, to) && !CanTransition (from, to))
+    {
+      _log.Warn ($"Not adding transition not found in transition table from {ToString (from)} to {ToString (to)}.");
+
+      return;
+    }
+
+    if (_actions.ContainsKey (from) && _actions[from].ContainsKey (to))
+    {
+      _log.Warn ($"Not adding duplicate transition from {ToString (from)} to {ToString (to)}.");
+
+      return;
+    }
+
+    if (!_actions.ContainsKey (from)) _actions.Add (from, new Dictionary <T, IStateMachine <T>.TransitionAction>());
+    _actions[from].Add (to, action);
+  }
+
+  private void AddWildcardableTrigger (T from, T to, IStateMachine <T>.TransitionTrigger trigger)
+  {
+    if (!HasWildcards (from, to) && !CanTransition (from, to))
+    {
+      _log.Warn ($"Not adding trigger with transition not found in transition table from {ToString (from)} to {ToString (to)}.");
+
+      return;
+    }
+
+    if (_triggers.ContainsKey (from) && _triggers[from].ContainsKey (to))
+    {
+      _log.Warn ($"Not adding duplicate trigger from {ToString (from)} to {ToString (to)}.");
+
+      return;
+    }
+
+    if (!_triggers.ContainsKey (from)) _triggers.Add (from, new Dictionary <T, IStateMachine <T>.TransitionTrigger>());
+    _triggers[from].Add (to, trigger);
+  }
 
   private T DoublePeek()
   {
@@ -208,8 +310,12 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     return _childStates.Count > 1 ? _childStates.Skip (1).First() : _parentState;
   }
 
-  private void TriggerState (T to)
+  private void TriggerState (T from, T to)
   {
+    _log.Debug ($"Executing {(from.Equals (AnyState) ? "wildcard" : "specific")} " +
+                $"trigger {ToString (_currentState)} {(from.Equals (AnyState) ? "(any)" : "(specific)")} " +
+                $"=> {ToString (to)} (specific).");
+
     if (CanPopTo (to))
     {
       Pop();
@@ -249,11 +355,22 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 
   private void ExecuteTransitionActionsTo (T to)
   {
-    foreach (var fromState in new[] { _currentState, AnyState })
+    _fromStates.Clear();
+    _fromStates.Add (_currentState);
+    _fromStates.Add (AnyState);
+    _toStates.Clear();
+    _toStates.Add (to);
+    _toStates.Add (AnyState);
+
+    foreach (var fromState in ImmutableList.CreateRange (_fromStates))
     {
-      foreach (var toState in new[] { to, AnyState })
+      foreach (var toState in ImmutableList.CreateRange (_toStates).Where (toState => HasTransitionAction (fromState, toState)))
       {
-        if (HasTransitionAction (fromState, toState)) _actions[fromState][toState]();
+        _log.Debug ($"Executing {(fromState.Equals (AnyState) || toState.Equals (AnyState) ? "wildcard" : "specific")} " +
+                    $"transition action {ToString (_currentState)} {(fromState.Equals (AnyState) ? "(any)" : "(specific)")} " +
+                    $"=> {ToString (to)} {(toState.Equals (AnyState) ? "(any)" : "(specific)")}.");
+
+        _actions[fromState][toState]();
       }
     }
   }
