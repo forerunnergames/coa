@@ -73,6 +73,7 @@ public abstract class AbstractPerch : IPerchable
   public bool Contains (Vector2 globalPosition) => _perchableAreasInGlobalSpace.Any (x => AlmostHasPoint (x, globalPosition, _positionEpsilon));
   public virtual bool HasParentName (string name) => false;
   public bool Is (string name, Vector2 globalOrigin) => Name == name && AreAlmostEqual (GlobalOrigin, globalOrigin, _positionEpsilon);
+  // ReSharper disable once MemberCanBePrivate.Global
   public bool Equals (IPerchable other) => !ReferenceEquals (null, other) && (ReferenceEquals (this, other) || Is (other.Name, other.GlobalOrigin));
   public override bool Equals (object obj) => !ReferenceEquals (null, obj) && (ReferenceEquals (this, obj) || obj.GetType() == GetType() && Equals ((IPerchable)obj));
   // @formatter:on

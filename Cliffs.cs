@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using static Tools;
 
@@ -21,7 +22,6 @@ public class Cliffs : Area2D
   private AnimatedSprite _playerSprite;
   private Area2D _playerArea;
   private Rect2 _playerRect;
-  private Vector2 _playerExtents;
   private Vector2 _playerPosition;
   private string _playerAnimation;
   private CollisionShape2D _playerAnimationCollider;
@@ -30,10 +30,6 @@ public class Cliffs : Area2D
   private AudioStreamPlayer _ambiencePlayer;
   private AudioStreamPlayer _musicPlayer;
   private TileMap _iceTileMap;
-  private Vector2 _topLeft;
-  private Vector2 _bottomRight;
-  private Vector2 _topRight;
-  private Vector2 _bottomLeft;
   private readonly Dictionary <Season, int> _waterfallZIndex = new();
   private readonly Dictionary <Season, AudioStream> _music = new();
   private readonly Dictionary <Season, AudioStream> _ambience = new();
@@ -69,19 +65,12 @@ public class Cliffs : Area2D
     _ambiencePlayer = GetNode <AudioStreamPlayer> ("../AmbiencePlayer");
     _musicPlayer = GetNode <AudioStreamPlayer> ("../MusicPlayer");
     _iceTileMap = GetNode <TileMap> ("Ice");
-    _colliders.Add (GetNode <CollisionShape2D> ("Extents 1"));
+    for (var i = 1; i <= 5; ++i) _colliders.Add (GetNode <CollisionShape2D> ("Extents " + i));
     _player = GetNode <Player> ("../Player");
     _playerSprite = _player.GetNode <AnimatedSprite> ("AnimatedSprite");
     _playerArea = _playerSprite.GetNode <Area2D> ("Area2D");
     _playerAnimation = _playerSprite.Animation;
     _playerAnimationCollider = _playerArea.GetNode <CollisionShape2D> (_playerAnimation);
-
-    if (Name == "Upper Cliffs")
-    {
-      _colliders.Add (GetNode <CollisionShape2D> ("Extents 2"));
-      _colliders.Add (GetNode <CollisionShape2D> ("Extents 3"));
-    }
-
     InitializeSeasons();
   }
 
@@ -95,7 +84,7 @@ public class Cliffs : Area2D
   public override void _UnhandledInput (InputEvent @event)
   {
     if (IsReleased (Tools.Input.Season, @event) && !_seasonChangeInProgress) NextSeason();
-    if (IsReleased (Tools.Input.Music, @event) && Name == "Upper Cliffs") ToggleMusic();
+    if (IsReleased (Tools.Input.Music, @event)) ToggleMusic();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -103,7 +92,7 @@ public class Cliffs : Area2D
   {
     if (!area.IsInGroup ("Player")) return;
 
-    _log.Info ($"{area.GetParent().Name} entered waterfall.");
+    _log.Info ($"Player entered waterfall.");
     _isPlayerInWaterfall = true;
     _player.IsInFrozenWaterfall = CurrentSeason == Season.Winter;
   }
@@ -113,7 +102,7 @@ public class Cliffs : Area2D
   {
     if (!area.IsInGroup ("Player")) return;
 
-    _log.Info ($"{area.GetParent().Name} exited waterfall.");
+    _log.Info ($"Player exited waterfall.");
     _isPlayerInWaterfall = false;
     _player.IsInFrozenWaterfall = false;
   }
@@ -135,24 +124,6 @@ public class Cliffs : Area2D
     _isPlayerIntersectingCliffs = false;
     _player.IsInCliffs = false;
     _log.Debug ($"Player exited {Name}.");
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnUpperCliffsGroundEntered (Area2D area)
-  {
-    if (!area.IsInGroup ("Player") || Name != "Upper Cliffs") return;
-
-    _log.Debug ($"Player entered ground of {Name}.");
-    _player.IsInGround = true;
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnUpperCliffsGroundExited (Area2D area)
-  {
-    if (!area.IsInGroup ("Player") || Name != "Upper Cliffs") return;
-
-    _log.Debug ($"Player exited ground of {Name}.");
-    _player.IsInGround = false;
   }
 
   private void InitializeSeasons()
@@ -180,8 +151,6 @@ public class Cliffs : Area2D
 
   private void UpdateWaterfall (Season season, float delta)
   {
-    if (Name != "Upper Cliffs") return;
-
     var isWinter = season == Season.Winter;
     var waterfall = GetNode <Area2D> ("Waterfall");
     waterfall.Visible = true;
@@ -212,8 +181,8 @@ public class Cliffs : Area2D
     var isWinter = season == Season.Winter;
     waterSurfaceCollider.SetCollisionMaskBit (0, isWinter);
     waterSurfaceCollider.SetCollisionLayerBit (1, isWinter);
-    GetNode <CollisionShape2D> ("../Upper Cliffs/Upper Cliffs Top Ground Static Collider 3/CollisionShape2D").Disabled = isWinter;
-    GetNode <CollisionShape2D> ("../Upper Cliffs/Cliff Edge 3/CollisionShape2D").Disabled = isWinter;
+    GetNode <CollisionShape2D> ("Ground 3/CollisionShape2D").Disabled = isWinter;
+    GetNode <CollisionShape2D> ("Edge 3/CollisionShape2D").Disabled = isWinter;
     await ToSignal (GetTree().CreateTimer (delta, false), "timeout");
 
     foreach (int shapeOwnerId in waterSurfaceCollider.GetShapeOwners())
@@ -292,31 +261,13 @@ public class Cliffs : Area2D
       AreAlmostEqual (_playerAnimationCollider.GlobalPosition, _playerPosition, 0.001f)) return;
 
     _playerAnimation = _playerSprite.Animation;
-    _playerExtents = GetExtents (_playerArea, _playerAnimation);
     _playerAnimationCollider = _playerArea.GetNode <CollisionShape2D> (_playerAnimation);
     _playerPosition = _playerAnimationCollider.GlobalPosition;
-    _playerRect.Position = _playerPosition - _playerExtents;
-    _playerRect.Size = _playerExtents * 2;
+    _playerRect = GetAreaColliderRect (_playerArea, _playerAnimationCollider);
     _cliffRects.Clear();
-
-    foreach (var collider in _colliders)
-    {
-      var extents = (collider.Shape as RectangleShape2D)?.Extents ?? Vector2.Zero;
-      _cliffRects.Add (new Rect2 (collider.GlobalPosition - extents, extents * 2));
-    }
-
+    _cliffRects.AddRange (_colliders.Select (x => GetAreaColliderRect (this, x)));
     _player.IsInCliffs = _isPlayerIntersectingCliffs && IsEnclosedBy (_playerRect, _cliffRects);
-    _topLeft = _playerArea.GlobalPosition - _playerExtents;
-    _bottomRight = _playerArea.GlobalPosition + _playerExtents;
-    _topRight.x = _playerArea.GlobalPosition.x + _playerExtents.x;
-    _topRight.y = _playerArea.GlobalPosition.y - _playerExtents.y;
-    _bottomLeft.x = _playerArea.GlobalPosition.x - _playerExtents.x;
-    _bottomLeft.y = _playerArea.GlobalPosition.y + _playerExtents.y;
-
-    _player.IsTouchingCliffIce = _iceTileMap.Visible && (IsIntersectingAnyTile (_topLeft, _iceTileMap) ||
-                                                         IsIntersectingAnyTile (_bottomRight, _iceTileMap) ||
-                                                         IsIntersectingAnyTile (_topRight, _iceTileMap) ||
-                                                         IsIntersectingAnyTile (_bottomLeft, _iceTileMap));
+    _player.IsTouchingCliffIce = _iceTileMap.Visible && IsIntersectingAnyTile (_playerArea, _playerAnimationCollider, _iceTileMap);
   }
 
   private void ToggleMusic() => _musicPlayer.Playing = !_musicPlayer.Playing;

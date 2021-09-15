@@ -6,6 +6,7 @@ using static Tools;
 
 // TODO Adjust idle position to synchronize with sprite animation for KinematicPerch.
 // TODO Use nonlinear interpolation to accelerate / decelerate.
+// TODO Test without custom position epsilon.
 
 public class Butterfly : AnimatedSprite
 {
@@ -126,16 +127,18 @@ public class Butterfly : AnimatedSprite
   private DrawRect _drawRect;
   private IPerchable _perch;
   private Vector2 _perchPoint;
-  private Node _perchingBody;
+  private Node _perchableNode;
+  private Area2D _perchingColliderArea;
+  private CollisionShape2D _perchingCollider;
   private float _maxOscillationAngleVariation;
   private readonly RandomNumberGenerator _rng = new();
   private readonly List <Vector2> _path = new();
-  private readonly float _ninety = Mathf.Deg2Rad (90);
   private readonly List <IPerchable> _perches = new();
   private readonly List <IPerchable> _perchesUnvisited = new();
   private readonly List <IPerchable> _unperchablePerches = new();
   private readonly List <Node2D> _perchableNodes = new();
   private readonly PerchableDrawPrefs _perchableDrawPrefs = new();
+  private readonly float _ninety = Mathf.Deg2Rad (90);
   private Log _log;
 
   private enum State
@@ -160,6 +163,8 @@ public class Butterfly : AnimatedSprite
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
     Animation = FlyingAnimation;
+    _perchingColliderArea = GetNode <Area2D> ("PerchingCollider");
+    _perchingCollider = _perchingColliderArea.GetNode <CollisionShape2D> ("CollisionShape2D");
     _maxOscillationAngleVariation = Mathf.Deg2Rad (MaxOscillationAngleVariationDegrees);
     _drawPrimitive = delegate (Vector2[] points, Color[] colors, Vector2[] uvs) { DrawPrimitive (points, colors, uvs); };
     _drawRect = delegate (Rect2 rect, Color color, bool filled) { DrawRect (rect, color, filled); };
@@ -199,13 +204,11 @@ public class Butterfly : AnimatedSprite
           perch.GlobalOrigin = node.GlobalPosition;
         }
 
-        // @formatter:off
         // x & y are intentionally reversed here, see: https://github.com/godotengine/godot/issues/17405
         if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.y) == -1 && !perch.FlippedHorizontally) perch.FlipHorizontally();
         if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.x) == -1 && !perch.FlippedVertically) perch.FlipVertically();
         if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.y) == 1 && perch.FlippedHorizontally) perch.FlipHorizontally();
         if (Mathf.Sign (((Node2D)sprite.GetParent()).Scale.x) == 1 && perch.FlippedVertically) perch.FlipVertically();
-        // @formatter:on
 
         if (!perch.Disabled) continue;
 
@@ -249,40 +252,40 @@ public class Butterfly : AnimatedSprite
   }
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnPerchingBodyColliderEntered (Node body)
+  public void _OnPerchingColliderAreaEntered (Area2D area)
   {
-    if (!body.IsInGroup ("Perchable")) return;
+    if (area.GetParent() is not AnimatedSprite sprite || !sprite.IsInGroup ("Perchable")) return;
 
-    _log.All ($"Entering body perch: {NameOf (body, Position)}.");
-    _perchingBody = body;
+    _log.All ($"Entering animated sprite perch: {NameOf (sprite)}.");
+    _perchableNode = sprite;
   }
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnPerchingAreaColliderEntered (Area2D area)
+  public void _OnPerchingColliderBodyEntered (Node body)
   {
-    if (!area.IsInGroup ("Player") || area.GetParent() is not AnimatedSprite sprite) return;
+    if (body is not TileMap tileMap || !tileMap.IsInGroup ("Perchable")) return;
 
-    _log.All ($"Entering area perch: {NameOf (sprite, Position)}.");
-    _perchingBody = sprite;
+    _log.All ($"Entering tile perch: {NameOf (tileMap)}.");
+    _perchableNode = tileMap;
   }
 
   // @formatter:off
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnObstacleColliderEntered (Node body)
+  public void _OnObstacleColliderBodyEntered (Node body)
   {
     if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Perchable Parent") || body.IsInGroup ("Ground")) return;
 
-    _log.Debug ($"Encountered obstacle: {NameOf (body, Position)}.");
+    _log.Debug ($"Encountered obstacle: {NameOf (body)}");
     _stateMachine.To (State.Evading);
   }
 
   // ReSharper disable once UnusedMember.Global
-  public void _OnObstacleColliderExited (Node body)
+  public void _OnObstacleColliderBodyExited (Node body)
   {
     if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Perchable Parent") || body.IsInGroup ("Ground")) return;
 
-    _log.Debug ($"Evaded obstacle: {NameOf (body, Position)}.");
+    _log.Debug ($"Evaded obstacle: {NameOf (body)}.");
     _stateMachine.To (State.Flying);
   }
 
@@ -310,8 +313,8 @@ public class Butterfly : AnimatedSprite
   {
     if (!_perch.Contains (Position) || !AreAlmostEqual (Position, _perchPoint, PositionEpsilon))
     {
-      _log.All (
-        $"Found correct perch: {NameOf (_perchingBody, Position)}. Continuing perching along same path from position {Position} to reach perch point {_perchPoint}.");
+      _log.All ($"Found correct perch: {NameOf (_perchableNode)}." +
+                $"Continuing perching along same path from position {Position} to reach perch point {_perchPoint}.");
 
       Move (PerchingSpeed, delta);
 
@@ -352,26 +355,24 @@ public class Butterfly : AnimatedSprite
 
   private bool ArrivedAtPerch()
   {
-    if (_perchingBody == null) return false;
+    if (_perchableNode == null) return false;
 
     IPerchable perch = null;
     var position = Vector2.Zero;
-    var cell = Vector2.Zero;
 
-    switch (_perchingBody)
+    switch (_perchableNode)
     {
       case TileMap tileMap:
       {
-        cell = GetIntersectingTileCell (Position, tileMap);
-        position = GetIntersectingTileCellGlobalPosition (Position, tileMap);
-        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (GetIntersectingTileName (Position, tileMap), position));
+        position = GetIntersectingTileCellGlobalPosition (_perchingColliderArea, _perchingCollider, tileMap);
+        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (NameOf (tileMap), position));
 
         break;
       }
       case AnimatedSprite sprite:
       {
         position = sprite.GlobalPosition;
-        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (sprite.Animation, position));
+        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (NameOf (sprite), position));
 
         break;
       }
@@ -379,10 +380,10 @@ public class Butterfly : AnimatedSprite
 
     if (_perch.Equals (perch)) return true;
 
-    _log.All ($"Found wrong perch: {NameOf (_perchingBody, Position)} at position {position}, cell {cell}.");
-    _log.All ($"_perch: {_perch}, perch: {perch}, _perchingBody: {_perchingBody}");
+    _log.All ($"Found wrong perch: {NameOf (_perchableNode)} at position {position}.");
+    _log.All ($"_perch: {_perch}, perch: {perch}, _perchingBody: {_perchableNode}");
     _log.Debug ($"Continuing flying along same path toward correct perch:\n{_perch}.");
-    _perchingBody = null;
+    _perchableNode = null;
 
     return false;
   }
@@ -479,4 +480,16 @@ public class Butterfly : AnimatedSprite
     _perchesUnvisited.Remove (_perch);
     StartMoving();
   }
+
+  // @formatter:off
+
+  private string NameOf (Node node) =>
+    node switch
+    {
+      TileMap tileMap => GetIntersectingTileName (_perchingColliderArea, _perchingCollider, tileMap).NullIfEmpty() ?? node.Name,
+      AnimatedSprite sprite => sprite.Animation,
+      _ => node.Name
+    };
+
+  // @formatter:on
 }
