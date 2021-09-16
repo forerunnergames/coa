@@ -38,6 +38,7 @@ public class StateMachineTest : Test
   };
 
   // @formatter:off
+
   private static readonly State AnyState = (State)(object)-1;
   private StateMachine <State> _sm;
   private const State InitialState = State.State5;
@@ -629,10 +630,8 @@ public class StateMachineTest : Test
   public void TestTrueTriggerInAddTriggerCausesTransition()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
     const State state = State.State6;
-    _sm.AddTrigger (InitialState, state, trigger);
-    trigger();
+    _sm.AddTrigger (InitialState, state, () => true);
     _sm.Update();
     Assert.IsTrue (_sm.Is (state));
   }
@@ -641,10 +640,7 @@ public class StateMachineTest : Test
   public void TestFalseTriggerInAddTriggerDoesNotCauseTransition()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => false);
-    const State state = State.State6;
-    _sm.AddTrigger (InitialState, state, trigger);
-    trigger();
+    _sm.AddTrigger (InitialState, State.State6, () => false);
     _sm.Update();
     Assert.IsTrue (_sm.Is (InitialState));
   }
@@ -653,10 +649,7 @@ public class StateMachineTest : Test
   public void TestTrueInvalidTriggerInAddTriggerDoesNotCauseTransition()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
-    const State state = State.State7;
-    _sm.AddTrigger (InitialState, state, trigger);
-    trigger();
+    _sm.AddTrigger (InitialState, State.State7, () => true);
     _sm.Update();
     Assert.IsTrue (_sm.Is (InitialState));
   }
@@ -665,11 +658,9 @@ public class StateMachineTest : Test
   public void TestTrueTriggerInAddTriggerToCausesTransition()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
     const State state = State.State6;
     _sm.LogLevel = Log.Level.All;
-    _sm.AddTriggerTo (state, trigger);
-    trigger();
+    _sm.AddTriggerTo (state, () => true);
     _sm.Update();
     Assert.IsTrue (_sm.Is (state));
   }
@@ -678,10 +669,7 @@ public class StateMachineTest : Test
   public void TestFalseTriggerInAddTriggerToDoesNotCauseTransition()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => false);
-    const State state = State.State6;
-    _sm.AddTriggerTo (state, trigger);
-    trigger();
+    _sm.AddTriggerTo (State.State6, () => false);
     _sm.Update();
     Assert.IsTrue (_sm.Is (InitialState));
   }
@@ -690,10 +678,7 @@ public class StateMachineTest : Test
   public void TestTrueInvalidTriggerInAddTriggerToDoesNotCauseTransition()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
-    const State state = State.State7;
-    _sm.AddTriggerTo (state, trigger);
-    trigger();
+    _sm.AddTriggerTo (State.State7, () => true);
     _sm.Update();
     Assert.IsTrue (_sm.Is (InitialState));
   }
@@ -783,14 +768,10 @@ public class StateMachineTest : Test
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
     var counter = 0;
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
-    var trigger2 = new IStateMachine <State>.TransitionTrigger (() => true);
     const State state = State.State6;
     _sm.OnTransition (InitialState, state, () => { ++counter; });
-    _sm.AddTrigger (InitialState, state, trigger);
-    _sm.AddTrigger (InitialState, state, trigger2);
-    trigger();
-    trigger2();
+    _sm.AddTrigger (InitialState, state, () => true);
+    _sm.AddTrigger (InitialState, state, () => true);
     _sm.Update();
     Assert.IsEqual (counter, 1);
   }
@@ -800,16 +781,12 @@ public class StateMachineTest : Test
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
     var counter = 0;
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
-    var trigger2 = new IStateMachine <State>.TransitionTrigger (() => true);
     const State stateA = State.State6;
     const State stateB = State.State3;
     _sm.OnTransition (InitialState, stateA, () => { ++counter; });
     _sm.OnTransition (InitialState, stateB, () => { ++counter; });
-    _sm.AddTrigger (InitialState, stateA, trigger);
-    _sm.AddTrigger (InitialState, stateB, trigger2);
-    trigger();
-    trigger2();
+    _sm.AddTrigger (InitialState, stateA, () => true);
+    _sm.AddTrigger (InitialState, stateB, () => true);
     _sm.Update();
     Assert.IsEqual (counter, 0);
   }
@@ -823,11 +800,8 @@ public class StateMachineTest : Test
     _sm.AddTrigger (InitialState, State.State1, trigger);
     _sm.AddTrigger (State.State1, State.State2, trigger);
     _sm.AddTrigger (State.State2, State.State3, trigger);
-    trigger();
     _sm.Update();
-    trigger();
     _sm.Update();
-    trigger();
     _sm.Update();
     Assert.IsTrue (_sm.Is (State.State3));
   }
@@ -846,11 +820,8 @@ public class StateMachineTest : Test
     _sm.AddTrigger (InitialState, State.State1, trigger);
     _sm.AddTrigger (State.State1, State.State2, trigger);
     _sm.AddTrigger (State.State2, State.State3, trigger);
-    trigger();
     _sm.Update();
-    trigger();
     _sm.Update();
-    trigger();
     _sm.Update();
     Assert.IsEqual (counter, 3);
   }
@@ -864,10 +835,8 @@ public class StateMachineTest : Test
     _sm.AddTrigger (InitialState, State.State1, trigger);
     _sm.AddTrigger (State.State3, State.State1, trigger);
     _sm.AddTrigger (State.State4, State.State1, trigger);
-    trigger();
     _sm.Update();
     _sm.To (State.State3);
-    trigger();
     _sm.Update();
     Assert.IsTrue (_sm.Is (State.State1));
   }
@@ -912,14 +881,11 @@ public class StateMachineTest : Test
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
     var counter = 0;
     var action = new IStateMachine <State>.TransitionAction (() => ++counter);
-    var action2 = new IStateMachine <State>.TransitionAction (() => ++counter);
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
     _sm.LogLevel = Log.Level.All;
     _sm.OnTransitionFrom (InitialState, action);
     _sm.OnTransitionFrom (State.State1, action);
-    _sm.OnTransitionTo (InitialState, action2);
-    _sm.AddTrigger (InitialState, State.State1, trigger);
-    trigger();
+    _sm.OnTransitionTo (InitialState, () => ++counter);
+    _sm.AddTrigger (InitialState, State.State1, () => true);
     _sm.Update();
     _sm.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
     Assert.IsEqual (counter, 1);
@@ -931,14 +897,11 @@ public class StateMachineTest : Test
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
     var counter = 0;
     var action = new IStateMachine <State>.TransitionAction (() => ++counter);
-    var action2 = new IStateMachine <State>.TransitionAction (() => ++counter);
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
     _sm.LogLevel = Log.Level.All;
     _sm.OnTransitionFrom (InitialState, action);
     _sm.OnTransitionFrom (State.State1, action);
-    _sm.OnTransitionTo (InitialState, action2);
-    _sm.AddTrigger (InitialState, State.State1, trigger);
-    trigger();
+    _sm.OnTransitionTo (InitialState, () => ++counter);
+    _sm.AddTrigger (InitialState, State.State1, () => true);
     _sm.Update();
     _sm.To (State.State6);
     _sm.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
@@ -951,14 +914,11 @@ public class StateMachineTest : Test
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
     var counter = 0;
     var action = new IStateMachine <State>.TransitionAction (() => ++counter);
-    var action2 = new IStateMachine <State>.TransitionAction (() => ++counter);
-    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
     _sm.LogLevel = Log.Level.All;
     _sm.OnTransitionFrom (InitialState, action);
     _sm.OnTransitionFrom (State.State1, action);
-    _sm.OnTransitionTo (InitialState, action2);
-    _sm.AddTrigger (InitialState, State.State1, trigger);
-    trigger();
+    _sm.OnTransitionTo (InitialState, () => ++counter);
+    _sm.AddTrigger (InitialState, State.State1, () => true);
     _sm.Update();
     _sm.To (State.State6);
     _sm.Reset (IStateMachine <State>.ResetOption.IgnoreTransitionActions);
@@ -971,7 +931,7 @@ public class StateMachineTest : Test
     GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
     var counter = 0;
 
-    var action = new IStateMachine <State>.TransitionAction (() =>
+    var action1 = new IStateMachine <State>.TransitionAction (() =>
     {
       ++counter;
       GD.Print ($"Incremented counter from {counter - 1} to {counter}.");
@@ -983,28 +943,19 @@ public class StateMachineTest : Test
       GD.Print ($"Decremented counter from {counter + 1} to {counter}.");
     });
 
-    var trigger1 = new IStateMachine <State>.TransitionTrigger (() => true);
-    var trigger2 = new IStateMachine <State>.TransitionTrigger (() => false);
+    var trigger = new IStateMachine <State>.TransitionTrigger (() => true);
     _sm.LogLevel = Log.Level.All;
-    _sm.OnTransitionTo (State.State1, action);
-    _sm.OnTransitionFrom (InitialState, action);
-    _sm.OnTransition (InitialState, State.State1, action);
+    _sm.OnTransitionTo (State.State1, action1);
+    _sm.OnTransitionFrom (InitialState, action1);
+    _sm.OnTransition (InitialState, State.State1, action1);
     _sm.OnTransition (InitialState, State.State6, action2);
-    _sm.AddTrigger (InitialState, State.State1, trigger1);
-    _sm.AddTrigger (State.State3, State.State1, trigger1);
-    _sm.AddTrigger (State.State4, State.State1, trigger1);
-    _sm.AddTrigger (State.State1, State.State7, trigger2);
-    trigger1(); // counter = 3
-    trigger1();
-    trigger2();
+    _sm.AddTrigger (InitialState, State.State1, trigger);
+    _sm.AddTrigger (State.State3, State.State1, trigger);
+    _sm.AddTrigger (State.State4, State.State1, trigger);
+    _sm.AddTrigger (State.State1, State.State7, () => false);
+    _sm.Update(); // counter = 3
     _sm.Update();
-    trigger2();
     _sm.Update();
-    trigger2();
-    trigger1();
-    trigger1();
-    _sm.Update();
-    trigger2();
     _sm.Update();
     _sm.Update();
     _sm.Update();
