@@ -27,7 +27,7 @@ _global_script_class_icons={
 [WAT]
 
 Test_Directory="res://tests"
-Results_Directory="res://tests"
+Results_Directory="res://tests/results"
 Test_Metadata_Directory="res://tests/metadata"
 Tags=PoolStringArray(  )
 Window_Size=Vector2( 1280, 720 )
