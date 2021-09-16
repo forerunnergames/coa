@@ -42,6 +42,7 @@ margin_left = 200.0
 margin_top = -500.0
 margin_right = 584.0
 margin_bottom = -244.0
+mouse_filter = 2
 bbcode_enabled = true
 fit_content_height = true
 scroll_active = false
