@@ -150,6 +150,7 @@ public class Cliffs : Area2D
       {
         if (node2 is not AudioStreamPlayer2D sound) continue;
 
+        LoopAudio (sound.Stream);
         sound.Playing = !isWinter;
       }
     }
