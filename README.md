@@ -1,6 +1,6 @@
 Release:
 
-[![master](https://github.com/forerunnergames/coa/workflows/build/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/release.yml)
+[![master](https://github.com/forerunnergames/coa/workflows/release/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/release.yml)
 
 Development:
 
