@@ -1,10 +1,10 @@
 Release:
 
-[![master](https://github.com/forerunnergames/coa/workflows/build/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/build-release.yml)
+[![master](https://github.com/forerunnergames/coa/workflows/build/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/release.yml)
 
 Development:
 
-[![develop](https://github.com/forerunnergames/coa/workflows/build/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/build-develop.yml)
+[![develop](https://github.com/forerunnergames/coa/workflows/build/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/build.yml)
 
 Itch.io Deployment:
 
