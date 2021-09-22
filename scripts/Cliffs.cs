@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using static Inputs;
 using static Tools;
 
 public class Cliffs : Area2D
@@ -26,6 +27,7 @@ public class Cliffs : Area2D
   private string _playerAnimation;
   private CollisionShape2D _playerAnimationCollider;
   private bool _isPlayerInWaterfall;
+  private bool _isPlayerInCliffIce;
   private AudioStreamPlayer _ambiencePlayer;
   private AudioStreamPlayer _musicPlayer;
   private TileMap _iceTileMap;
@@ -83,8 +85,8 @@ public class Cliffs : Area2D
 
   public override void _UnhandledInput (InputEvent @event)
   {
-    if (IsReleased (Tools.Input.Season, @event) && !_seasonChangeInProgress) NextSeason();
-    if (IsReleased (Tools.Input.Music, @event)) ToggleMusic();
+    if (WasPressed (Inputs.Input.Season, @event) && !_seasonChangeInProgress) NextSeason();
+    if (WasPressed (Inputs.Input.Music, @event)) ToggleMusic();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -94,7 +96,7 @@ public class Cliffs : Area2D
 
     _log.Info ($"Player entered waterfall.");
     _isPlayerInWaterfall = true;
-    _player.IsInFrozenWaterfall = CurrentSeason == Season.Winter;
+    _player.IsInCliffIce = CurrentSeason == Season.Winter || _isPlayerInCliffIce;
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -104,7 +106,7 @@ public class Cliffs : Area2D
 
     _log.Info ($"Player exited waterfall.");
     _isPlayerInWaterfall = false;
-    _player.IsInFrozenWaterfall = false;
+    _player.IsInCliffIce = _isPlayerInCliffIce;
   }
 
   private void InitializeSeasons()
@@ -155,7 +157,7 @@ public class Cliffs : Area2D
       }
     }
 
-    _player.IsInFrozenWaterfall = _isPlayerInWaterfall && isWinter;
+    _player.IsInCliffIce = isWinter && _isPlayerInWaterfall || _isPlayerInCliffIce;
   }
 
   private async void UpdateFrozenWaterfallTopGround (PhysicsBody2D waterSurfaceCollider, Season season, float delta)
@@ -250,7 +252,8 @@ public class Cliffs : Area2D
     _cliffRects.Clear();
     _cliffRects.AddRange (_colliders.Select (x => GetAreaColliderRect (this, x)));
     _player.IsInCliffs = IsEnclosedBy (_playerRect, _cliffRects);
-    _player.IsTouchingCliffIce = _iceTileMap.Visible && IsIntersectingAnyTile (_playerArea, _playerAnimationCollider, _iceTileMap);
+    _isPlayerInCliffIce = _iceTileMap.Visible && IsIntersectingAnyTile (_playerArea, _playerAnimationCollider, _iceTileMap);
+    _player.IsInCliffIce = CurrentSeason == Season.Winter && _isPlayerInWaterfall || _isPlayerInCliffIce;
   }
 
   private void ToggleMusic() => _musicPlayer.Playing = !_musicPlayer.Playing;
