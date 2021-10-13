@@ -248,7 +248,7 @@ public class Butterfly : AnimatedSprite
   public override void _Draw()
   {
     _flightPathCurve.Draw (_drawPrimitive, () => ToLocal);
-    _perch.Draw (_drawRect, _perchPoint, () => ToLocal, () => GlobalScale);
+    _perch.Draw (_drawRect, _perchPoint, () => ToLocal);
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -335,7 +335,7 @@ public class Butterfly : AnimatedSprite
     _lerp = 0;
     _lastPosition = Position;
     _perch = FindPerch();
-    _perchPoint = _perch.RandomPoint (_rng, () => GlobalScale);
+    _perchPoint = _perch.RandomPoint (_rng);
     CreatePathFromTo (ToLocal (Position), ToLocal (_perchPoint));
   }
 

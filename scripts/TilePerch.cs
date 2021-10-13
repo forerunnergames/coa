@@ -6,9 +6,9 @@ public class TilePerch : AbstractPerch
   private readonly Vector2 _tileCell;
   private readonly string _tileMapName;
 
-  public TilePerch (string tileMapName, string tileName, Vector2 globalOrigin, Vector2 cell, PerchableDrawPrefs drawPrefs,
-    List <Rect2> perchableAreasInTileSpace, float positionEpsilon) : base (tileName, globalOrigin, drawPrefs,
-    perchableAreasInTileSpace, positionEpsilon)
+  public TilePerch (string tileMapName, string tileName, Vector2 localScale, Vector2 globalScale, Vector2 globalOrigin, Vector2 cell,
+    PerchableDrawPrefs drawPrefs, List <Rect2> perchableAreasInTileSpace, float positionEpsilon) : base (tileName, localScale,
+    globalScale, globalOrigin, drawPrefs, perchableAreasInTileSpace, positionEpsilon)
   {
     _tileMapName = tileMapName;
     _tileCell = cell;
