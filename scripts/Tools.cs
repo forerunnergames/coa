@@ -20,7 +20,8 @@ public static class Tools
     Left,
     Right,
     Jump,
-    Energy
+    Energy,
+    Attack
   }
 
   private static readonly Dictionary <Input, string[]> Inputs = new()
@@ -28,6 +29,7 @@ public static class Tools
     { Input.Horizontal, new[] { "move_left", "move_right" } },
     { Input.Vertical, new[] { "move_up", "move_down" } },
     { Input.Item, new[] { "use_item" } },
+    { Input.Attack, new[] { "attack" } },
     { Input.Text, new[] { "show_text" } },
     { Input.Respawn, new[] { "respawn" } },
     { Input.Season, new[] { "season" } },
@@ -40,6 +42,8 @@ public static class Tools
     { Input.Energy, new[] { "energy" } }
   };
 
+  // @formatter:off
+  public delegate bool Condition();
   public delegate void DrawPrimitive (Vector2[] points, Color[] colors, Vector2[] uvs);
   public delegate void DrawRect (Rect2 rect, Color color, bool filled);
   public delegate Transform GetLocalTransform();
@@ -49,6 +53,7 @@ public static class Tools
   public static bool IsPressed (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionPressed (x));
   public static bool IsOneActiveOf (Input i) => Inputs[i].Where (Godot.Input.IsActionPressed).Take (2).Count() == 1;
   public static bool IsAnyActiveOf (Input i) => Inputs[i].Any (Godot.Input.IsActionPressed);
+  public static bool WasMouseLeftClicked (InputEvent e) => e is InputEventMouseButton { ButtonIndex: (int)ButtonList.Left, Pressed: true };
   public static bool IsLeftArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Left][0]);
   public static bool WasLeftArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Left][0]);
   public static bool IsRightArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Right][0]);
@@ -65,8 +70,12 @@ public static class Tools
   public static bool IsEveryVerticalArrowPressed() => IsUpArrowPressed() && IsDownArrowPressed();
   public static bool IsAnyArrowKeyPressed() => IsAnyHorizontalArrowPressed() || IsAnyVerticalArrowPressed();
   public static bool IsItemKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Item][0]);
-  public static bool IsEnergyKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Energy][0]);
+  public static bool WasAttackKeyPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Attack][0]);
+  public static bool IsAttackKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Attack][0]);
+  public static bool WasAttackKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Attack][0]);
   public static bool WasItemKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Item][0]);
+  public static bool WasItemKeyPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Item][0]);
+  public static bool IsEnergyKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Energy][0]);
   public static bool WasJumpKeyPressed() => Godot.Input.IsActionJustPressed (Inputs[Input.Jump][0]);
   public static bool WasJumpKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Jump][0]);
   public static float SafelyClampMin (float f, float min) => IsSafelyLessThan (f, min) ? min : f;
@@ -74,6 +83,7 @@ public static class Tools
   public static float SafelyClamp (float f, float min, float max) => SafelyClampMin (SafelyClampMax (f, max), min);
   public static bool IsSafelyLessThan (float f1, float f2) => f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
   public static bool IsSafelyGreaterThan (float f1, float f2) => f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
+  // @formatter:on
 
   public static bool IsAnyArrowKeyPressedExcept (Input arrow)
   {
@@ -255,7 +265,26 @@ public static class Tools
   public static Vector2 GetIntersectingTileCell (Area2D area, string colliderName, TileMap t) => GetIntersectingTileCell (area, area.GetNode <CollisionShape2D> (colliderName), t);
   public static Vector2 GetTileCellGlobalPosition (Vector2 cell, TileMap t) => t.ToGlobal (t.MapToWorld (cell));
   public static Vector2 GetIntersectingTileCellGlobalPosition (Area2D area, CollisionShape2D collider, TileMap t) => GetTileCellGlobalPosition (GetIntersectingTileCell (area, collider, t), t);
+  public static bool MouseInSprite (Sprite sprite, Vector2 spriteLocalMousePos) => sprite.GetRect().HasPoint (spriteLocalMousePos) && sprite.IsPixelOpaque (spriteLocalMousePos);
+  public static Vector2 GetMousePositionInSpriteSpace (Sprite sprite) => sprite.GetLocalMousePosition();
+  public static void ToggleVisibility (CanvasItem sprite) => sprite.Visible = !sprite.Visible;
+  public static void ToggleVisibility (CanvasItem sprite, Condition condition) => sprite.Visible = condition() && !sprite.Visible;
   // @formatter:on
+
+  public static async void PlaySyncedAnimation (string animationName, AnimationPlayer playOn, AnimationPlayer syncTo, float delta)
+  {
+    await playOn.ToSignal (playOn.GetTree().CreateTimer (NextAnimationFrameDelaySecs (syncTo) - delta, false), "timeout");
+    playOn.Play (animationName);
+  }
+
+  public static float NextAnimationFrameDelaySecs (AnimationPlayer player) =>
+    player.CurrentAnimationPosition < player.CurrentAnimationLength
+      ? RoundUpToNextMultiple (player.CurrentAnimationPosition, player.GetAnimation (player.CurrentAnimation).Step) -
+        player.CurrentAnimationPosition
+      : 0;
+
+  public static float RoundUpToNextMultiple (float value, float multiple) =>
+    (float)Math.Ceiling ((decimal)value / (decimal)multiple) * multiple;
 
   public static string ToString <T> (IEnumerable <T> e, string sep = ", ", string prepend = "", string append = "",
     Func <T, string> f = null)

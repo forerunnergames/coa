@@ -30,6 +30,7 @@ public class Cliffs : Area2D
   private AudioStreamPlayer _musicPlayer;
   private TileMap _iceTileMap;
   private readonly Dictionary <Season, int> _waterfallZIndex = new();
+  private readonly Dictionary <Season, int> _waterfallMistZIndex = new();
   private readonly Dictionary <Season, AudioStream> _music = new();
   private readonly Dictionary <Season, AudioStream> _ambience = new();
   private readonly Dictionary <Season, float> _musicVolumes = new();
@@ -52,8 +53,10 @@ public class Cliffs : Area2D
     _log = new Log (Name);
     _clearColor = InitialClearColor;
     VisualServer.SetDefaultClearColor (_clearColor);
-    _waterfallZIndex.Add (Season.Summer, 2);
+    _waterfallZIndex.Add (Season.Summer, 33);
     _waterfallZIndex.Add (Season.Winter, 1);
+    _waterfallMistZIndex.Add (Season.Summer, 33);
+    _waterfallMistZIndex.Add (Season.Winter, 33);
     _ambience.Add (Season.Summer, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_summer.wav"));
     _ambience.Add (Season.Winter, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_winter.wav"));
     _ambienceVolumes.Add (Season.Summer, -10);
@@ -136,6 +139,12 @@ public class Cliffs : Area2D
     var waterfall = GetNode <Area2D> ("Waterfall");
     waterfall.Visible = true;
     waterfall.ZIndex = _waterfallZIndex[season];
+
+    for (var i = 1; i <= 3; ++i)
+    {
+      var mist = waterfall.GetNode <AnimatedSprite> ("Mist " + i);
+      mist.ZIndex = _waterfallMistZIndex[season];
+    }
 
     foreach (Node node1 in waterfall.GetChildren())
     {
