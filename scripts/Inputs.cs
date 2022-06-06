@@ -8,10 +8,10 @@ using static Inputs;
 [SuppressMessage ("ReSharper", "MemberCanBePrivate.Global")]
 public static class Inputs
 {
-  public static IInputWrapper Required (params Input[] inputs) => new CompositeRequiredInputWrapper (inputs);
-  public static IInputWrapper Required (IInputWrapper wrapper) => Required (wrapper.Inputs());
-  public static IInputWrapper Optional (params Input[] inputs) => new CompositeOptionalInputWrapper (inputs);
-  public static IInputWrapper Optional (IInputWrapper wrapper) => Optional (wrapper.Inputs());
+  public static IInputWrapper Required (params Input[] inputs) => new RequiredInputWrapper (inputs);
+  public static IInputWrapper Required (IInputWrapper wrapper) => Required (wrapper.GetItems().ToArray());
+  public static IInputWrapper Optional (params Input[] inputs) => new OptionalInputWrapper (new List <Input> (inputs) { Input.None });
+  public static IInputWrapper Optional (IInputWrapper wrapper) => Optional (wrapper.GetItems().ToArray());
   public static IInputWrapper[] _ (params IInputWrapper[] wrappers) => new IInputWrapper[] { new CompositeInputWrapper (wrappers) };
   public static readonly IEnumerable <Input> Values = Enum.GetValues (typeof (Input)).Cast <Input>();
 
@@ -63,11 +63,19 @@ public static class Inputs
     Energy
   }
 
-  public static bool IsActive (this Input i)
+  public static bool IsActive (this Input i, Func <Input, string, bool> inputFunc)
   {
-    if (i == Input.None) return Mapping.Values.All (x => !x.Any (Godot.Input.IsActionPressed));
+    Godot.GD.Print ("IsActive: Input: ", i);
 
-    var count = Mapping[i].Count (Godot.Input.IsActionPressed);
+    foreach (var action in Mapping[i])
+    {
+      Godot.GD.Print ("action: ", action, ", inputFunc: ", inputFunc.Invoke (action), ", is pressed (should match inputFunc): ",
+        Godot.Input.IsActionPressed (action));
+    }
+
+    if (i == Input.None) return Mapping.Values.All (x => !x.Any (inputFunc));
+
+    var count = Mapping[i].Count (inputFunc);
     var max = MaxActiveActions.GetValueOrDefault (i, 1);
 
     return count >= Math.Min (max, 1) && count <= max;
@@ -82,64 +90,29 @@ public static class Inputs
   // @formatter:on
 }
 
-public interface IInputWrapper
+public interface IInputWrapper : IRequiredOptionalWrapper <Input, string>
 {
-  public bool Result();
-  public IEnumerable <Input> Allowed();
-  public IEnumerable <Input> Disallowed();
-  public Input[] Inputs();
 }
 
-public abstract class AbstractCompositeInputWrapper : IInputWrapper
+public class RequiredInputWrapper : RequiredWrapper <Input, string>, IInputWrapper
 {
-  private readonly Input[] _inputs;
-  private readonly IEnumerable <Input> _allowed;
-  private readonly IEnumerable <Input> _disallowed;
-
-  protected AbstractCompositeInputWrapper (IEnumerable <Input> inputs)
+  public RequiredInputWrapper (IReadOnlyCollection <Input> inputs) : base (inputs,
+    Values().Where (x => inputs.Any (y => x == y || y != Input.None && Mapping[y].All (z => Mapping[x].Any (a => a == z)))),
+    Values().Where (x => inputs.All (y => x != y && Mapping[y].All (z => Mapping[x].All (a => a != z)))))
   {
-    _inputs = inputs.ToArray();
-    _disallowed = Values.Except (_inputs).Where (x => _inputs.Any (y => !Mapping[x].Intersect (Mapping[y]).Any())).Distinct();
-    _allowed = _inputs.Except (_disallowed).Distinct();
   }
-
-  public abstract bool Result();
-  public IEnumerable <Input> Allowed() => _allowed;
-  public IEnumerable <Input> Disallowed() => _disallowed;
-  public Input[] Inputs() => _inputs;
-  public override string ToString() => Tools.ToString (_inputs);
 }
 
-public class CompositeRequiredInputWrapper : AbstractCompositeInputWrapper
+public class OptionalInputWrapper : OptionalWrapper <Input, string>, IInputWrapper
 {
-  public CompositeRequiredInputWrapper (Input[] inputs) : base (inputs) { }
-  public override bool Result() => Allowed().All (x => x.IsActive());
-  public override string ToString() => "Required: " + base.ToString();
-}
-
-public class CompositeOptionalInputWrapper : AbstractCompositeInputWrapper
-{
-  public CompositeOptionalInputWrapper (IEnumerable <Input> inputs) : base (new List <Input> (inputs) { Input.None }) { }
-  public override bool Result() => true;
-  public override string ToString() => "Optional: " + base.ToString();
-}
-
-public class CompositeInputWrapper : IInputWrapper
-{
-  private readonly IInputWrapper[] _wrappers;
-  private readonly IEnumerable <Input> _allowed;
-  private readonly IEnumerable <Input> _disallowed;
-
-  public CompositeInputWrapper (IInputWrapper[] wrappers)
+  public OptionalInputWrapper (IReadOnlyCollection <Input> inputs) : base (inputs,
+    Values().Where (x => inputs.Any (y => x == y || Mapping[y].Any (z => Mapping[x].All (a => a == z)))),
+    Values().Where (x => inputs.All (y => x != y && Mapping[y].All (z => x != Input.None && Mapping[x].All (a => a != z)))))
   {
-    _wrappers = wrappers;
-    _allowed = _wrappers.SelectMany (x => x.Allowed()).Distinct();
-    _disallowed = _wrappers.SelectMany (x => x.Disallowed().Except (_wrappers.SelectMany (y => y.Allowed()))).Distinct();
   }
+}
 
-  public bool Result() => _wrappers.All (x => x.Result()) && _disallowed.All (y => !y.IsActive());
-  public IEnumerable <Input> Allowed() => _allowed;
-  public IEnumerable <Input> Disallowed() => _disallowed;
-  public Input[] Inputs() => _wrappers.SelectMany (x => x.Inputs()).ToArray();
-  public override string ToString() => Tools.ToString (_wrappers);
+public class CompositeInputWrapper : CompositeRequiredOptionalWrapper <Input, string>, IInputWrapper
+{
+  public CompositeInputWrapper (IEnumerable <IInputWrapper> wrappers) : base (wrappers) { }
 }
