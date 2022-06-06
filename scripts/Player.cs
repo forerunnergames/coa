@@ -395,7 +395,7 @@ public class Player : KinematicBody2D
   }
 
   // @formatter:off
-  private void StateMachine (float delta) => UpdateVelocity (_sm.Update (this, _velocity, delta));
+  private void StateMachine (float delta) => UpdateVelocity (_sm.Update (this, Godot.Input.IsActionPressed, _velocity, delta));
   private void Collisions() => UpdateVelocity (MoveAndSlide (_velocity, Vector2.Up));
   private void UpdateVelocity (Vector2? velocity) => _velocity = velocity ?? _velocity;
   private bool IsInClimbableLocation() => IsInCliffs || _isInGround;
@@ -427,7 +427,6 @@ public class Player : KinematicBody2D
     velocity.x *= leftOnly || rightOnly ? HorizontalFriction : HorizontalStoppingFriction;
     if (flippable) FlipHorizontally (rightOnly || !leftOnly && _isFlippedHorizontally);
     if (Mathf.Abs (velocity.x) < VelocityEpsilon) velocity.x = 0;
-    if (Mathf.Abs (velocity.y) < VelocityEpsilon) velocity.y = 0;
 
     return velocity;
   }
@@ -490,7 +489,9 @@ public class Player : KinematicBody2D
   {
     if (_velocity.y > _highestVerticalVelocity) _highestVerticalVelocity = _velocity.y;
 
-    switch (Motion.Down.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)))
+    var physicsBodyData = new PhysicsBodyData (_velocity, GravityType.AfterApplied, GetPositioning (this));
+
+    switch (Motion.Down.IsActive (ref physicsBodyData))
     {
       case true when _fallingStartTimeMs == 0:
         _fallingStartTimeMs = OS.GetTicksMsec();
@@ -518,7 +519,11 @@ public class Player : KinematicBody2D
 
   // @formatter:off
 
-  private string GetDebuggingText() =>
+  private string GetDebuggingText()
+  {
+    var physicsBodyData = new PhysicsBodyData (_velocity, GravityType.AfterApplied, GetPositioning (this));
+
+    return
     "\nState: " + _sm.GetState() +
     "\nAnimation: " + _sprite.Animation +
     "\nSeason: " + _cliffs.CurrentSeason +
@@ -543,19 +548,20 @@ public class Player : KinematicBody2D
     "\nWas In Cliff Edge: " + _wasInCliffEdge +
     "\nDropping Down: " + _isDroppingDown +
     "\nJust Respawned: " + _justRespawned +
-    "\nMoving: " + Motion.Any.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
-    "\nMoving Left: " + Motion.Left.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
-    "\nMoving Right: " + Motion.Right.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
-    "\nMoving Up: " + Motion.Up.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
-    "\nMoving Down: " + Motion.Down.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
-    "\nMoving Horizontally: " + Motion.Horizontal.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
-    "\nMoving Vertically: " + Motion.Vertical.IsActive (_velocity, GravityType.AfterApplied, GetPositioning (this)) +
+    "\nMoving: " + Motion.Any.IsActive (ref physicsBodyData) +
+    "\nMoving Left: " + Motion.Left.IsActive (ref physicsBodyData) +
+    "\nMoving Right: " + Motion.Right.IsActive (ref physicsBodyData) +
+    "\nMoving Up: " + Motion.Up.IsActive (ref physicsBodyData) +
+    "\nMoving Down: " + Motion.Down.IsActive (ref physicsBodyData) +
+    "\nMoving Horizontally: " + Motion.Horizontal.IsActive (ref physicsBodyData) +
+    "\nMoving Vertically: " + Motion.Vertical.IsActive (ref physicsBodyData) +
     "\nRight Arrow Pressed: " + IsPressed (Input.Right) +
     "\nLeft Arrow Pressed: " + IsPressed (Input.Left) +
     "\nUp Arrow Pressed: " + IsPressed (Input.Up) +
     "\nDown Arrow Pressed: " + IsPressed (Input.Down) +
     "\nAny Horizontal Arrow Pressed: " + IsPressed (Input.Horizontal) +
     "\nAny Vertical Arrow Pressed: " + IsPressed (Input.Vertical) +
+    "\nJump Key Pressed: " + IsPressed (Input.Jump) +
     "\nFlipped Horizontally: " + _isFlippedHorizontally +
     "\nPosition: " + Position +
     "\nScale: " + Scale +
@@ -564,6 +570,7 @@ public class Player : KinematicBody2D
     "\nHighest Vertical Velocity: " + _highestVerticalVelocity +
     "\nHighest Vertical Velocity (mph): " + _highestVerticalVelocity * 0.028334573333333 +
     "\nFalling Time (sec): " + (_elapsedFallingTimeMs > 0 ? _elapsedFallingTimeMs / 1000.0f : _lastTotalFallingTimeMs / 1000.0f);
+  }
 
   // @formatter:on
 
@@ -706,7 +713,8 @@ public class Player : KinematicBody2D
     _sm.AddFrameAction (State.Jumping, GravityType.AfterApplied, velocityAction: (velocity, delta) =>
     {
       MoveHorizontally (velocity, delta);
-      if (WasReleased (Input.Jump) && Motion.Up.IsActive (velocity, GravityType.AfterApplied, GetPositioning (this))) velocity.y = 0;
+      var physicsBodyData = new PhysicsBodyData (velocity, GravityType.AfterApplied, GetPositioning (this));
+      if (WasReleased (Input.Jump) && Motion.Up.IsActive (ref physicsBodyData)) velocity.y = 0;
 
       return velocity;
     });
@@ -753,11 +761,8 @@ public class Player : KinematicBody2D
     _sm.AddTrigger (State.Idle, State.FreeFalling, motion: Motion.Down, positioning: Positioning.Air, conditions: _ (And (() => !IsPressed (Input.Down), () => !WasPressed (Input.Jump)), Or (() => _isDroppingDown)));
 
     _sm.AddTrigger (State.Idle, State.ReadingSign, Input.Up, positioning: Positioning.Ground, conditions: _ (And (CanReadSign, () => !_isDroppingDown, () => !_isResting)));
-    _sm.AddTrigger (State.Walking, State.Idle, inputs: _ (Optional (Required (Input.Left, Input.Right))), motion: Motion.None, positioning: Positioning.Ground);
-
-     // TODO Not working
+    _sm.AddTrigger (State.Walking, State.Idle, motion: Motion.None, positioning: Positioning.Ground);
     _sm.AddTrigger (State.Walking, State.Running, inputs: _ (Required (Input.Horizontal, Input.Energy)), motion: Motion.Horizontal, positioning: Positioning.Ground, and: IsDepletingEnergy);
-
     _sm.AddTrigger (State.Walking, State.Jumping, inputs: _ (Required (Input.Jump), Optional (Input.Horizontal)), positioning: Positioning.Ground);
 
     // TODO Try to eliminate custom input conditions.
@@ -767,7 +772,10 @@ public class Player : KinematicBody2D
     _sm.AddTrigger (State.Walking, State.ReadingSign, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanReadSign);
     _sm.AddTrigger (State.Running, State.Idle, Input.None, motion: Motion.None, positioning: Positioning.Ground);
     _sm.AddTrigger (State.Running, State.Walking, Input.Horizontal, motion: Motion.Horizontal, positioning: Positioning.Ground, conditions: _ (And (() => !IsDepletingEnergy()), Or (JustDepletedAllEnergy)));
-    _sm.AddTrigger (State.Running, State.Jumping, Input.Jump, positioning: Positioning.Ground);
+
+    // TODO Testing
+    _sm.AddTrigger (State.Running, State.Jumping, inputs: _ (Required (Input.Jump, Input.Left)), positioning: Positioning.Ground, motion: Motion.Left);
+
     _sm.AddTrigger (State.Running, State.FreeFalling, motion: Motion.Down, positioning: Positioning.Air, and: () => !IsHittingWall());
     _sm.AddTrigger (State.Running, State.ClimbingPrep, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanClimbPrep);
     _sm.AddTrigger (State.Running, State.ReadingSign, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanReadSign);
@@ -784,10 +792,10 @@ public class Player : KinematicBody2D
     _sm.AddTrigger (State.ClimbingUp, State.FreeFalling, Input.Jump, positioning: Positioning.Air, conditions: _ (Or (() => !IsInClimbableLocation(), () => IsInCliffIce, JustDepletedAllEnergy), And (() => !_isResting)));
 
     // TODO Testing.
-    _sm.AddTrigger (State.ClimbingUp, State.CliffHanging, Input.None, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.ClimbingUp, State.CliffHanging, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.ClimbingDown, State.CliffHanging, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    // _sm.AddTrigger (State.ClimbingUp, State.ClimbingDown, Input.Down, positioning: Positioning.Air, and: IsInClimbableLocation);
 
-    _sm.AddTrigger (State.ClimbingUp, State.ClimbingDown, Input.Down, positioning: Positioning.Air, and: IsInClimbableLocation);
-    _sm.AddTrigger (State.ClimbingDown, State.CliffHanging, Input.None, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
     _sm.AddTrigger (State.ClimbingDown, State.Idle, positioning: Positioning.Ground); // TODO Test more strict conditions.
     _sm.AddTrigger (State.ClimbingDown, State.ClimbingUp, Input.Up, positioning: Positioning.Air, and: IsInClimbableLocation);
     _sm.AddTrigger (State.ClimbingDown, State.FreeFalling, Input.Jump, positioning: Positioning.Air, conditions: _ (Or (() => !IsInClimbableLocation(), () => IsInCliffIce, () => _isResting)));
@@ -805,7 +813,7 @@ public class Player : KinematicBody2D
     _sm.AddTrigger (State.CliffHanging, State.FreeFalling, Input.Jump, positioning: Positioning.Air); // TODO Test more strict conditions.
     _sm.AddTrigger (State.CliffHanging, State.Traversing, Input.Horizontal, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
     _sm.AddTrigger (State.Traversing, State.FreeFalling, inputs: _ (Required (Input.Jump), Optional (Input.Horizontal)), positioning: Positioning.Air, conditions: _ (And (() => !IsInClimbableLocation()), Or (() => IsInCliffIce)));
-    _sm.AddTrigger (State.Traversing, State.CliffHanging, Input.None, motion: Motion.None, positioning: Positioning.Air, conditions: _ (And (IsInClimbableLocation, () => !IsInCliffIce)));
+    _sm.AddTrigger (State.Traversing, State.CliffHanging, inputs: _ (Optional (Required (Input.Left, Input.Right))), motion: Motion.None, positioning: Positioning.Air, conditions: _ (And (IsInClimbableLocation, () => !IsInCliffIce)));
 
     _sm.AddTrigger (State.CliffArresting, State.FreeFalling, Input.None, motions: _ (Required (Motion.Down), Optional (Motion.Horizontal)), positioning: Positioning.Air);
 

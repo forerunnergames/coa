@@ -28,9 +28,8 @@ public interface IStateMachine <T> where T : Enum
   public void OnTransitionFromExceptTo (T from, ImmutableList <T> exceptions, NonVelocityTransitionAction nonVelocityAction = null, VelocityTransitionAction velocityAction = null);
   public void OnTransition (T from, T to, NonVelocityTransitionAction nonVelocityAction = null, VelocityTransitionAction velocityAction = null);
   public void AddFrameAction (T state, GravityType gravity = GravityType.AfterApplied, NonVelocityFrameAction nonVelocityAction = null, VelocityFrameAction velocityAction = null);
-  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, Godot.Vector2? velocity = null, float delta = 0.0f);
-  public Godot.Vector2? To (T to, Godot.Vector2? velocity = null);
-  public Godot.Vector2? ToIf (T to, bool condition, Godot.Vector2? velocity = null);
+  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null, Godot.Vector2? velocity = null, float delta = 0.0f);
+  public Godot.Vector2? To (T to, Godot.Vector2? velocity = null); public Godot.Vector2? ToIf (T to, bool condition, Godot.Vector2? velocity = null);
   public Godot.Vector2? Push (T to, Godot.Vector2? velocity = null);
   public Godot.Vector2? PushIf (T to, bool condition, Godot.Vector2? velocity = null);
   public Godot.Vector2? Pop (Godot.Vector2? velocity = null);

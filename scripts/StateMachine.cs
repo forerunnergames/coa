@@ -83,21 +83,18 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       _log = new Log (name) { CurrentLevel = logLevel };
     }
 
-    public bool CanTransition (T from, T to, Godot.KinematicBody2D body = null, Godot.Vector2? velocity = null,
-      GravityType? gravity = null)
+    public bool CanTransition (T from, T to, Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+      Godot.Vector2? velocity = null, GravityType? gravity = null)
     {
-      var input = _inputs?.Result() ?? true;
-      // Because frame actions, where gravity would be applied, always occur before transition triggers,
-      // by this point gravity has already been applied regardless.
-      // Therefore the only valid gravity type for motion calculations is either None or AfterApplied.
-      gravity = gravity == GravityType.BeforeApplied ? GravityType.AfterApplied : gravity;
-      var motion = !velocity.HasValue || (_motions?.ComposeFromRequired (input, velocity.Value, gravity, _positioning) ?? input);
+      // @formatter:off
+      var input = inputFunc == null || (_inputs?.Compose (inputFunc) ?? true);
+      var physicsBodyData = new PhysicsBodyData (velocity, gravity, _positioning);
+      var motion = !velocity.HasValue || (_motions?.ComposeFromRequired (input, ref physicsBodyData, (motion1, data) => motion1.IsActive (ref data)) ?? input);
       var positioning = body == null || !_positioning.HasValue || _positioning.Value.IsActive (body);
       var conditions = (_condition?.Invoke() ?? true) && (_and?.Invoke() ?? true) || (_or?.Invoke() ?? false);
       var result = input && motion && positioning && conditions;
       var canTransition = _operators?.Compose (result) ?? result;
 
-      // @formatter:off
       _log.Debug ($"{nameof (TransitionTrigger)}: {from} => {to}: " +
                  $"inputs: {input} ({(_inputs != null ? _inputs : "null")}), " +
                  $"motions: {motion} ({(_motions != null ? _motions : "null")}), " +
@@ -320,8 +317,9 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       new TransitionTrigger (input, inputs, motion, motions, positioning, condition, and, or, conditions, _log.CurrentLevel, _name));
   }
 
-  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, Godot.Vector2? velocity = null, float delta = 0.0f) =>
-    ExecuteTriggers (body, ExecuteFrameAction (velocity, delta));
+  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+    Godot.Vector2? velocity = null, float delta = 0.0f) =>
+    ExecuteTriggers (body, inputFunc, ExecuteFrameAction (velocity, delta));
 
   public void Reset (IStateMachine <T>.ResetOption resetOption)
   {
@@ -525,22 +523,31 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     !(to.Equals (AnyState) && !from.Equals (AnyState) && _fromExceptions.ContainsKey (from)) &&
     !(from.Equals (AnyState) && !to.Equals (AnyState) && _toExceptions.ContainsKey (to));
 
-  private Godot.Vector2? ExecuteTriggers (Godot.KinematicBody2D body = null, Godot.Vector2? velocity = null)
+  private Godot.Vector2? ExecuteTriggers (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+    Godot.Vector2? velocity = null)
   {
     if (!_triggers.ContainsKey (_currentState) && !_triggers.ContainsKey (AnyState)) return velocity;
 
     _triggeredFromStates.Clear();
     _triggeredToStates.Clear();
 
+    // @formatter:off
+    GravityType? gravity = _frameActions.ContainsKey (_currentState) ? _frameActions[_currentState].Gravity : null;
+
+    // Because frame actions, where gravity would be applied, always occur before transition triggers,
+    // by this point (executing transition triggers), gravity has already been applied regardless.
+    // Therefore the only valid gravity type for motion calculations is either None or AfterApplied.
+    gravity = gravity == GravityType.BeforeApplied ? GravityType.AfterApplied : gravity;
+
     foreach (var from in Create (_currentState, AnyState).Where (x => _triggers.ContainsKey (x)))
     {
-      foreach (var to in _triggers[from].Keys.Where (x => _triggers[from][x].CanTransition (from, x, body, velocity,
-        _frameActions.ContainsKey (_currentState) ? _frameActions[_currentState].Gravity : null)))
+      foreach (var to in _triggers[from].Keys.Where (x => _triggers[from][x].CanTransition (from, x, body, inputFunc, velocity, gravity)))
       {
         _triggeredFromStates.Add (from);
         _triggeredToStates.Add (to);
       }
     }
+    // @formatter:on
 
     if (_triggeredFromStates.Count == 0 || _triggeredToStates.Count == 0) return velocity;
 
