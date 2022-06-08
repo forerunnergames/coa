@@ -2,7 +2,7 @@ name: 3. deploy
 
 on:
   release:
-    types: [created, edited]
+    types: [published]
 
 jobs:
   deploy_mac:
@@ -67,11 +67,12 @@ jobs:
 
   cleanup:
     name: cleanup
+    needs: [deploy_mac, deploy_windows, deploy_linux]
     runs-on: ubuntu-latest
     steps:
       - name: delete github executables
         uses: mknejp/delete-release-assets@v1
         with:
           token: ${{ secrets.GH_ACTIONS_TOKEN }}
-          tag: tags/${{ github.event.release.tag_name }}
+          tag: ${{ github.event.release.tag_name }}
           assets: 'coa-*.zip'
