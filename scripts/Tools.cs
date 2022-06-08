@@ -6,6 +6,8 @@ using Godot;
 // ReSharper disable MemberCanBePrivate.Global
 public static class Tools
 {
+  private static Log _log = new Log();
+
   public enum Input
   {
     Horizontal,
@@ -202,11 +204,37 @@ public static class Tools
   public static Vector2 RandomPointIn (Rect2 rect, RandomNumberGenerator rng, Vector2 multiple)
   {
     var p = rect.Position - Vector2.One;
+    var i = 0;
 
-    // @formatter:off
-    while (p.x < rect.Position.x || p.x % multiple.x != 0) p.x = rng.RandiRange (Mathf.RoundToInt (rect.Position.x), Mathf.RoundToInt (rect.End.x) - 1);
-    while (p.y < rect.Position.y || p.y % multiple.y != 0) p.y = rng.RandiRange (Mathf.RoundToInt (rect.Position.y), Mathf.RoundToInt (rect.End.y) - 1);
-    // @formatter:on
+    while (p.x < rect.Position.x || p.x % multiple.x != 0)
+    {
+      p.x = rng.RandiRange (Mathf.RoundToInt (rect.Position.x), Mathf.RoundToInt (rect.End.x) - 1);
+
+      if (++i < 100) continue;
+
+      _log.Warn (
+        $"{nameof (RandomPointIn)}: Possible infinite loop detected for x value, using default value of {rect.Position.x}...");
+
+      p.x = rect.Position.x;
+
+      break;
+    }
+
+    var j = 0;
+
+    while (p.y < rect.Position.y || p.y % multiple.y != 0)
+    {
+      p.y = rng.RandiRange (Mathf.RoundToInt (rect.Position.y), Mathf.RoundToInt (rect.End.y) - 1);
+
+      if (++j < 100) continue;
+
+      _log.Warn (
+        $"{nameof (RandomPointIn)}: Possible infinite loop detected for y value, using default value of {rect.Position.y}...");
+
+      p.y = rect.Position.y;
+
+      break;
+    }
 
     return p;
   }

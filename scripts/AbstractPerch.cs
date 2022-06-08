@@ -31,12 +31,16 @@ public abstract class AbstractPerch : IPerchable
   private readonly List <Rect2> _perchableAreasInGlobalSpace;
   private Rect2 _drawableRect;
   private Vector2 _globalOrigin;
+  private readonly Vector2 _globalScale;
+  private readonly Vector2 _localScale;
   private readonly float _positionEpsilon;
 
-  protected AbstractPerch (string name, Vector2 globalOrigin, PerchableDrawPrefs drawPrefs, List <Rect2> perchableAreasInLocalSpace,
-    float positionEpsilon)
+  protected AbstractPerch (string name, Vector2 localScale, Vector2 globalScale, Vector2 globalOrigin, PerchableDrawPrefs drawPrefs,
+    List <Rect2> perchableAreasInLocalSpace, float positionEpsilon)
   {
     Name = name;
+    _localScale = localScale;
+    _globalScale = globalScale;
     _perchableAreasInLocalSpace = perchableAreasInLocalSpace;
     _perchableAreasInGlobalSpace = new List <Rect2>();
     _positionEpsilon = positionEpsilon;
@@ -45,14 +49,14 @@ public abstract class AbstractPerch : IPerchable
     UpdateGlobalPerchableAreas (GlobalOrigin);
   }
 
-  public void Draw (DrawRect draw, Vector2 perchPoint, GetLocalTransform getLocalTransform, GetGlobalScale getGlobalScale)
+  public void Draw (DrawRect draw, Vector2 perchPoint, GetLocalTransform getLocalTransform)
   {
     if (DrawPrefs.DrawAreas)
     {
       foreach (var area in _perchableAreasInGlobalSpace)
       {
         _drawableRect.Position = getLocalTransform() (area.Position);
-        _drawableRect.Size = area.Size / getGlobalScale();
+        _drawableRect.Size = area.Size / _localScale;
         draw (_drawableRect, DrawPrefs.AreasColor, DrawPrefs.AreasFilled);
       }
     }
@@ -64,9 +68,9 @@ public abstract class AbstractPerch : IPerchable
     draw (_drawableRect, DrawPrefs.PerchPointColor, DrawPrefs.PerchPointFilled);
   }
 
-  public Vector2 RandomPoint (RandomNumberGenerator rng, GetGlobalScale getGlobalScale) =>
-    GlobalOrigin + RandomPointIn (_perchableAreasInLocalSpace.ElementAt (rng.RandiRange (0, _perchableAreasInLocalSpace.Count - 1)),
-      rng, getGlobalScale());
+  public Vector2 RandomPoint (RandomNumberGenerator rng) =>
+    RandomPointIn (_perchableAreasInGlobalSpace.ElementAt (rng.RandiRange (0, _perchableAreasInGlobalSpace.Count - 1)), rng,
+      _globalScale);
 
   // @formatter:off
   public float DistanceFrom (Vector2 globalPosition) => globalPosition.DistanceTo (GlobalOrigin);
@@ -79,7 +83,8 @@ public abstract class AbstractPerch : IPerchable
   // @formatter:on
 
   public override string ToString() =>
-    $"[Name: [{Name}], Global Origin: [{GlobalOrigin}], Disabled: [{Disabled}], FlippedHorizontally: {FlippedHorizontally}, " +
+    $"[Name: [{Name}], Global Origin: [{GlobalOrigin}], Global Scale: [{_globalScale}], Local Scale: [{_localScale}], " +
+    $"Disabled: [{Disabled}], FlippedHorizontally: {FlippedHorizontally}, " +
     $"FlippedVertically: {FlippedVertically}, Global Areas:\n{PerchableAreasInGlobalSpaceString}]";
 
   public override int GetHashCode()
@@ -131,7 +136,9 @@ public abstract class AbstractPerch : IPerchable
     for (var i = 0; i < _perchableAreasInLocalSpace.Count; ++i)
     {
       var perch = _perchableAreasInLocalSpace[i];
+      perch.Position *= _globalScale / _localScale;
       perch.Position += globalOrigin;
+      perch.Size *= _globalScale / _localScale;
       _perchableAreasInGlobalSpace.Add (perch);
       PerchableAreasInGlobalSpaceString += $"        {(i > 0 ? " " : "[")}[Area {i}: {perch}]{(i < last ? ",\n" : "]")}";
     }
