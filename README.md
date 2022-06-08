@@ -1,11 +1,11 @@
-Release:
+Development Build (unstable 'develop' branch):
 
-[![master](https://github.com/forerunnergames/coa/workflows/release/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/release.yml)
+[![develop](https://github.com/forerunnergames/coa/actions/workflows/build.yml/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/build.yml)
 
-Development:
+Release Build (stable 'master' branch):
 
-[![develop](https://github.com/forerunnergames/coa/workflows/build/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/build.yml)
+[![master](https://github.com/forerunnergames/coa/actions/workflows/release.yml/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/release.yml)
 
-Itch.io Deployment:
+Deployment (Itch.io):
 
-[![master](https://github.com/forerunnergames/coa/workflows/deploy/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/deploy.yml)
+[![master](https://github.com/forerunnergames/coa/actions/workflows/deploy.yml/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/deploy.yml)
