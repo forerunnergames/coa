@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: create executables
-        uses: firebelley/godot-export@v2.8.0
+        uses: firebelley/godot-export@v2.8.1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_ACTIONS_TOKEN }}
           GODOT_MONO_FILE_VERSION: 3.3.3-stable
