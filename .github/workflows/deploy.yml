@@ -65,14 +65,3 @@ jobs:
           PACKAGE: coa-linux.zip
           VERSION: ${{ steps.download_linux.outputs.version }}
 
-  cleanup:
-    name: cleanup
-    needs: [deploy_mac, deploy_windows, deploy_linux]
-    runs-on: ubuntu-latest
-    steps:
-      - name: delete github executables
-        uses: mknejp/delete-release-assets@v1
-        with:
-          token: ${{ secrets.GH_ACTIONS_TOKEN }}
-          tag: ${{ github.event.release.tag_name }}
-          assets: 'coa-*.zip'
