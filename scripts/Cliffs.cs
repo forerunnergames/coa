@@ -19,7 +19,7 @@ public class Cliffs : Area2D
   }
 
   private Player _player;
-  private AnimatedSprite _playerSprite;
+  private AnimationPlayer _playerAnimationPlayer;
   private Area2D _playerArea;
   private Rect2 _playerRect;
   private Vector2 _playerPosition;
@@ -70,9 +70,9 @@ public class Cliffs : Area2D
     _iceTileMap = GetNode <TileMap> ("Ice");
     for (var i = 1; i <= 5; ++i) _colliders.Add (GetNode <CollisionShape2D> ("Extents " + i));
     _player = GetNode <Player> ("../Player");
-    _playerSprite = _player.GetNode <AnimatedSprite> ("AnimatedSprite");
-    _playerArea = _playerSprite.GetNode <Area2D> ("Area2D");
-    _playerAnimation = _playerSprite.Animation;
+    _playerAnimationPlayer = _player.GetNode <AnimationPlayer> ("Sprites/AnimationPlayer1");
+    _playerArea = _player.GetNode <Area2D> ("Sprites/Area2D");
+    _playerAnimation = _playerAnimationPlayer.CurrentAnimation;
     _playerAnimationCollider = _playerArea.GetNode <CollisionShape2D> (_playerAnimation);
     InitializeSeasons();
   }
@@ -248,11 +248,11 @@ public class Cliffs : Area2D
 
   private void UpdatePlayer()
   {
-    if (_playerSeason == CurrentSeason && _playerSprite.Animation == _playerAnimation &&
+    if (_playerSeason == CurrentSeason && _playerAnimationPlayer.CurrentAnimation == _playerAnimation &&
         AreAlmostEqual (_playerAnimationCollider.GlobalPosition, _playerPosition, 0.001f)) return;
 
     _playerSeason = CurrentSeason;
-    _playerAnimation = _playerSprite.Animation;
+    _playerAnimation = _playerAnimationPlayer.CurrentAnimation;
     _playerAnimationCollider = _playerArea.GetNode <CollisionShape2D> (_playerAnimation);
     _playerPosition = _playerAnimationCollider.GlobalPosition;
     _playerRect = GetAreaColliderRect (_playerArea, _playerAnimationCollider);
