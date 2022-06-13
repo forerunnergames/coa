@@ -9,3 +9,4 @@ tests/.mono/
 tests/logs/
 tests/metadata/
 tests/results/
+/*.import
