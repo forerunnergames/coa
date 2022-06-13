@@ -56,8 +56,13 @@ public class Weapon
 
   private bool ShouldEquip()
   {
+    // @formatter:off
     return WasItemKeyPressedOnce() && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
-           _playerAnimator1.AssignedAnimation != "player_cliff_hanging" && _playerAnimator1.AssignedAnimation != "player_climbing_up";
+           _playerAnimator1.AssignedAnimation != "player_cliff_arresting" &&
+           _playerAnimator1.AssignedAnimation != "player_cliff_hanging" &&
+           _playerAnimator1.AssignedAnimation != "player_climbing_up" &&
+           _playerAnimator1.AssignedAnimation != "player_free_falling";
+    // @formatter:on
   }
 
   private bool ShouldUnequip()
@@ -72,14 +77,15 @@ public class Weapon
       case "player_idle_left":
       case "player_walking_left":
       case "player_running_left":
+      case "player_free_falling":
       {
         PlaySyncedAnimation ("player_equipping_left", _playerAnimator2, _playerAnimator1, _delta);
 
         break;
       }
       case "player_idle_back":
+      case "player_cliff_arresting":
       case "player_cliff_hanging":
-      case "player_falling":
       {
         PlaySyncedAnimation ("player_equipping_back", _playerAnimator2, _playerAnimator1, _delta);
 
@@ -95,12 +101,14 @@ public class Weapon
       case "player_idle_left":
       case "player_walking_left":
       case "player_running_left":
+      case "player_free_falling":
       {
         PlaySyncedAnimation ("player_unequipping_left", _playerAnimator2, _playerAnimator1, _delta);
 
         break;
       }
       case "player_idle_back":
+      case "player_cliff_arresting":
       case "player_cliff_hanging":
       {
         PlaySyncedAnimation ("player_unequipping_back", _playerAnimator2, _playerAnimator1, _delta);
