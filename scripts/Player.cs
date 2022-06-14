@@ -144,6 +144,7 @@ public class Player : KinematicBody2D
   private Sprite _armLeftSprite;
   private Sprite _armRightSprite;
   private Sprite _backpackSprite;
+  private Sprite _backpackStrapsSprite;
   private List <Sprite> _clothes;
   private Log _log;
 
@@ -186,20 +187,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_idle_back", new Dictionary <string, int> {
       { "item-in-hand", 0 },
       { "body", 1 },
@@ -222,6 +224,7 @@ public class Player : KinematicBody2D
       { "glove-right", 11 },
       { "scarf", 12 },
       { "backpack", 13 },
+      { "backpack-straps", 13 },
       { "hair", 14 },
       { "hat-outline", 15 },
       { "hat", 16 },
@@ -248,6 +251,7 @@ public class Player : KinematicBody2D
       { "glove-right", 11 },
       { "scarf", 12 },
       { "backpack", 13 },
+      { "backpack-straps", 13 },
       { "hair", 14 },
       { "hat-outline", 15 },
       { "hat", 16 },
@@ -274,6 +278,7 @@ public class Player : KinematicBody2D
       { "glove-right", 11 },
       { "scarf", 12 },
       { "backpack", 13 },
+      { "backpack-straps", 13 },
       { "hair", 14 },
       { "hat-outline", 15 },
       { "hat", 16 },
@@ -290,20 +295,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_equipping_left", new Dictionary <string, int> {
       { "item-in-backpack", 0 },
       { "backpack", 1 },
@@ -316,20 +322,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_unequipping_left", new Dictionary <string, int> {
       { "item-in-backpack", 0 },
       { "backpack", 1 },
@@ -342,20 +349,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_equipping_back", new Dictionary <string, int> {
       { "item-in-hand", 0 },
       { "body", 1 },
@@ -374,6 +382,7 @@ public class Player : KinematicBody2D
       { "glove-left", 11 },
       { "scarf", 12 },
       { "backpack", 13 },
+      { "backpack-straps", 13 },
       { "hair", 14 },
       { "hat-outline", 15 },
       { "hat", 16 },
@@ -400,6 +409,7 @@ public class Player : KinematicBody2D
       { "glove-left", 11 },
       { "scarf", 12 },
       { "backpack", 13 },
+      { "backpack-straps", 13 },
       { "hair", 14 },
       { "hat-outline", 15 },
       { "hat", 16 },
@@ -420,20 +430,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_running_left", new Dictionary <string, int> {
       { "item-in-backpack", 0 },
       { "backpack", 1 },
@@ -446,20 +457,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_attacking", new Dictionary <string, int> {
       { "item-in-backpack", 0 },
       { "backpack", 1 },
@@ -472,20 +484,21 @@ public class Player : KinematicBody2D
       { "foot-left", 7 },
       { "body", 8 },
       { "shirt", 9 },
-      { "head", 10 },
-      { "head-outline-rear", 10 },
-      { "boot-left", 11 },
-      { "pants", 12 },
-      { "belt", 13 },
-      { "hair", 14 },
-      { "scarf", 15 },
-      { "hat", 16 },
-      { "hat-outline", 16 },
-      { "item-in-hand", 17 },
-      { "arm-left", 18 },
-      { "hand-left", 18 },
-      { "shirt-sleeve-left", 19 },
-      { "glove-left", 19 }}},
+      { "backpack-straps", 10 },
+      { "head", 11 },
+      { "head-outline-rear", 11 },
+      { "boot-left", 12 },
+      { "pants", 13 },
+      { "belt", 14 },
+      { "hair", 15 },
+      { "scarf", 16 },
+      { "hat", 17 },
+      { "hat-outline", 17 },
+      { "item-in-hand", 18 },
+      { "arm-left", 19 },
+      { "hand-left", 19 },
+      { "shirt-sleeve-left", 20 },
+      { "glove-left", 20 }}},
     { "player_climbing_up", new Dictionary <string, int> {
       { "item-in-hand", 0 },
       { "body", 1 },
@@ -508,6 +521,7 @@ public class Player : KinematicBody2D
       { "glove-right", 11 },
       { "scarf", 12 },
       { "backpack", 13 },
+      { "backpack-straps", 13 },
       { "hair", 14 },
       { "hat-outline", 15 },
       { "hat", 16 },
@@ -515,13 +529,6 @@ public class Player : KinematicBody2D
   };
 
   // @formatter:on
-
-  private enum AnimationStatus
-  {
-    Started,
-    Finished,
-    Unknown
-  }
 
   private enum ClothingClickMode
   {
@@ -577,6 +584,7 @@ public class Player : KinematicBody2D
     _armLeftSprite = GetNode <Sprite> ("Sprites/arm-left");
     _armRightSprite = GetNode <Sprite> ("Sprites/arm-right");
     _backpackSprite = GetNode <Sprite> ("Sprites/backpack");
+    _backpackStrapsSprite = GetNode <Sprite> ("Sprites/backpack-straps");
 
     _clothes = new List <Sprite>
     {
@@ -585,6 +593,7 @@ public class Player : KinematicBody2D
       _scarfSprite,
       _hatSprite,
       _backpackSprite,
+      _backpackStrapsSprite,
       _beltSprite,
       _shirtSprite,
       _shirtSleeveLeftSprite,
@@ -732,7 +741,7 @@ public class Player : KinematicBody2D
       }
     }
 
-    UpdateSecondaryClothing (animationName, AnimationStatus.Started);
+    UpdateSecondaryClothing();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -756,7 +765,7 @@ public class Player : KinematicBody2D
       }
     }
 
-    UpdateSecondaryClothing (animationName, AnimationStatus.Finished);
+    UpdateSecondaryClothing();
   }
 
   private void CheckDropDownThrough()
@@ -932,12 +941,19 @@ public class Player : KinematicBody2D
     UpdateSecondaryClothing();
   }
 
-  private void UpdateSecondaryClothing (string animationName = "", AnimationStatus animationStatus = AnimationStatus.Unknown)
+  private void UpdateSecondaryClothing()
   {
     _shirtSprite.Visible = _clothingClickMode switch
     {
       ClothingClickMode.Add => _shirtSprite.Visible || _shirtSleeveLeftSprite.Visible || _shirtSleeveRightSprite.Visible,
       ClothingClickMode.Remove => _shirtSprite.Visible && _shirtSleeveLeftSprite.Visible && _shirtSleeveRightSprite.Visible,
+      _ => throw new ArgumentOutOfRangeException()
+    };
+
+    _backpackSprite.Visible = _clothingClickMode switch
+    {
+      ClothingClickMode.Add => _backpackSprite.Visible || _backpackStrapsSprite.Visible || _itemInBackpackSprite.Visible,
+      ClothingClickMode.Remove => _backpackSprite.Visible && _backpackStrapsSprite.Visible,
       _ => throw new ArgumentOutOfRangeException()
     };
 
@@ -948,7 +964,7 @@ public class Player : KinematicBody2D
       _ => throw new ArgumentOutOfRangeException()
     };
 
-    _backpackSprite.Visible = _backpackSprite.Visible || _itemInBackpackSprite.Visible;
+    _backpackStrapsSprite.Visible = _backpackSprite.Visible;
     _shirtSleeveLeftSprite.Visible = _shirtSprite.Visible;
     _shirtSleeveRightSprite.Visible = _shirtSprite.Visible;
     _armLeftSprite.Visible = !_shirtSleeveLeftSprite.Visible;
