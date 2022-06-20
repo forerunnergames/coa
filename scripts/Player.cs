@@ -98,9 +98,9 @@ public class Player : KinematicBody2D
   private bool _wasFlippedHorizontally;
   private readonly List <string> _printLines = new();
   private IStateMachine <State> _stateMachine = null!;
-  private uint _fallingStartTimeMs;
-  private uint _elapsedFallingTimeMs;
-  private uint _lastTotalFallingTimeMs;
+  private ulong _fallingStartTimeMs;
+  private ulong _elapsedFallingTimeMs;
+  private ulong _lastTotalFallingTimeMs;
   private float _highestVerticalVelocity;
   private bool _isInGround;
   private bool _wasRunning;
@@ -1159,15 +1159,15 @@ public class Player : KinematicBody2D
 
     if (IsMovingDown() && _fallingStartTimeMs == 0)
     {
-      _fallingStartTimeMs = OS.GetTicksMsec();
+      _fallingStartTimeMs = Time.GetTicksMsec();
     }
     else if (IsMovingDown())
     {
-      _elapsedFallingTimeMs = OS.GetTicksMsec() - _fallingStartTimeMs;
+      _elapsedFallingTimeMs = Time.GetTicksMsec() - _fallingStartTimeMs;
     }
     else if (!IsMovingDown() && _elapsedFallingTimeMs > 0)
     {
-      _lastTotalFallingTimeMs = OS.GetTicksMsec() - _fallingStartTimeMs;
+      _lastTotalFallingTimeMs = Time.GetTicksMsec() - _fallingStartTimeMs;
       _fallingStartTimeMs = 0;
       _elapsedFallingTimeMs = 0;
     }

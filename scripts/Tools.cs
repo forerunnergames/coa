@@ -53,8 +53,8 @@ public static class Tools
   public delegate Vector2 GetGlobalScale();
   public static bool IsReleased (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionReleased (x));
   public static bool IsPressed (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionPressed (x));
-  public static bool IsOneActiveOf (Input i) => Inputs[i].Where (Godot.Input.IsActionPressed).Take (2).Count() == 1;
-  public static bool IsAnyActiveOf (Input i) => Inputs[i].Any (Godot.Input.IsActionPressed);
+  public static bool IsOneActiveOf (Input i) => Inputs[i].Where (x => Godot.Input.IsActionPressed (x)).Take (2).Count() == 1;
+  public static bool IsAnyActiveOf (Input i) => Inputs[i].Any (x => Godot.Input.IsActionPressed (x));
   public static bool WasMouseLeftClicked (InputEvent e) => e is InputEventMouseButton { ButtonIndex: (int)ButtonList.Left, Pressed: true };
   public static bool IsLeftArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Left][0]);
   public static bool WasLeftArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Left][0]);
