@@ -31,6 +31,7 @@ public class Player : KinematicBody2D
   [Export] public float HorizontalFreeFallingSpeed = 10.0f;
   [Export] public float CliffArrestingSpeed = 40.0f;
   [Export] public float CliffArrestingActivationVelocity = 800.0f;
+  [Export] public float CameraSmoothingDeactivationVelocity = 800.0f;
   [Export] public float VelocityEpsilon = 1.0f;
   [Export] public float JumpPower = 800.0f;
   [Export] public float Gravity = 30.0f;
@@ -91,6 +92,7 @@ public class Player : KinematicBody2D
   private AudioStreamPlayer _audio = null!;
   private Timer _energyTimer = null!;
   private Timer _climbingPrepTimer = null!;
+  private Timer _cameraSmoothingTimer = null!;
   private int _energy;
   private float _energyMeterReplenishRatePerUnit;
   private float _energyMeterDepletionRatePerUnit;
@@ -146,6 +148,7 @@ public class Player : KinematicBody2D
   private Sprite _backpackSprite;
   private Sprite _backpackStrapsSprite;
   private List <Sprite> _clothes;
+  private List <Area2D> _groundAreas;
   private Log _log;
 
   // @formatter:off
@@ -154,7 +157,8 @@ public class Player : KinematicBody2D
   {
     { "sign", 16 },
     { "sign-arrow-right", 17 },
-    { "sign-arrow-left", 17 }
+    { "sign-arrow-left", 17 },
+    { "bridge-post", 1 }
   };
 
   private static readonly Dictionary <State, State[]> TransitionTable = new()
@@ -552,11 +556,13 @@ public class Player : KinematicBody2D
     _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
     _label.Visible = false;
     _area = GetNode <Area2D> ("Sprites/Area2D");
+    _groundAreas = GetTree().GetNodesInGroup ("Ground").Cast <Node2D>().Where (x => x is Area2D).Cast <Area2D>().ToList();
     _energyMeter = GetNode <TextureProgress> ("../UI/Control/Energy Meter");
     _energyMeter.Value = MaxEnergy;
     _energy = MaxEnergy;
     _energyTimer = GetNode <Timer> ("EnergyTimer");
     _climbingPrepTimer = GetNode <Timer> ("ClimbingReadyTimer");
+    _cameraSmoothingTimer = GetNode <Timer> ("Camera2D/SmoothingTimer");
     _energyMeterReplenishRatePerUnit = (float)EnergyMeterReplenishTimeSeconds / EnergyMeterUnits;
     _energyMeterDepletionRatePerUnit = (float)EnergyMeterDepletionTimeSeconds / EnergyMeterUnits;
     _shirtSprite = GetNode <Sprite> ("Sprites/shirt");
@@ -625,6 +631,16 @@ public class Player : KinematicBody2D
     PrintLine (DumpState());
     Print();
 
+    // @formatter:off
+
+    if (AreAlmostEqual (_camera.GetCameraScreenCenter().x, GlobalPosition.x, 1.0f)) StopCameraSmoothing();
+
+    if (Mathf.Abs (_velocity.x) >= CameraSmoothingDeactivationVelocity ||
+        Mathf.Abs (_velocity.y) >= CameraSmoothingDeactivationVelocity)
+    {
+      StopCameraSmoothing();
+    }
+
     if ((_stateMachine.Is (State.ClimbingUp) || _stateMachine.Is (State.ClimbingDown)) && IsDepletingEnergy() &&
         !Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterDepletionRatePerUnit))
     {
@@ -636,6 +652,8 @@ public class Player : KinematicBody2D
     {
       _energyTimer.Start (_energyMeterReplenishRatePerUnit);
     }
+
+    // @formatter:on
   }
 
   public override void _UnhandledInput (InputEvent @event)
@@ -668,6 +686,14 @@ public class Player : KinematicBody2D
 
     _energy += 1;
     _energyMeter.Value = _energy;
+  }
+
+  // ReSharper disable once UnusedMember.Global
+  public void _OnCameraSmoothingTimerTimeout()
+  {
+    if (IsMoving()) return;
+
+    StartCameraSmoothing();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -787,7 +813,7 @@ public class Player : KinematicBody2D
         }
         case TileMap tileMap:
         {
-          var tileName = GetIntersectingTileName (_area, _animationPlayer.CurrentAnimation, tileMap);
+          var tileName = GetCollidingTileName (collision.Position, tileMap);
 
           if (tileName.Empty()) continue;
 
@@ -853,10 +879,11 @@ public class Player : KinematicBody2D
     }
 
     _signsTileMap.Visible = false;
-    _signsTileMap.GetNode <TileMap> ("../Signs Winter Layer").Visible = false;
+    _signsTileMap.GetNode <TileMap> ("Winter Layer").Visible = false;
     readableSign.Visible = true;
     _readableSign = readableSign;
     _velocity = Vector2.Zero;
+    StopCameraSmoothing();
     _camera.Zoom = Vector2.One / 10;
     _readableSign.Position = _camera.GetCameraScreenCenter();
     Visible = false;
@@ -869,7 +896,7 @@ public class Player : KinematicBody2D
     Visible = true;
     _readableSign.Visible = false;
     _signsTileMap.Visible = true;
-    _signsTileMap.GetNode <TileMap> ("../Signs Winter Layer").Visible = _cliffs.CurrentSeason == Cliffs.Season.Winter;
+    _signsTileMap.GetNode <TileMap> ("Winter Layer").Visible = _cliffs.CurrentSeason == Cliffs.Season.Winter;
     _camera.Zoom = Vector2.One;
     _camera.Position = new Vector2 (0, -355);
     _camera.ForceUpdateScroll();
@@ -980,9 +1007,22 @@ public class Player : KinematicBody2D
   private void Respawn()
   {
     _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
+    StopCameraSmoothing();
     GlobalPosition = new Vector2 (952, -4032);
     _animationPlayer.Play (IdleLeftAnimation);
     _justRespawned = true;
+  }
+
+  private void StartCameraSmoothing()
+  {
+    _camera.SmoothingEnabled = true;
+    _camera.DragMarginHEnabled = false;
+  }
+
+  private void StopCameraSmoothing()
+  {
+    _camera.SmoothingEnabled = false;
+    _camera.DragMarginHEnabled = true;
   }
 
   // @formatter:off
@@ -1121,9 +1161,7 @@ public class Player : KinematicBody2D
     _currentAnimation = _animationPlayer.CurrentAnimation;
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
-    await ToSignal (GetTree(), "idle_frame");
-    for (var i = 1; i <= 6; ++i) _cliffs.GetNode <Area2D> ("Ground " + i + "/Area2D").SetBlockSignals (true);
-    await ToSignal (GetTree(), "idle_frame");
+    _groundAreas.ForEach (x => x.SetBlockSignals (true));
     _area.SetBlockSignals (true);
     _waterfall.SetBlockSignals (true);
     // End workaround
@@ -1137,7 +1175,7 @@ public class Player : KinematicBody2D
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
     await ToSignal (GetTree(), "idle_frame");
-    for (var i = 1; i <= 6; ++i) _cliffs.GetNode <Area2D> ("Ground " + i + "/Area2D").SetBlockSignals (false);
+    _groundAreas.ForEach (x => x.SetBlockSignals (false));
     await ToSignal (GetTree(), "idle_frame");
     _area.SetBlockSignals (false);
     _waterfall.SetBlockSignals (false);
@@ -1177,6 +1215,7 @@ public class Player : KinematicBody2D
   {
     _label.Text = "";
     _label.BbcodeText = "";
+    _label.GetVScroll().Visible = false;
     foreach (var line in _printLines) _label.AddText (line + "\n");
     _printLines.Clear();
   }
@@ -1227,13 +1266,18 @@ public class Player : KinematicBody2D
     "\nIsAnyHorizontalArrowPressed(): " + IsAnyHorizontalArrowPressed() +
     "\nIsAnyVerticalArrowPressed(): " + IsAnyVerticalArrowPressed() +
     "\nIsFlippedHorizontally: " + _isFlippedHorizontally +
-    "\nPosition: " + Position +
     "\nScale: " + Scale +
     "\nVelocity: " + _velocity +
     "\nVertical velocity (mph): " + _velocity.y * 0.028334573333333 +
     "\nHighest vertical velocity: " + _highestVerticalVelocity +
     "\nHighest vertical velocity (mph): " + _highestVerticalVelocity * 0.028334573333333 +
-    "\nFalling time (sec): " + GetFallingTimeSeconds();
+    "\nFalling time (sec): " + GetFallingTimeSeconds() +
+    "\nCamera Smoothing: " + _camera.SmoothingEnabled +
+    "\nCamera Smoothing Timer: " + _cameraSmoothingTimer.TimeLeft +
+    "\nCamera Drag Margin (Horizontal): " + _camera.DragMarginHEnabled +
+    "\nCamera screen center: " + _camera.GetCameraScreenCenter() +
+    "\nPosition: " + Position +
+    "\nGlobal position: " + GlobalPosition;
 
   // @formatter:on
 
@@ -1247,8 +1291,6 @@ public class Player : KinematicBody2D
     _stateMachine.OnTransitionTo (State.FreeFalling, () => _animationPlayer.Play (FreeFallingAnimation));
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
     _stateMachine.OnTransition (State.ReadingSign, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
-    _stateMachine.OnTransition (State.Walking, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
-    _stateMachine.OnTransition (State.Running, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
     _stateMachine.OnTransition (State.CliffArresting, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
     _stateMachine.OnTransition (State.ClimbingDown, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
     _stateMachine.OnTransition (State.FreeFalling, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
@@ -1258,6 +1300,19 @@ public class Player : KinematicBody2D
     {
       if (IsInGroup ("Perchable Parent")) RemoveFromGroup ("Perchable Parent");
       // if (_sprite.IsInGroup ("Perchable")) _sprite.RemoveFromGroup ("Perchable");
+      _cameraSmoothingTimer.Stop();
+    });
+
+    _stateMachine.OnTransition (State.Running, State.Idle, () =>
+    {
+      _animationPlayer.Play (IdleLeftAnimation);
+      _cameraSmoothingTimer.Start();
+    });
+
+    _stateMachine.OnTransition (State.Walking, State.Idle, () =>
+    {
+      _animationPlayer.Play (IdleLeftAnimation);
+      _cameraSmoothingTimer.Start();
     });
 
     _stateMachine.OnTransitionTo (State.Idle, () =>

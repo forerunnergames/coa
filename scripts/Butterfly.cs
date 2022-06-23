@@ -364,7 +364,7 @@ public class Butterfly : AnimatedSprite
     {
       case TileMap tileMap:
       {
-        position = GetIntersectingTileCellGlobalPosition (_perchingColliderArea, _perchingCollider, tileMap);
+        position = GetIntersectingTileCellGlobalOrigin (_perchingColliderArea, _perchingCollider, tileMap);
         perch = _perchesUnvisited.FirstOrDefault (x => x.Is (NameOf (tileMap), position));
 
         break;
