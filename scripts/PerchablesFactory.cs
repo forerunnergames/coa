@@ -73,6 +73,8 @@ public static class PerchablesFactory
         new(new Vector2 (104, 16), new Vector2 (8, 8)),
         new(new Vector2 (112, 24), new Vector2 (8, 8)),
         new(new Vector2 (120, 32), new Vector2 (8, 8))}},
+    { "bridge-post", new List <Rect2> {
+        new(new Vector2 (8, 0), new Vector2 (16, 8))}},
     { "player_idle_left", new List <Rect2> {
         new(new Vector2 (-40, -16), new Vector2 (8, 8)),
         new(new Vector2 (-32, -40), new Vector2 (8, 8)),
@@ -97,7 +99,8 @@ public static class PerchablesFactory
           drawPrefs, new List <Rect2> (NamesToPerchableAreas[animationName]), positionEpsilon)),
       TileMap tileMap => new List <IPerchable> (tileMap.GetUsedCells().Cast <Vector2>()
         .Select (cell => new { cell, tileName = GetTileName (cell, tileMap) }).Select (t => new TilePerch (tileMap.Name, t.tileName,
-          LocalScale, node.GlobalScale, GetTileCellGlobalPosition (t.cell, tileMap), t.cell, drawPrefs,
+          LocalScale, node.GlobalScale, GetTileCellGlobalOrigin (t.cell, tileMap), t.cell,
+          tileMap.IsCellXFlipped ((int)t.cell.x, (int)t.cell.y), tileMap.IsCellYFlipped ((int)t.cell.x, (int)t.cell.y), drawPrefs,
           new List <Rect2> (NamesToPerchableAreas[t.tileName]), positionEpsilon))),
       _ => new List <IPerchable>()
     };

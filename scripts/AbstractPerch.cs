@@ -64,7 +64,7 @@ public abstract class AbstractPerch : IPerchable
     if (!DrawPrefs.DrawPerchPoint) return;
 
     _drawableRect.Position = getLocalTransform() (perchPoint);
-    _drawableRect.Size = Vector2.One;
+    _drawableRect.Size = _globalScale / _localScale;
     draw (_drawableRect, DrawPrefs.PerchPointColor, DrawPrefs.PerchPointFilled);
   }
 

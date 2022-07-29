@@ -68,7 +68,7 @@ public class Cliffs : Area2D
     _ambiencePlayer = GetNode <AudioStreamPlayer> ("../AmbiencePlayer");
     _musicPlayer = GetNode <AudioStreamPlayer> ("../MusicPlayer");
     _iceTileMap = GetNode <TileMap> ("Ice");
-    for (var i = 1; i <= 5; ++i) _colliders.Add (GetNode <CollisionShape2D> ("Extents " + i));
+    _colliders.AddRange (GetTree().GetNodesInGroup ("Extents").Cast <CollisionShape2D>());
     _player = GetNode <Player> ("../Player");
     _playerAnimationPlayer = _player.GetNode <AnimationPlayer> ("Sprites/AnimationPlayer1");
     _playerArea = _player.GetNode <Area2D> ("Sprites/Area2D");
