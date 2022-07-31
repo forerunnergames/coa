@@ -14,6 +14,7 @@ public class Butterfly : AnimatedSprite
   [Export] public string EvadingAnimation = "butterfly_evading";
   [Export] public string PerchingAnimation = "butterfly_perching";
   [Export] public string FlyingAnimation = "butterfly_flying";
+  [Export] public string PerchableGroupName = "Perchable";
   [Export] public int FlyingSpeed = 300;
   [Export] public int EvadingSpeed = 400;
   [Export] public int PerchingSpeed = 200;
@@ -127,7 +128,7 @@ public class Butterfly : AnimatedSprite
   private DrawRect _drawRect;
   private IPerchable _perch;
   private Vector2 _perchPoint;
-  private Node _perchableNode;
+  private Node2D _perchableNode;
   private Area2D _perchingColliderArea;
   private CollisionShape2D _perchingCollider;
   private float _maxOscillationAngleVariation;
@@ -190,7 +191,7 @@ public class Butterfly : AnimatedSprite
     if (!Visible) return;
 
     _perchableNodes.Clear();
-    foreach (Node2D node in GetTree().GetNodesInGroup ("Perchable")) _perchableNodes.Add (node);
+    foreach (Node2D node in GetTree().GetNodesInGroup (PerchableGroupName)) _perchableNodes.Add (node);
 
     foreach (var node in _perchableNodes)
     {
@@ -200,7 +201,7 @@ public class Butterfly : AnimatedSprite
       {
         if (!AreAlmostEqual (perch.GlobalOrigin, node.GlobalPosition, PositionEpsilon))
         {
-          _log.Debug ($"Updating outdated perch position from: {perch.GlobalOrigin} to  {node.GlobalPosition}");
+          _log.Debug ($"Updating outdated perch position from: {perch.GlobalOrigin} to {node.GlobalPosition}");
           perch.GlobalOrigin = node.GlobalPosition;
         }
 
@@ -254,7 +255,7 @@ public class Butterfly : AnimatedSprite
   // ReSharper disable once UnusedMember.Global
   public void _OnPerchingColliderAreaEntered (Area2D area)
   {
-    if (area.GetParent() is not AnimatedSprite sprite || !sprite.IsInGroup ("Perchable")) return;
+    if (area.GetParent() is not AnimatedSprite sprite || !sprite.IsInGroup (PerchableGroupName)) return;
 
     _log.All ($"Entering animated sprite perch: {NameOf (sprite)}.");
     _perchableNode = sprite;
@@ -263,7 +264,7 @@ public class Butterfly : AnimatedSprite
   // ReSharper disable once UnusedMember.Global
   public void _OnPerchingColliderBodyEntered (Node body)
   {
-    if (body is not TileMap tileMap || !tileMap.IsInGroup ("Perchable")) return;
+    if (body is not TileMap tileMap || !tileMap.IsInGroup (PerchableGroupName)) return;
 
     _log.All ($"Entering tile perch: {NameOf (tileMap)}.");
     _perchableNode = tileMap;
@@ -274,7 +275,7 @@ public class Butterfly : AnimatedSprite
   // ReSharper disable once UnusedMember.Global
   public void _OnObstacleColliderBodyEntered (Node body)
   {
-    if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Perchable Parent") || body.IsInGroup ("Ground")) return;
+    if (body is Node2D {Visible: false} or StaticBody2D || body.IsInGroup (PerchableGroupName) || body.IsInGroup (PerchableGroupName + " Parent") || body.IsInGroup ("Ground")) return;
 
     _log.Debug ($"Encountered obstacle: {NameOf (body)}");
     _stateMachine.To (State.Evading);
@@ -283,7 +284,7 @@ public class Butterfly : AnimatedSprite
   // ReSharper disable once UnusedMember.Global
   public void _OnObstacleColliderBodyExited (Node body)
   {
-    if (body is StaticBody2D || body.IsInGroup ("Perchable") || body.IsInGroup ("Perchable Parent") || body.IsInGroup ("Ground")) return;
+    if (body is Node2D {Visible: false} or StaticBody2D || body.IsInGroup (PerchableGroupName) || body.IsInGroup (PerchableGroupName + " Parent") || body.IsInGroup ("Ground")) return;
 
     _log.Debug ($"Evaded obstacle: {NameOf (body)}.");
     _stateMachine.To (State.Flying);
@@ -313,7 +314,7 @@ public class Butterfly : AnimatedSprite
   {
     if (!_perch.Contains (Position) || !AreAlmostEqual (Position, _perchPoint, PositionEpsilon))
     {
-      _log.All ($"Found correct perch: {NameOf (_perchableNode)}." +
+      _log.All ($"Found correct perch: {NameOf (_perchableNode)}. " +
                 $"Continuing perching along same path from position {Position} to reach perch point {_perchPoint}.");
 
       Move (PerchingSpeed, delta);
@@ -359,20 +360,23 @@ public class Butterfly : AnimatedSprite
 
     IPerchable perch = null;
     var position = Vector2.Zero;
+    var name = "";
 
     switch (_perchableNode)
     {
       case TileMap tileMap:
       {
+        name = NameOf (tileMap);
         position = GetIntersectingTileCellGlobalOrigin (_perchingColliderArea, _perchingCollider, tileMap);
-        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (NameOf (tileMap), position));
+        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (name, position));
 
         break;
       }
       case AnimatedSprite sprite:
       {
+        name = NameOf (sprite);
         position = sprite.GlobalPosition;
-        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (NameOf (sprite), position));
+        perch = _perchesUnvisited.FirstOrDefault (x => x.Is (name, position));
 
         break;
       }
@@ -381,7 +385,9 @@ public class Butterfly : AnimatedSprite
     if (_perch.Equals (perch)) return true;
 
     _log.All ($"Found wrong perch: {NameOf (_perchableNode)} at position {position}.");
-    _log.All ($"_perch: {_perch}, perch: {perch}, _perchingBody: {_perchableNode}");
+    _log.All ($"Correct perch: {_perch}");
+    _log.All ($"Wrong perch: {perch ?? _perches.FirstOrDefault (x => x.Is (name, position))}");
+    _log.All ($"Wrong perchable node: {_perchableNode}");
     _log.Debug ($"Continuing flying along same path toward correct perch:\n{_perch}.");
     _perchableNode = null;
 
@@ -432,10 +438,8 @@ public class Butterfly : AnimatedSprite
     _perches.Clear();
     _perchesUnvisited.Clear();
 
-    foreach (Node2D node in GetTree().GetNodesInGroup ("Perchable"))
-    {
-      _perches.AddRange (PerchablesFactory.Create (node, _perchableDrawPrefs, PositionEpsilon));
-    }
+    GetTree().GetNodesInGroup (PerchableGroupName).Cast <Node2D>().ToList().ForEach (node =>
+      _perches.AddRange (PerchablesFactory.Create (node, _perchableDrawPrefs, PositionEpsilon)));
 
     var perch = PerchablesFactory.CreateDefault (this, _perchableDrawPrefs, PositionEpsilon);
     perch.Disabled = true;
