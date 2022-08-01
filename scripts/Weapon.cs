@@ -31,12 +31,12 @@ public class Weapon
 
   // @formatter:on
 
-  public Weapon (Node player, Log.Level logLevel)
+  public Weapon (Node sprites, Log.Level logLevel)
   {
-    _playerAnimator1 = player.GetNode <AnimationPlayer> ("Sprites/AnimationPlayer1");
-    _playerAnimator2 = player.GetNode <AnimationPlayer> ("Sprites/AnimationPlayer2");
-    _backpackSprite = player.GetNode <Sprite> ("Sprites/backpack");
-    _itemInBackpackSprite = player.GetNode <Sprite> ("Sprites/item-in-backpack");
+    _playerAnimator1 = sprites.GetNode <AnimationPlayer> ("AnimationPlayer1");
+    _playerAnimator2 = sprites.GetNode <AnimationPlayer> ("AnimationPlayer2");
+    _backpackSprite = sprites.GetNode <Sprite> ("backpack");
+    _itemInBackpackSprite = sprites.GetNode <Sprite> ("item-in-backpack");
     InitializeStateMachine (logLevel);
   }
 
