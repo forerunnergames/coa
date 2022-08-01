@@ -8,6 +8,7 @@ public class Cliffs : Area2D
 {
   [Export] public Season InitialSeason = Season.Summer;
   [Export] public Color InitialClearColor = Color.Color8 (11, 118, 255);
+  [Export] public Log.Level LogLevel = Log.Level.Info;
 
   // Field must be publicly accessible from Player.cs
   public Season CurrentSeason;
@@ -50,7 +51,7 @@ public class Cliffs : Area2D
   public override void _Ready()
   {
     // ReSharper disable once ExplicitCallerInfoArgument
-    _log = new Log (Name);
+    _log = new Log (Name) { CurrentLevel = LogLevel };
     _clearColor = InitialClearColor;
     VisualServer.SetDefaultClearColor (_clearColor);
     _waterfallZIndex.Add (Season.Summer, 33);

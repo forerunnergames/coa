@@ -57,6 +57,7 @@ public class Player : KinematicBody2D
   [Export] public int EnergyMeterReplenishTimeSeconds = 10;
   [Export] public int EnergyMeterDepletionTimeSeconds = 3;
   [Export] public State InitialState = State.Idle;
+  [Export] public Log.Level LogLevel = Log.Level.Info;
 
   // Field must be publicly accessible from Cliffs.cs
   public bool IsInCliffs;
@@ -98,7 +99,8 @@ public class Player : KinematicBody2D
   private float _energyMeterDepletionRatePerUnit;
   private bool _isFlippedHorizontally;
   private bool _wasFlippedHorizontally;
-  private readonly List <string> _printLines = new();
+  private readonly List <string> _printLinesOnce = new();
+  private readonly List <string> _printLinesContinuously = new();
   private IStateMachine <State> _stateMachine = null!;
   private ulong _fallingStartTimeMs;
   private ulong _elapsedFallingTimeMs;
@@ -543,9 +545,9 @@ public class Player : KinematicBody2D
   public override void _Ready()
   {
     // ReSharper disable once ExplicitCallerInfoArgument
-    _log = new Log (Name);
+    _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
-    _weapon = new Weapon (this);
+    _weapon = new Weapon (GetNode <Node2D> ("Sprites"), LogLevel);
     _camera = GetNode <Camera2D> ("Camera2D");
     _rayChest = GetNode <RayCast2D> ("Chest");
     _rayFeet = GetNode <RayCast2D> ("Feet");
@@ -628,7 +630,7 @@ public class Player : KinematicBody2D
     if (Mathf.Abs (_velocity.y) < VelocityEpsilon) _velocity.y = 0.0f;
     _velocity = MoveAndSlide (_velocity, Vector2.Up);
     CalculateFallingStats();
-    PrintLine (DumpState());
+    PrintLineOnce (DumpState());
     Print();
 
     // @formatter:off
@@ -1042,7 +1044,9 @@ public class Player : KinematicBody2D
   private bool IsMovingUp() => _velocity.y + VelocityEpsilon < 0.0f;
   private bool IsMovingDown() => _velocity.y - VelocityEpsilon > 0.0f;
   private float GetFallingTimeSeconds() => _elapsedFallingTimeMs > 0 ? _elapsedFallingTimeMs / 1000.0f : _lastTotalFallingTimeMs / 1000.0f;
-  private void PrintLine (string line) => _printLines.Add (line);
+  private void PrintLineOnce (string line) => _printLinesOnce.Add (line);
+  private void PrintLineContinuously (string line) => _printLinesContinuously.Add (line);
+  private void StopPrintingContinuousLine (string line) => _printLinesContinuously.Remove (line);
   // @formatter:on
 
   private void HorizontalVelocity()
@@ -1216,8 +1220,9 @@ public class Player : KinematicBody2D
     _label.Text = "";
     _label.BbcodeText = "";
     _label.GetVScroll().Visible = false;
-    foreach (var line in _printLines) _label.AddText (line + "\n");
-    _printLines.Clear();
+    foreach (var line in _printLinesContinuously) _label.AddText (line + "\n");
+    foreach (var line in _printLinesOnce) _label.AddText (line + "\n");
+    _printLinesOnce.Clear();
   }
 
   // @formatter:off
@@ -1284,7 +1289,7 @@ public class Player : KinematicBody2D
   private void InitializeStateMachine()
   {
     // @formatter:off
-    _stateMachine = new StateMachine <State> (TransitionTable, InitialState);
+    _stateMachine = new StateMachine <State> (TransitionTable, InitialState) { LogLevel = LogLevel };
     _stateMachine.OnTransitionFrom (State.ReadingSign, StopReadingSign);
     _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
     _stateMachine.OnTransitionTo (State.Traversing, () => _animationPlayer.Play (TraversingAnimation));
@@ -1353,7 +1358,8 @@ public class Player : KinematicBody2D
       if (!_audio.Playing) return;
 
       _audio.Stop();
-      PrintLine ("Sound effects: Stopped cliff arresting sound.");
+      StopPrintingContinuousLine ("Sound effects: Playing cliff arresting sound.");
+      PrintLineContinuously ("Sound effects: Stopped cliff arresting sound.");
     });
 
     _stateMachine.OnTransitionTo (State.CliffArresting, () =>
@@ -1364,7 +1370,8 @@ public class Player : KinematicBody2D
       if (_audio.Playing) return;
 
       _audio.Play();
-      PrintLine ("Sound effects: Playing cliff arresting sound.");
+      StopPrintingContinuousLine ("Sound effects: Stopped cliff arresting sound.");
+      PrintLineContinuously ("Sound effects: Playing cliff arresting sound.");
     });
 
     _stateMachine.OnTransition (State.ClimbingPrep, State.Idle, () =>

@@ -26,6 +26,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
   private readonly List <T> _triggeredToStates = new();
   private readonly List <T> _fromStates = new();
   private readonly List <T> _toStates = new();
+  private bool _isFirstUpdate = true;
   private readonly Log _log;
 
   // ReSharper disable once ExplicitCallerInfoArgument
@@ -71,7 +72,6 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     _currentState = initialState;
     _parentState = initialState;
     _transitionTable = transitionTable;
-    _log.Info ($"Initial state: {ToString (_initialState)}");
   }
 
   public T GetState() => _currentState;
@@ -123,6 +123,12 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 
   public void Update()
   {
+    if (_isFirstUpdate)
+    {
+      _log.Info ($"Initial state: {ToString (_initialState)}");
+      _isFirstUpdate = false;
+    }
+
     if (!_triggers.ContainsKey (_currentState) && !_triggers.ContainsKey (AnyState)) return;
 
     _fromStates.Clear();

@@ -171,7 +171,7 @@ public class Butterfly : AnimatedSprite
     _drawRect = delegate (Rect2 rect, Color color, bool filled) { DrawRect (rect, color, filled); };
     _idleTimer = GetNode <Timer> ("IdleTimer");
     _lastPosition = Position;
-    _stateMachine = new StateMachine <State> (TransitionTable, State.Flying, Name);
+    _stateMachine = new StateMachine <State> (TransitionTable, State.Flying, Name) { LogLevel = LogLevel };
     _stateMachine.OnTransitionTo (State.Perching, () => Animation = PerchingAnimation);
     _stateMachine.OnTransitionTo (State.Evading, () => Animation = EvadingAnimation);
     _stateMachine.OnTransitionTo (State.Flying, () => Animation = FlyingAnimation);
