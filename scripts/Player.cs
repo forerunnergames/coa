@@ -1304,7 +1304,6 @@ public class Player : KinematicBody2D
     _stateMachine.OnTransitionFrom (State.Idle, () =>
     {
       if (IsInGroup ("Perchable Parent")) RemoveFromGroup ("Perchable Parent");
-      // if (_sprite.IsInGroup ("Perchable")) _sprite.RemoveFromGroup ("Perchable");
       _cameraSmoothingTimer.Stop();
     });
 
@@ -1323,14 +1322,12 @@ public class Player : KinematicBody2D
     _stateMachine.OnTransitionTo (State.Idle, () =>
     {
       if (!IsInGroup ("Perchable Parent")) AddToGroup ("Perchable Parent");
-      // if (!_sprite.IsInGroup ("Perchable")) _sprite.AddToGroup ("Perchable");
       _wasRunning = false;
     });
 
     _stateMachine.OnTransitionFrom (State.CliffHanging, () =>
     {
       if (IsInGroup ("Perchable Parent")) RemoveFromGroup ("Perchable Parent");
-      // if (_sprite.IsInGroup ("Perchable")) _sprite.RemoveFromGroup ("Perchable");
     });
 
     _stateMachine.OnTransitionTo (State.CliffHanging, () =>
@@ -1338,7 +1335,6 @@ public class Player : KinematicBody2D
       _animationPlayer.Play (CliffHangingAnimation);
       _weapon.Unequip();
       if (!IsInGroup ("Perchable Parent")) AddToGroup ("Perchable Parent");
-      // if (!_sprite.IsInGroup ("Perchable")) _sprite.AddToGroup ("Perchable");
     });
 
     _stateMachine.OnTransitionTo (State.Walking, () =>
