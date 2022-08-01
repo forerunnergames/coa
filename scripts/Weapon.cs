@@ -31,13 +31,13 @@ public class Weapon
 
   // @formatter:on
 
-  public Weapon (Node player)
+  public Weapon (Node player, Log.Level logLevel)
   {
     _playerAnimator1 = player.GetNode <AnimationPlayer> ("Sprites/AnimationPlayer1");
     _playerAnimator2 = player.GetNode <AnimationPlayer> ("Sprites/AnimationPlayer2");
     _backpackSprite = player.GetNode <Sprite> ("Sprites/backpack");
     _itemInBackpackSprite = player.GetNode <Sprite> ("Sprites/item-in-backpack");
-    InitializeStateMachine();
+    InitializeStateMachine (logLevel);
   }
 
   // ReSharper disable once MemberCanBeMadeStatic.Global
@@ -118,9 +118,9 @@ public class Weapon
     }
   }
 
-  private void InitializeStateMachine()
+  private void InitializeStateMachine (Log.Level logLevel)
   {
-    _sm = new StateMachine <State> (TransitionTable, State.Unequipped);
+    _sm = new StateMachine <State> (TransitionTable, State.Unequipped) { LogLevel = logLevel };
     _sm.OnTransition (State.Unequipped, State.Equipped, StartEquipping);
     _sm.OnTransition (State.Equipped, State.Unequipped, StartUnequipping);
     _sm.AddTrigger (State.Unequipped, State.Equipped, ShouldEquip);

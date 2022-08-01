@@ -17,7 +17,7 @@ public class Log
     All
   }
 
-  public Log ([CallerFilePath] string name = "") { _name = Path.GetFileNameWithoutExtension (name); }
+  public Log ([CallerFilePath] string name = "") => _name = Path.GetFileNameWithoutExtension (name);
   public bool All (string message) => CurrentLevel > Level.Debug && Print (message, Level.All);
   public bool Debug (string message) => CurrentLevel > Level.Info && Print (message, Level.Debug);
   public bool Info (string message) => CurrentLevel > Level.Warn && Print (message, Level.Info);

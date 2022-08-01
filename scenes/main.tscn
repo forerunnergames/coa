@@ -4799,7 +4799,7 @@ __meta__ = {
 "_edit_lock_": true
 }
 FlightPathColor = Color( 1, 0, 0, 1 )
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 1"]
 visible = false
@@ -4839,7 +4839,7 @@ __meta__ = {
 "_edit_lock_": true
 }
 FlightPathColor = Color( 0, 1, 0, 1 )
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 2"]
 visible = false
@@ -4879,7 +4879,7 @@ __meta__ = {
 "_edit_lock_": true
 }
 FlightPathColor = Color( 0, 0, 1, 1 )
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 3"]
 visible = false
@@ -4919,7 +4919,7 @@ __meta__ = {
 "_edit_lock_": true
 }
 FlightPathColor = Color( 1, 0.701961, 0, 1 )
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 4"]
 visible = false
@@ -4959,7 +4959,7 @@ __meta__ = {
 "_edit_lock_": true
 }
 FlightPathColor = Color( 1, 0.376471, 0, 1 )
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 5"]
 visible = false
@@ -5000,7 +5000,7 @@ __meta__ = {
 }
 FlightPathColor = Color( 0, 0.952941, 1, 1 )
 NearestPerchFrequency = 1.0
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 6"]
 visible = false
@@ -5041,7 +5041,7 @@ __meta__ = {
 }
 FlightPathColor = Color( 0.0117647, 0.196078, 0.0862745, 1 )
 NearestPerchFrequency = 1.0
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 7"]
 visible = false
@@ -5082,7 +5082,7 @@ __meta__ = {
 }
 FlightPathColor = Color( 0, 0.670588, 1, 1 )
 NearestPerchFrequency = 1.0
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 8"]
 visible = false
@@ -5123,7 +5123,7 @@ __meta__ = {
 }
 FlightPathColor = Color( 0.415686, 0.32549, 0.117647, 1 )
 NearestPerchFrequency = 1.0
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 9"]
 visible = false
@@ -5164,7 +5164,7 @@ __meta__ = {
 }
 FlightPathColor = Color( 1, 0.588235, 0.384314, 1 )
 NearestPerchFrequency = 1.0
-LogLevel = 2
+LogLevel = 0
 
 [node name="PerchingCollider" type="Area2D" parent="Butterfly 10"]
 visible = false
