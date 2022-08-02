@@ -27,8 +27,8 @@ jobs:
         uses: firebelley/godot-export@v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GH_ACTIONS_TOKEN }}
-          GODOT_MONO_FILE_VERSION: 3.5-rc4
-          GODOT_MONO_URL_VERSION: 3.5/rc4
+          GODOT_MONO_FILE_VERSION: 3.5-rc8
+          GODOT_MONO_URL_VERSION: 3.5/rc8
         with:
           godot_executable_download_url: https://downloads.tuxfamily.org/godotengine/${{env.GODOT_MONO_URL_VERSION}}/mono/Godot_v${{env.GODOT_MONO_FILE_VERSION}}_mono_linux_headless_64.zip
           godot_export_templates_download_url: https://downloads.tuxfamily.org/godotengine/${{env.GODOT_MONO_URL_VERSION}}/mono/Godot_v${{env.GODOT_MONO_FILE_VERSION}}_mono_export_templates.tpz
