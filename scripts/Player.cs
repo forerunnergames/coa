@@ -960,7 +960,9 @@ public class Player : KinematicBody2D
       }
       default:
       {
-        throw new ArgumentOutOfRangeException();
+        _log.Warn ($"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode}");
+
+        return;
       }
     }
 
@@ -976,21 +978,21 @@ public class Player : KinematicBody2D
     {
       ClothingClickMode.Add => _shirtSprite.Visible || _shirtSleeveLeftSprite.Visible || _shirtSleeveRightSprite.Visible,
       ClothingClickMode.Remove => _shirtSprite.Visible && _shirtSleeveLeftSprite.Visible && _shirtSleeveRightSprite.Visible,
-      _ => throw new ArgumentOutOfRangeException()
+      _ => _log.Warn ($"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode} for {_shirtSprite.GetType()}: {_shirtSprite.Name}")
     };
 
     _backpackSprite.Visible = _clothingClickMode switch
     {
       ClothingClickMode.Add => _backpackSprite.Visible || _backpackStrapsSprite.Visible || _itemInBackpackSprite.Visible,
       ClothingClickMode.Remove => _backpackSprite.Visible && _backpackStrapsSprite.Visible,
-      _ => throw new ArgumentOutOfRangeException()
+      _ => _log.Warn ($"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode} for {_backpackSprite.GetType()}: {_backpackSprite.Name}")
     };
 
     _itemInBackpackSprite.Visible = _clothingClickMode switch
     {
       ClothingClickMode.Add => !_itemInHandSprite.Visible && (_itemInBackpackSprite.Visible || _backpackSprite.Visible),
       ClothingClickMode.Remove => _itemInBackpackSprite.Visible && _backpackSprite.Visible,
-      _ => throw new ArgumentOutOfRangeException()
+      _ => _log.Warn ($"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode} for {_itemInBackpackSprite.GetType()}: {_itemInBackpackSprite.Name}")
     };
 
     _backpackStrapsSprite.Visible = _backpackSprite.Visible;
