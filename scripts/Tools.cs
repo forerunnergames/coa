@@ -313,12 +313,7 @@ public static class Tools
   {
     var cellId = t.GetCell ((int)cell.x, (int)cell.y);
 
-    if (cellId == -1)
-    {
-      _log.Warn ($"Cell {cell} doesn't exist in TileMap: \"{t.Name}\"");
-
-      return Vector2.Zero;
-    }
+    if (cellId == -1) return Vector2.Zero;
 
     return t.TileSet.TileGetRegion (cellId).Size * t.Scale;
   }
