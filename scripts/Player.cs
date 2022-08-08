@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -112,15 +111,13 @@ public class Player : KinematicBody2D
   private bool _wasInCliffEdge;
   private bool _justRespawned;
   private Camera2D _camera;
-  private RayCast2D _rayChest;
-  private RayCast2D _rayFeet;
   private Sprite _readableSign;
   private TileMap _signsTileMap;
   private Cliffs _cliffs;
   private Area2D _waterfall;
   private Weapon _weapon;
+  private IDropdownable _dropdown;
   private volatile string _currentAnimation;
-  private volatile bool _isDroppingDown;
   private volatile bool _isResting;
   private ClothingClickMode _clothingClickMode = ClothingClickMode.Remove;
   private Sprite _shirtSprite;
@@ -151,17 +148,11 @@ public class Player : KinematicBody2D
   private Sprite _backpackStrapsSprite;
   private List <Sprite> _clothes;
   private List <Area2D> _groundAreas;
+  private List <RayCast2D> _groundDetectors;
+  private List <RayCast2D> _wallDetectors;
   private Log _log;
 
   // @formatter:off
-
-  private static readonly Dictionary <string, int> TileNamesToDropdownFrames = new()
-  {
-    { "sign", 16 },
-    { "sign-arrow-right", 17 },
-    { "sign-arrow-left", 17 },
-    { "bridge-post", 1 }
-  };
 
   private static readonly Dictionary <State, State[]> TransitionTable = new()
   {
@@ -544,13 +535,15 @@ public class Player : KinematicBody2D
 
   public override void _Ready()
   {
+    // @formatter:off
     // ReSharper disable once ExplicitCallerInfoArgument
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
     _weapon = new Weapon (GetNode <Node2D> ("Sprites"), LogLevel);
     _camera = GetNode <Camera2D> ("Camera2D");
-    _rayChest = GetNode <RayCast2D> ("Chest");
-    _rayFeet = GetNode <RayCast2D> ("Feet");
+    _groundDetectors = GetTree().GetNodesInGroup ("Ground Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
+    _dropdown = new Dropdown (this, _groundDetectors);
+    _wallDetectors = GetTree().GetNodesInGroup ("Wall Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
     _cliffs = GetNode <Cliffs> ("../Cliffs");
     _waterfall = _cliffs.GetNode <Area2D> ("Waterfall");
     _audio = GetNode <AudioStreamPlayer> ("PlayerSoundEffectsPlayer");
@@ -593,6 +586,7 @@ public class Player : KinematicBody2D
     _armRightSprite = GetNode <Sprite> ("Sprites/arm-right");
     _backpackSprite = GetNode <Sprite> ("Sprites/backpack");
     _backpackStrapsSprite = GetNode <Sprite> ("Sprites/backpack-straps");
+    // @formatter:on
 
     _clothes = new List <Sprite>
     {
@@ -658,12 +652,14 @@ public class Player : KinematicBody2D
     // @formatter:on
   }
 
-  public override void _UnhandledInput (InputEvent @event)
+  public override async void _UnhandledInput (InputEvent @event)
   {
     if (IsReleased (Input.Text, @event)) _label.Visible = !_label.Visible;
     if (IsReleased (Input.Respawn, @event)) Respawn();
-    if (IsDownArrowPressed()) CheckDropDownThrough();
     if (WasMouseLeftClicked (@event)) UpdateClothing();
+
+    // This async call must be the last line in this method.
+    if (IsDownArrowPressed() && !_stateMachine.Is (State.ReadingSign)) await _dropdown.Drop();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -720,7 +716,7 @@ public class Player : KinematicBody2D
   // ReSharper disable once UnusedMember.Global
   public void _OnCliffEdgeExited (Node body)
   {
-    if (!body.IsInGroup ("Player") || !_stateMachine.Is (State.FreeFalling) || _justRespawned) return;
+    if (body is not KinematicBody2D || !body.IsInGroup ("Player") || !_stateMachine.Is (State.FreeFalling) || _justRespawned) return;
 
     _log.Debug ("Player exited cliff edge.");
     _wasInCliffEdge = true;
@@ -794,59 +790,6 @@ public class Player : KinematicBody2D
     }
 
     UpdateSecondaryClothing();
-  }
-
-  private void CheckDropDownThrough()
-  {
-    for (var i = 0; i < GetSlideCount(); ++i)
-    {
-      var collision = GetSlideCollision (i);
-
-      if (_stateMachine.Is (State.ReadingSign) || !WasDownArrowPressedOnce() || collision.Collider is not Node2D node ||
-          !node.IsInGroup ("Dropdownable")) continue;
-
-      switch (collision.Collider)
-      {
-        case PhysicsBody2D body:
-        {
-          DropDownThrough (body);
-
-          break;
-        }
-        case TileMap tileMap:
-        {
-          var tileName = GetCollidingTileName (collision.Position, tileMap);
-
-          if (tileName.Empty()) continue;
-
-          DropDownThrough (tileName, tileMap);
-
-          break;
-        }
-      }
-    }
-  }
-
-  private async void DropDownThrough (PhysicsBody2D body)
-  {
-    _isDroppingDown = true;
-    body.SetCollisionMaskBit (0, false);
-    SetCollisionMaskBit (1, false);
-    await ToSignal (GetTree(), "idle_frame");
-    body.SetCollisionMaskBit (0, true);
-    SetCollisionMaskBit (1, true);
-    _isDroppingDown = false;
-  }
-
-  private async void DropDownThrough (string tileName, TileMap tileMap)
-  {
-    _isDroppingDown = true;
-    tileMap.SetCollisionMaskBit (0, false);
-    SetCollisionMaskBit (1, false);
-    for (var i = 0; i < TileNamesToDropdownFrames[tileName]; ++i) await ToSignal (GetTree(), "idle_frame");
-    tileMap.SetCollisionMaskBit (0, true);
-    SetCollisionMaskBit (1, true);
-    _isDroppingDown = false;
   }
 
   private async void RestAfterClimbingUp()
@@ -1142,13 +1085,15 @@ public class Player : KinematicBody2D
     }
   }
 
-  private bool IsHittingWall()
-  {
-    return _rayChest.GetCollider() is StaticBody2D collider1 && collider1.IsInGroup ("Walls") ||
-           _rayFeet.GetCollider() is StaticBody2D collider2 && collider2.IsInGroup ("Walls") ||
-           _rayChest.GetCollider() is TileMap collider3 && collider3.IsInGroup ("Walls") ||
-           _rayFeet.GetCollider() is TileMap collider4 && collider4.IsInGroup ("Walls");
-  }
+  private bool IsTouchingWall() =>
+    _wallDetectors.Any (x =>
+      x.GetCollider() is StaticBody2D collider && collider.IsInGroup ("Walls") ||
+      x.GetCollider() is TileMap collider2 && collider2.IsInGroup ("Walls"));
+
+  private bool IsTouchingGround() =>
+    _groundDetectors.Any (x =>
+      x.GetCollider() is StaticBody2D collider && collider.IsInGroup ("Ground") ||
+      x.GetCollider() is TileMap collider2 && collider2.IsInGroup ("Ground"));
 
   private void FlipHorizontally (bool flip)
   {
@@ -1251,15 +1196,16 @@ public class Player : KinematicBody2D
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Traversing: " + _stateMachine.Is (State.Traversing) +
     "\nFree falling: " + _stateMachine.Is (State.FreeFalling) +
+    "\nDropping down: " + _dropdown.IsDropping() +
     "\nIsOnFloor(): " + IsOnFloor() +
-    "\nIsHittingWall(): " + IsHittingWall() +
+    "\nIsTouchingGround(): " + IsTouchingGround() +
+    "\nIsTouchingWall(): " + IsTouchingWall() +
     "\nIsInCliffs: " + IsInCliffs +
     "\nIsInGround: " + _isInGround +
     "\n_isInSign: " + _isInSign +
     "\n_isResting: " + _isResting +
     "\n_wasRunning: " + _wasRunning +
     "\n_wasInCliffEdge: " + _wasInCliffEdge +
-    "\n_isDroppingDown: " + _isDroppingDown +
     "\n_justRespawned: " + _justRespawned +
     "\nIsInMotion(): " + IsMoving() +
     "\nIsMovingDown(): " + IsMovingDown() +
@@ -1445,24 +1391,24 @@ public class Player : KinematicBody2D
 
     // TODO Move conditions into state machine conditions, leaving only input for triggers.
     _stateMachine.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy());
-    _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsHittingWall());
+    _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsTouchingWall());
     _stateMachine.AddTrigger (State.Idle, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign && !_isResting);
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs && !_isDroppingDown);
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs && !_dropdown.IsDropping());
     _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => !IsDownArrowPressed() && IsMovingDown() && !IsOnFloor());
-    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && HasReadableSign() && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !_isResting);
     _stateMachine.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally() && !(_isInSign && IsUpArrowPressed()));
     _stateMachine.AddTrigger (State.Walking, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsMovingHorizontally() && IsDepletingEnergy());
     _stateMachine.AddTrigger (State.Walking, State.Jumping, WasJumpKeyPressed);
-    _stateMachine.AddTrigger (State.Walking, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsHittingWall());
+    _stateMachine.AddTrigger (State.Walking, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
     _stateMachine.AddTrigger (State.Walking, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign);
-    _stateMachine.AddTrigger (State.Walking, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && HasReadableSign());
+    _stateMachine.AddTrigger (State.Walking, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
     _stateMachine.AddTrigger (State.Running, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Running, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() || JustDepletedAllEnergy());
     _stateMachine.AddTrigger (State.Running, State.Jumping, WasJumpKeyPressed);
-    _stateMachine.AddTrigger (State.Running, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsHittingWall());
+    _stateMachine.AddTrigger (State.Running, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
     _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign);
-    _stateMachine.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && HasReadableSign());
+    _stateMachine.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
     _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall);
@@ -1491,7 +1437,7 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.ReadingSign, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
     _stateMachine.AddTrigger (State.ReadingSign, State.Walking, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && _isInSign);
     _stateMachine.AddTrigger (State.ReadingSign, State.Running, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsDepletingEnergy() && _isInSign);
-
-    // @formatter:on
   }
+
+  // @formatter:on
 }
