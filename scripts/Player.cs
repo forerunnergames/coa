@@ -961,6 +961,7 @@ public class Player : KinematicBody2D
     GlobalPosition = new Vector2 (952, -4032);
     _animationPlayer.Play (IdleLeftAnimation);
     _justRespawned = true;
+    _log.Info ("Player respawned.");
   }
 
   private void StartCameraSmoothing()
