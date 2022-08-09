@@ -3,7 +3,7 @@ using System.Linq;
 using Godot;
 using static Tools;
 
-public static class PerchablesFactory
+public static class PerchableFactory
 {
   private static readonly Vector2 LocalScale = new(8, 8);
 
