@@ -6,7 +6,7 @@ using Godot;
 // ReSharper disable MemberCanBePrivate.Global
 public static class Tools
 {
-  private static Log _log = new Log();
+  private static readonly Log Log = new();
 
   public enum Input
   {
@@ -85,7 +85,132 @@ public static class Tools
   public static float SafelyClamp (float f, float min, float max) => SafelyClampMin (SafelyClampMax (f, max), min);
   public static bool IsSafelyLessThan (float f1, float f2) => f1 < f2 && !Mathf.IsEqualApprox (f1, f2);
   public static bool IsSafelyGreaterThan (float f1, float f2) => f1 > f2 && !Mathf.IsEqualApprox (f1, f2);
+  public static bool LessThan (Vector2 v1, Vector2 v2) => v1.x < v2.x && v1.y < v2.y;
+  public static bool GreaterThan (Vector2 v1, Vector2 v2) => v1.x > v2.x && v1.y > v2.y;
+  public static bool LessThanOrEqual (Vector2 v1, Vector2 v2) => v1.x <= v2.x && v1.y <= v2.y;
+  public static bool GreaterThanOrEqual (Vector2 v1, Vector2 v2) => v1.x >= v2.x && v1.y >= v2.y;
+  public static bool AreAlmostEqual (Vector2 v1, Vector2 v2, float epsilon) => Mathf.Abs (v1.x - v2.x) < epsilon && Mathf.Abs (v1.y - v2.y) < epsilon;
+  public static bool AreAlmostEqual (float f1, float f2, float epsilon) => Mathf.Abs (f1 - f2) < epsilon && Mathf.Abs (f1 - f2) < epsilon;
+  public static bool IsEnclosedBy (Rect2 original, IReadOnlyCollection <Rect2> overlaps) => overlaps.Aggregate (new List <Rect2> { original }, (x, _) => GetUncoveredRects (x, overlaps)).Count == 0;
+  public static bool IsEnclosedBy (Rect2 r1, Rect2 r2) => r1.Position.x >= r2.Position.x && r1.End.x <= r2.End.x && r1.Position.y >= r2.Position.y && r1.End.y <= r2.End.y;
+  public static Vector2 GetTileCellAtCenterOf (Area2D area, string colliderName, TileMap t) => GetTileCellAtCenterOf (area, area.GetNode <CollisionShape2D> (colliderName), t);
+  public static bool IsIntersectingAnyTile (Area2D area, CollisionShape2D collider, TileMap t) => GetIntersectingTileId (area, collider, t) != -1;
+  public static int GetIntersectingTileId (Area2D area, CollisionShape2D collider, TileMap t) => t.GetCellv (GetIntersectingTileCell (area, collider, t));
+  public static Vector2 GetIntersectingTileCell (Area2D area, string colliderName, TileMap t) => GetIntersectingTileCell (area, area.GetNode <CollisionShape2D> (colliderName), t);
+  public static string GetIntersectingTileName (Area2D area, CollisionShape2D collider, TileMap t) => GetTileName (GetIntersectingTileCell (area, collider, t), t);
+  public static string GetCollidingTileName (Vector2 collisionPoint, TileMap t) => GetTileName (GetCollidingTileCell (collisionPoint, t), t);
+  public static Vector2 GetIntersectingTileCellGlobalOrigin (Area2D area, CollisionShape2D collider, TileMap t) => GetTileCellGlobalOrigin (GetIntersectingTileCell (area, collider, t), t);
+  public static bool MouseInSprite (Sprite sprite, Vector2 spriteLocalMousePos) => sprite.GetRect().HasPoint (spriteLocalMousePos) && sprite.IsPixelOpaque (spriteLocalMousePos);
+  public static Vector2 GetMousePositionInSpriteSpace (Sprite sprite) => sprite.GetLocalMousePosition();
+  public static void ToggleVisibility (CanvasItem sprite) => sprite.Visible = !sprite.Visible;
+  public static void ToggleVisibility (CanvasItem sprite, Condition condition) => sprite.Visible = condition() && !sprite.Visible;
+  public static float RoundUpToNextMultiple (float value, float multiple) => (float)Math.Ceiling ((decimal)value / (decimal)multiple) * multiple;
+  public static void LoopAudio (AudioStream a) => LoopAudio (a, 0.0f, a.GetLength());
   // @formatter:on
+
+  public static bool AreAlmostEqual (Color color1, Color color2, float epsilon) =>
+    Mathf.Abs (color1.r - color2.r) < epsilon && Mathf.Abs (color1.g - color2.g) < epsilon &&
+    Mathf.Abs (color1.b - color2.b) < epsilon && Mathf.Abs (color1.a - color2.a) < epsilon;
+
+  public static bool AlmostHasPoint (Rect2 rect, Vector2 point, float epsilon) =>
+    (AreAlmostEqual (point.x, rect.Position.x, epsilon) || point.x > (double)rect.Position.x) &&
+    (AreAlmostEqual (point.y, rect.Position.y, epsilon) || point.y > (double)rect.Position.y) &&
+    point.x < rect.Position.x + (double)rect.Size.x && point.y < rect.Position.y + (double)rect.Size.y;
+
+  public static float NextAnimationFrameDelaySecs (AnimationPlayer player) =>
+    player.CurrentAnimationPosition < player.CurrentAnimationLength
+      ? RoundUpToNextMultiple (player.CurrentAnimationPosition, player.GetAnimation (player.CurrentAnimation).Step) -
+        player.CurrentAnimationPosition
+      : 0;
+
+  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", string prepend = "", string append = "",
+    Func <T, string> f = null) =>
+    e.Select (f ?? (s => prepend + s + append)).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
+
+  public static Rect2 GetAreaColliderRect (Area2D area, CollisionShape2D collider)
+  {
+    if (!area.HasNode (collider.Name) || collider.Shape is not RectangleShape2D rect) return new Rect2();
+
+    var extents = rect.Extents * area.GlobalScale.Abs();
+
+    return new Rect2 (collider.GlobalPosition - extents, extents * 2);
+  }
+
+  public static string GetTileName (Vector2 cell, TileMap t)
+  {
+    var id = t.GetCellv (cell);
+
+    return id != -1 ? t.TileSet.TileGetName (id) : "";
+  }
+
+  public static Vector2 GetTileCellAtCenterOf (Area2D area, CollisionShape2D collider, TileMap t)
+  {
+    var rect = GetAreaColliderRect (area, collider);
+
+    return GetTileCellAtAnyOf (new List <Vector2> { t.WorldToMap (t.ToLocal (rect.Position + rect.Size / 2)) }, t);
+  }
+
+  public static Vector2 GetCollidingTileCell (Vector2 collisionPoint, TileMap t)
+  {
+    var collisionCell = t.WorldToMap (t.ToLocal (collisionPoint));
+
+    var collisionCells = new List <Vector2>
+    {
+      collisionCell,
+      collisionCell + Vector2.Left,
+      collisionCell + Vector2.Right,
+      collisionCell + Vector2.Up,
+      collisionCell + Vector2.Down,
+      collisionCell + Vector2.Left + Vector2.Up,
+      collisionCell + Vector2.Left + Vector2.Down,
+      collisionCell + Vector2.Right + Vector2.Up,
+      collisionCell + Vector2.Right + Vector2.Down
+    };
+
+    return GetTileCellAtAnyOf (collisionCells, t);
+  }
+
+  public static Vector2 GetIntersectingTileCell (Area2D area, CollisionShape2D collider, TileMap t)
+  {
+    var rect = GetAreaColliderRect (area, collider);
+
+    var cornerCells = new List <Vector2>
+    {
+      t.WorldToMap (t.ToLocal (rect.Position)),
+      t.WorldToMap (t.ToLocal (new Vector2 (rect.End.x - 1, rect.Position.y))),
+      t.WorldToMap (t.ToLocal (new Vector2 (rect.Position.x, rect.End.y - 1))),
+      t.WorldToMap (t.ToLocal (rect.End - Vector2.One))
+    };
+
+    return GetTileCellAtAnyOf (cornerCells, t);
+  }
+
+  public static Vector2 GetTileCellGlobalOrigin (Vector2 cell, TileMap t)
+  {
+    var xFlipped = t.IsCellXFlipped ((int)cell.x, (int)cell.y);
+    var yFlipped = t.IsCellYFlipped ((int)cell.x, (int)cell.y);
+    var globalOrigin = t.ToGlobal (t.MapToWorld (cell));
+    var globalSize = GetTileCellGlobalSize (cell, t);
+    globalOrigin.x += xFlipped ? globalSize.x : 0;
+    globalOrigin.y += yFlipped ? globalSize.y : 0;
+
+    return globalOrigin;
+  }
+
+  public static Vector2 GetTileCellGlobalSize (Vector2 cell, TileMap t)
+  {
+    var cellId = t.GetCell ((int)cell.x, (int)cell.y);
+
+    if (cellId == -1) return Vector2.Zero;
+
+    return t.TileSet.TileGetRegion (cellId).Size * t.Scale;
+  }
+
+  public static async void PlaySyncedAnimation (string animationName, AnimationPlayer playOn, AnimationPlayer syncTo, float delta)
+  {
+    await playOn.ToSignal (playOn.GetTree().CreateTimer (NextAnimationFrameDelaySecs (syncTo) - delta, false), "timeout");
+    playOn.Play (animationName);
+  }
 
   public static bool IsAnyArrowKeyPressedExcept (Input arrow)
   {
@@ -105,31 +230,6 @@ public static class Tools
       _ => false
     };
   }
-
-  public static bool AreAlmostEqual (Color color1, Color color2, float epsilon)
-  {
-    return Mathf.Abs (color1.r - color2.r) < epsilon && Mathf.Abs (color1.g - color2.g) < epsilon &&
-           Mathf.Abs (color1.b - color2.b) < epsilon && Mathf.Abs (color1.a - color2.a) < epsilon;
-  }
-
-  public static bool AreAlmostEqual (Vector2 vector1, Vector2 vector2, float epsilon)
-  {
-    return Mathf.Abs (vector1.x - vector2.x) < epsilon && Mathf.Abs (vector1.y - vector2.y) < epsilon;
-  }
-
-  public static bool AreAlmostEqual (float f1, float f2, float epsilon)
-  {
-    return Mathf.Abs (f1 - f2) < epsilon && Mathf.Abs (f1 - f2) < epsilon;
-  }
-
-  public static bool AlmostHasPoint (Rect2 rect, Vector2 point, float epsilon)
-  {
-    return (AreAlmostEqual (point.x, rect.Position.x, epsilon) || point.x > (double)rect.Position.x) &&
-           (AreAlmostEqual (point.y, rect.Position.y, epsilon) || point.y > (double)rect.Position.y) &&
-           point.x < rect.Position.x + (double)rect.Size.x && point.y < rect.Position.y + (double)rect.Size.y;
-  }
-
-  public static void LoopAudio (AudioStream a) { LoopAudio (a, 0.0f, a.GetLength()); }
 
   /// <summary>
   /// Whether or not the specified input type is the only active input.
@@ -212,9 +312,7 @@ public static class Tools
 
       if (++i < 100) continue;
 
-      _log.Warn (
-        $"{nameof (RandomPointIn)}: Possible infinite loop detected for x value, using default value of {rect.Position.x}...");
-
+      Log.Warn ($"{nameof (RandomPointIn)}: Possible infinite loop detected for x value, using default value of {rect.Position.x}...");
       p.x = rect.Position.x;
 
       break;
@@ -228,9 +326,7 @@ public static class Tools
 
       if (++j < 100) continue;
 
-      _log.Warn (
-        $"{nameof (RandomPointIn)}: Possible infinite loop detected for y value, using default value of {rect.Position.y}...");
-
+      Log.Warn ($"{nameof (RandomPointIn)}: Possible infinite loop detected for y value, using default value of {rect.Position.y}...");
       p.y = rect.Position.y;
 
       break;
@@ -239,138 +335,16 @@ public static class Tools
     return p;
   }
 
-  public static Rect2 GetAreaColliderRect (Area2D area, CollisionShape2D collider)
-  {
-    if (!area.HasNode (collider.Name) || collider.Shape is not RectangleShape2D rect) return new Rect2();
-
-    var extents = rect.Extents * area.GlobalScale.Abs();
-
-    return new Rect2 (collider.GlobalPosition - extents, extents * 2);
-  }
-
-  public static string GetTileName (Vector2 cell, TileMap t)
-  {
-    var id = t.GetCellv (cell);
-
-    return id != -1 ? t.TileSet.TileGetName (id) : "";
-  }
-
-  public static Vector2 GetTileCellAtCenterOf (Area2D area, CollisionShape2D collider, TileMap t)
-  {
-    var rect = GetAreaColliderRect (area, collider);
-
-    return GetTileCellAtAnyOf (new List <Vector2> { t.WorldToMap (t.ToLocal (rect.Position + rect.Size / 2)) }, t);
-  }
-
-  public static Vector2 GetCollidingTileCell (Vector2 collisionPoint, TileMap t)
-  {
-    var collisionCell = t.WorldToMap (t.ToLocal (collisionPoint));
-
-    var collisionCells = new List <Vector2>
-    {
-      collisionCell,
-      collisionCell + Vector2.Left,
-      collisionCell + Vector2.Right,
-      collisionCell + Vector2.Up,
-      collisionCell + Vector2.Down,
-      collisionCell + Vector2.Left + Vector2.Up,
-      collisionCell + Vector2.Left + Vector2.Down,
-      collisionCell + Vector2.Right + Vector2.Up,
-      collisionCell + Vector2.Right + Vector2.Down
-    };
-
-    return GetTileCellAtAnyOf (collisionCells, t);
-  }
-
-  public static Vector2 GetIntersectingTileCell (Area2D area, CollisionShape2D collider, TileMap t)
-  {
-    var rect = GetAreaColliderRect (area, collider);
-
-    var cornerCells = new List <Vector2>
-    {
-      t.WorldToMap (t.ToLocal (rect.Position)),
-      t.WorldToMap (t.ToLocal (new Vector2 (rect.End.x - 1, rect.Position.y))),
-      t.WorldToMap (t.ToLocal (new Vector2 (rect.Position.x, rect.End.y - 1))),
-      t.WorldToMap (t.ToLocal (rect.End - Vector2.One))
-    };
-
-    return GetTileCellAtAnyOf (cornerCells, t);
-  }
-
-  public static Vector2 GetTileCellGlobalOrigin (Vector2 cell, TileMap t)
-  {
-    var xFlipped = t.IsCellXFlipped ((int)cell.x, (int)cell.y);
-    var yFlipped = t.IsCellYFlipped ((int)cell.x, (int)cell.y);
-    var globalOrigin = t.ToGlobal (t.MapToWorld (cell));
-    var globalSize = GetTileCellGlobalSize (cell, t);
-    globalOrigin.x += xFlipped ? globalSize.x : 0;
-    globalOrigin.y += yFlipped ? globalSize.y : 0;
-
-    return globalOrigin;
-  }
-
-  public static Vector2 GetTileCellGlobalSize (Vector2 cell, TileMap t)
-  {
-    var cellId = t.GetCell ((int)cell.x, (int)cell.y);
-
-    if (cellId == -1) return Vector2.Zero;
-
-    return t.TileSet.TileGetRegion (cellId).Size * t.Scale;
-  }
-
-  // @formatter:off
-  public static bool LessThan (Vector2 v1, Vector2 v2) => v1.x < v2.x && v1.y < v2.y;
-  public static bool GreaterThan (Vector2 v1, Vector2 v2) => v1.x > v2.x && v1.y > v2.y;
-  public static bool LessThanOrEqual (Vector2 v1, Vector2 v2) => v1.x <= v2.x && v1.y <= v2.y;
-  public static bool GreaterThanOrEqual (Vector2 v1, Vector2 v2) => v1.x >= v2.x && v1.y >= v2.y;
-  public static bool IsEnclosedBy (Rect2 original, IReadOnlyCollection <Rect2> overlaps) => overlaps.Aggregate (new List <Rect2> { original }, (x, _) => GetUncoveredRects (x, overlaps)).Count == 0;
-  public static bool IsEnclosedBy (Rect2 rect1, Rect2 rect2) => rect1.Position.x >= rect2.Position.x && rect1.End.x <= rect2.End.x && rect1.Position.y >= rect2.Position.y && rect1.End.y <= rect2.End.y;
-  public static Vector2 GetTileCellAtCenterOf (Area2D area, string colliderName, TileMap t) => GetTileCellAtCenterOf (area, area.GetNode <CollisionShape2D> (colliderName), t);
-  public static bool IsIntersectingAnyTile (Area2D area, CollisionShape2D collider, TileMap t) => GetIntersectingTileId (area, collider, t) != -1;
-  public static int GetIntersectingTileId (Area2D area, CollisionShape2D collider, TileMap t) => t.GetCellv (GetIntersectingTileCell (area, collider, t));
-  public static Vector2 GetIntersectingTileCell (Area2D area, string colliderName, TileMap t) => GetIntersectingTileCell (area, area.GetNode <CollisionShape2D> (colliderName), t);
-  public static string GetIntersectingTileName (Area2D area, CollisionShape2D collider, TileMap t) => GetTileName (GetIntersectingTileCell (area, collider, t), t);
-  public static string GetCollidingTileName (Vector2 collisionPoint, TileMap t) => GetTileName (GetCollidingTileCell (collisionPoint, t), t);
-  public static Vector2 GetIntersectingTileCellGlobalOrigin (Area2D area, CollisionShape2D collider, TileMap t) => GetTileCellGlobalOrigin (GetIntersectingTileCell (area, collider, t), t);
-  public static bool MouseInSprite (Sprite sprite, Vector2 spriteLocalMousePos) => sprite.GetRect().HasPoint (spriteLocalMousePos) && sprite.IsPixelOpaque (spriteLocalMousePos);
-  public static Vector2 GetMousePositionInSpriteSpace (Sprite sprite) => sprite.GetLocalMousePosition();
-  public static void ToggleVisibility (CanvasItem sprite) => sprite.Visible = !sprite.Visible;
-  public static void ToggleVisibility (CanvasItem sprite, Condition condition) => sprite.Visible = condition() && !sprite.Visible;
-  // @formatter:on
-
-  public static async void PlaySyncedAnimation (string animationName, AnimationPlayer playOn, AnimationPlayer syncTo, float delta)
-  {
-    await playOn.ToSignal (playOn.GetTree().CreateTimer (NextAnimationFrameDelaySecs (syncTo) - delta, false), "timeout");
-    playOn.Play (animationName);
-  }
-
-  public static float NextAnimationFrameDelaySecs (AnimationPlayer player) =>
-    player.CurrentAnimationPosition < player.CurrentAnimationLength
-      ? RoundUpToNextMultiple (player.CurrentAnimationPosition, player.GetAnimation (player.CurrentAnimation).Step) -
-        player.CurrentAnimationPosition
-      : 0;
-
-  public static float RoundUpToNextMultiple (float value, float multiple) =>
-    (float)Math.Ceiling ((decimal)value / (decimal)multiple) * multiple;
-
-  public static string ToString <T> (IEnumerable <T> e, string sep = ", ", string prepend = "", string append = "",
-    Func <T, string> f = null)
-  {
-    return e.Select (f ?? (s => prepend + s + append)).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
-  }
-
   private static Vector2 GetTileCellAtAnyOf (IReadOnlyCollection <Vector2> cells, TileMap t) =>
     t.GetUsedCells().Cast <Vector2>().FirstOrDefault (a => cells.Any (b =>
       GreaterThanOrEqual (b, a) && LessThan (b - a,
         (t.CellSize.Inverse() * t.TileSet.TileGetRegion (t.GetCell ((int)a.x, (int)a.y)).Size).Round())));
 
-  private static List <Rect2> GetUncoveredRects (IEnumerable <Rect2> originals, IReadOnlyCollection <Rect2> overlaps)
-  {
-    return originals.Where (x => !overlaps.Any (y => IsEnclosedBy (x, y))).Aggregate (new List <Rect2>(),
+  private static List <Rect2> GetUncoveredRects (IEnumerable <Rect2> originals, IReadOnlyCollection <Rect2> overlaps) =>
+    originals.Where (x => !overlaps.Any (y => IsEnclosedBy (x, y))).Aggregate (new List <Rect2>(),
       (a, x) => overlaps.Any (y => x.Intersects (y))
         ? overlaps.Where (y => x.Intersects (y)).Aggregate (a, (b, y) => b.Union (GetUncoveredRects (x, y)).ToList())
         : a.Union (new List <Rect2> { x }).ToList());
-  }
 
   private static IEnumerable <Rect2> GetUncoveredRects (Rect2 original, Rect2 overlap)
   {

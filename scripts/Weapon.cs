@@ -54,21 +54,19 @@ public class Weapon
   public void OnUnequipAnimationStarted() => _isUnequipping = true;
   public void OnUnequipAnimationFinished() => _isUnequipping = false;
 
-  private bool ShouldEquip()
-  {
-    // @formatter:off
-    return WasItemKeyPressedOnce() && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
-           _playerAnimator1.AssignedAnimation != "player_cliff_arresting" &&
-           _playerAnimator1.AssignedAnimation != "player_cliff_hanging" &&
-           _playerAnimator1.AssignedAnimation != "player_climbing_up" &&
-           _playerAnimator1.AssignedAnimation != "player_free_falling";
-    // @formatter:on
-  }
+  // @formatter:off
 
-  private bool ShouldUnequip()
-  {
-    return WasItemKeyPressedOnce() && _backpackSprite.Visible && !_itemInBackpackSprite.Visible && !_isEquipping;
-  }
+  private bool ShouldEquip() =>
+    WasItemKeyPressedOnce() && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
+    _playerAnimator1.AssignedAnimation != "player_cliff_arresting" &&
+    _playerAnimator1.AssignedAnimation != "player_cliff_hanging" &&
+    _playerAnimator1.AssignedAnimation != "player_climbing_up" &&
+    _playerAnimator1.AssignedAnimation != "player_free_falling";
+
+  // @formatter:on
+
+  private bool ShouldUnequip() =>
+    WasItemKeyPressedOnce() && _backpackSprite.Visible && !_itemInBackpackSprite.Visible && !_isEquipping;
 
   private void StartEquipping()
   {

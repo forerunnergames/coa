@@ -439,9 +439,9 @@ public class Butterfly : AnimatedSprite
     _perchesUnvisited.Clear();
 
     GetTree().GetNodesInGroup (PerchableGroupName).Cast <Node2D>().ToList().ForEach (node =>
-      _perches.AddRange (PerchablesFactory.Create (node, _perchableDrawPrefs, PositionEpsilon)));
+      _perches.AddRange (PerchableFactory.Create (node, _perchableDrawPrefs, PositionEpsilon)));
 
-    var perch = PerchablesFactory.CreateDefault (this, _perchableDrawPrefs, PositionEpsilon);
+    var perch = PerchableFactory.CreateDefault (this, _perchableDrawPrefs, PositionEpsilon);
     perch.Disabled = true;
     _perches.Add (perch);
     ReplenishUnvisitedPerches();
