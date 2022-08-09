@@ -4452,6 +4452,10 @@ position = Vector2( 384, -208 )
 collision_mask = 6
 collision/safe_margin = 0.6
 script = ExtResource( 1 )
+__meta__ = {
+"_edit_group_": true,
+"_edit_lock_": true
+}
 LogLevel = 1
 
 [node name="Camera2D" type="Camera2D" parent="Player" groups=["Player"]]
@@ -4477,29 +4481,34 @@ position = Vector2( -12, 8 )
 shape = SubResource( 1 )
 
 [node name="Ground Detector - Feet 1" type="RayCast2D" parent="Player" groups=["Ground Detectors", "Player"]]
+visible = false
 position = Vector2( -40, 48 )
 enabled = true
 cast_to = Vector2( 0, 18 )
 collision_mask = 6
 
 [node name="Ground Detector - Feet 2" type="RayCast2D" parent="Player" groups=["Ground Detectors", "Player"]]
+visible = false
 position = Vector2( 16, 48 )
 enabled = true
 cast_to = Vector2( 0, 18 )
 collision_mask = 6
 
 [node name="Ground Detector - Feet 3" type="RayCast2D" parent="Player" groups=["Ground Detectors", "Player"]]
+visible = false
 position = Vector2( -12, 48 )
 enabled = true
 cast_to = Vector2( 0, 18 )
 collision_mask = 6
 
 [node name="Wall Detector - Chest" type="RayCast2D" parent="Player" groups=["Player", "Wall Detectors"]]
+visible = false
 rotation = 1.5708
 enabled = true
 collision_mask = 6
 
 [node name="Wall Detector - Feet" type="RayCast2D" parent="Player" groups=["Player", "Wall Detectors"]]
+visible = false
 position = Vector2( 0, 52 )
 rotation = 1.5708
 enabled = true
