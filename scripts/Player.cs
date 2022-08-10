@@ -1394,11 +1394,11 @@ public class Player : KinematicBody2D
     // @formatter:off
 
     // TODO Move conditions into state machine conditions, leaving only input for triggers.
-    _stateMachine.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy());
-    _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsTouchingWall());
-    _stateMachine.AddTrigger (State.Idle, State.Jumping, WasJumpKeyPressed);
+    _stateMachine.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() && IsOnFloor());
+    _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsTouchingWall() && IsOnFloor());
+    _stateMachine.AddTrigger (State.Idle, State.Jumping, () => WasJumpKeyPressed() && IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign && !_isResting);
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs && !_dropdown.IsDropping());
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs && !_dropdown.IsDropping() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => !IsDownArrowPressed() && IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !_isResting);
     _stateMachine.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally() && !(_isInSign && IsUpArrowPressed()));
@@ -1430,7 +1430,7 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && (IsInCliffs || _isInGround));
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
-    _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, IsDownArrowPressed);
+    _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, () => IsDownArrowPressed() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall);
