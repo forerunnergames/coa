@@ -14,8 +14,8 @@ public class Weapon
   private StateMachine <State> _sm;
   private readonly Sprite _backpackSprite;
   private readonly Sprite _itemInBackpackSprite;
-  private readonly AnimationPlayer _playerAnimator1;
-  private readonly AnimationPlayer _playerAnimator2;
+  private readonly AnimationPlayer _primaryPlayerAnimator;
+  private readonly AnimationPlayer _secondaryPlayerAnimator;
   private bool _isUnequipping;
   private bool _isEquipping;
   private float _delta;
@@ -34,8 +34,8 @@ public class Weapon
   // ReSharper disable once SuggestBaseTypeForParameterInConstructor
   public Weapon (Node2D animations, Log.Level logLevel)
   {
-    _playerAnimator1 = animations.GetNode <AnimationPlayer> ("Players/Player1");
-    _playerAnimator2 = animations.GetNode <AnimationPlayer> ("Players/Player2");
+    _primaryPlayerAnimator = animations.GetNode <AnimationPlayer> ("Players/Primary");
+    _secondaryPlayerAnimator = animations.GetNode <AnimationPlayer> ("Players/Secondary");
     _backpackSprite = animations.GetNode <Sprite> ("Sprites/backpack");
     _itemInBackpackSprite = animations.GetNode <Sprite> ("Sprites/item-in-backpack");
     InitializeStateMachine (logLevel);
@@ -59,10 +59,10 @@ public class Weapon
 
   private bool ShouldEquip() =>
     WasItemKeyPressedOnce() && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
-    _playerAnimator1.AssignedAnimation != "player_cliff_arresting" &&
-    _playerAnimator1.AssignedAnimation != "player_cliff_hanging" &&
-    _playerAnimator1.AssignedAnimation != "player_climbing_up" &&
-    _playerAnimator1.AssignedAnimation != "player_free_falling";
+    _primaryPlayerAnimator.AssignedAnimation != "player_cliff_arresting" &&
+    _primaryPlayerAnimator.AssignedAnimation != "player_cliff_hanging" &&
+    _primaryPlayerAnimator.AssignedAnimation != "player_climbing_up" &&
+    _primaryPlayerAnimator.AssignedAnimation != "player_free_falling";
 
   // @formatter:on
 
@@ -71,14 +71,14 @@ public class Weapon
 
   private void StartEquipping()
   {
-    switch (_playerAnimator1.AssignedAnimation)
+    switch (_primaryPlayerAnimator.AssignedAnimation)
     {
       case "player_idle_left":
       case "player_walking_left":
       case "player_running_left":
       case "player_free_falling":
       {
-        PlaySyncedAnimation ("player_equipping_left", _playerAnimator2, _playerAnimator1, _delta);
+        PlaySyncedAnimation ("player_equipping_left", _secondaryPlayerAnimator, _primaryPlayerAnimator, _delta);
 
         break;
       }
@@ -86,7 +86,7 @@ public class Weapon
       case "player_cliff_arresting":
       case "player_cliff_hanging":
       {
-        PlaySyncedAnimation ("player_equipping_back", _playerAnimator2, _playerAnimator1, _delta);
+        PlaySyncedAnimation ("player_equipping_back", _secondaryPlayerAnimator, _primaryPlayerAnimator, _delta);
 
         break;
       }
@@ -95,14 +95,14 @@ public class Weapon
 
   private void StartUnequipping()
   {
-    switch (_playerAnimator1.AssignedAnimation)
+    switch (_primaryPlayerAnimator.AssignedAnimation)
     {
       case "player_idle_left":
       case "player_walking_left":
       case "player_running_left":
       case "player_free_falling":
       {
-        PlaySyncedAnimation ("player_unequipping_left", _playerAnimator2, _playerAnimator1, _delta);
+        PlaySyncedAnimation ("player_unequipping_left", _secondaryPlayerAnimator, _primaryPlayerAnimator, _delta);
 
         break;
       }
@@ -110,7 +110,7 @@ public class Weapon
       case "player_cliff_arresting":
       case "player_cliff_hanging":
       {
-        PlaySyncedAnimation ("player_unequipping_back", _playerAnimator2, _playerAnimator1, _delta);
+        PlaySyncedAnimation ("player_unequipping_back", _secondaryPlayerAnimator, _primaryPlayerAnimator, _delta);
 
         break;
       }

@@ -86,7 +86,7 @@ public class Player : KinematicBody2D
   private readonly RandomNumberGenerator _rng = new();
   private Vector2 _velocity;
   private RichTextLabel _label = null!;
-  private AnimationPlayer _animationPlayer = null!;
+  private AnimationPlayer _primaryAnimator = null!;
   private Area2D _animationAreaColliders = null!;
   private TextureProgress _energyMeter = null!;
   private AudioStreamPlayer _audio = null!;
@@ -540,13 +540,13 @@ public class Player : KinematicBody2D
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
     _weapon = new Weapon (GetNode <Node2D> ("Animations"), LogLevel);
-    _camera = GetNode <Camera2D> ("Camera2D");
+    _camera = GetNode <Camera2D> ("Camera");
     _groundDetectors = GetTree().GetNodesInGroup ("Ground Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
     _dropdown = new Dropdown (this, _groundDetectors);
     _wallDetectors = GetTree().GetNodesInGroup ("Wall Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
     _cliffs = GetNode <Cliffs> ("../Cliffs");
     _waterfall = _cliffs.GetNode <Area2D> ("Waterfall");
-    _audio = GetNode <AudioStreamPlayer> ("SoundEffectsPlayer");
+    _audio = GetNode <AudioStreamPlayer> ("Audio Players/Sound Effects");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
     _label.Visible = false;
@@ -555,9 +555,9 @@ public class Player : KinematicBody2D
     _energyMeter = GetNode <TextureProgress> ("../UI/Control/Energy Meter");
     _energyMeter.Value = MaxEnergy;
     _energy = MaxEnergy;
-    _energyTimer = GetNode <Timer> ("Timers/EnergyTimer");
-    _climbingPrepTimer = GetNode <Timer> ("Timers/ClimbingPrepTimer");
-    _cameraSmoothingTimer = GetNode <Timer> ("Camera2D/SmoothingTimer");
+    _energyTimer = GetNode <Timer> ("Timers/Energy");
+    _climbingPrepTimer = GetNode <Timer> ("Timers/ClimbingPrep");
+    _cameraSmoothingTimer = GetNode <Timer> ("Camera/SmoothingTimer");
     _energyMeterReplenishRatePerUnit = (float)EnergyMeterReplenishTimeSeconds / EnergyMeterUnits;
     _energyMeterDepletionRatePerUnit = (float)EnergyMeterDepletionTimeSeconds / EnergyMeterUnits;
     _shirtSprite = GetNode <Sprite> ("Animations/Sprites/shirt");
@@ -606,8 +606,8 @@ public class Player : KinematicBody2D
       _itemInBackpackSprite,
     };
 
-    _animationPlayer = GetNode <AnimationPlayer> ("Animations/Players/Player1");
-    _animationPlayer.Play (IdleLeftAnimation);
+    _primaryAnimator = GetNode <AnimationPlayer> ("Animations/Players/Primary");
+    _primaryAnimator.Play (IdleLeftAnimation);
     InitializeStateMachine();
     LoopAudio (_audio.Stream, CliffArrestingSoundLoopBeginSeconds, CliffArrestingSoundLoopEndSeconds);
   }
@@ -801,7 +801,7 @@ public class Player : KinematicBody2D
 
   private void ReadSign()
   {
-    var cell = GetTileCellAtCenterOf (_animationAreaColliders, _animationPlayer.CurrentAnimation, _signsTileMap);
+    var cell = GetTileCellAtCenterOf (_animationAreaColliders, _primaryAnimator.CurrentAnimation, _signsTileMap);
     var name = GetReadableSignName (cell);
 
     if (!HasReadableSign (name))
@@ -858,12 +858,12 @@ public class Player : KinematicBody2D
   }
 
   private Sprite GetClickedClothingItemForRemoving() =>
-    _clothes.OrderByDescending (clothes => SpriteZIndices[_animationPlayer.CurrentAnimation][clothes.Name])
+    _clothes.OrderByDescending (clothes => SpriteZIndices[_primaryAnimator.CurrentAnimation][clothes.Name])
       .Where (clothing => MouseInSprite (clothing, GetMousePositionInSpriteSpace (clothing)))
       .OrderByDescending (clothing => clothing.Visible).FirstOrDefault();
 
   private Sprite GetClickedClothingItemForAdding() =>
-    _clothes.OrderBy (clothes => SpriteZIndices[_animationPlayer.CurrentAnimation][clothes.Name])
+    _clothes.OrderBy (clothes => SpriteZIndices[_primaryAnimator.CurrentAnimation][clothes.Name])
       .Where (clothing => MouseInSprite (clothing, GetMousePositionInSpriteSpace (clothing)))
       .OrderByDescending (clothing => !clothing.Visible).FirstOrDefault();
 
@@ -959,7 +959,7 @@ public class Player : KinematicBody2D
     _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
     StopCameraSmoothing();
     GlobalPosition = new Vector2 (952, -4032);
-    _animationPlayer.Play (IdleLeftAnimation);
+    _primaryAnimator.Play (IdleLeftAnimation);
     _justRespawned = true;
     _log.Info ("Player respawned.");
   }
@@ -979,7 +979,7 @@ public class Player : KinematicBody2D
   // @formatter:off
   private bool HasReadableSign() => HasReadableSign (GetReadableSignName());
   private bool HasReadableSign (string name) => _signsTileMap?.HasNode ("../" + name) ?? false;
-  private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_animationAreaColliders, _animationPlayer.CurrentAnimation, _signsTileMap));
+  private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_animationAreaColliders, _primaryAnimator.CurrentAnimation, _signsTileMap));
   private static string GetReadableSignName (Vector2 tileSignCell) => "Readable Sign (" + tileSignCell.x + ", " + tileSignCell.y + ")";
   private Sprite GetReadableSign (string name) => _signsTileMap?.GetNode <Sprite> ("../" + name);
   private bool IsSpeedClimbing() => (_stateMachine.Is (State.ClimbingUp) || _stateMachine.Is (State.ClimbingDown)) && IsEnergyKeyPressed();
@@ -1075,8 +1075,8 @@ public class Player : KinematicBody2D
     // (Holding down jump continuously allows gravity to take over.)
     // @formatter:off
     if (_stateMachine.Is (State.Jumping) && WasJumpKeyReleased() && IsMovingUp()) _velocity.y = 0.0f;
-    if (_stateMachine.Is (State.ClimbingUp)) _velocity.y = AreAlmostEqual (_animationPlayer.CurrentAnimationPosition, 4 * 0.2f, 0.1f) || AreAlmostEqual (_animationPlayer.CurrentAnimationPosition, 9 * 0.2f, 0.1f) ? -VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
-    if (_stateMachine.Is (State.ClimbingDown)) _velocity.y = AreAlmostEqual (_animationPlayer.CurrentAnimationPosition, 6 * 0.2f, 0.1f) || AreAlmostEqual (_animationPlayer.CurrentAnimationPosition, 1 * 0.2f, 0.1f) ? VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
+    if (_stateMachine.Is (State.ClimbingUp)) _velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 4 * 0.2f, 0.1f) || AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 9 * 0.2f, 0.1f) ? -VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
+    if (_stateMachine.Is (State.ClimbingDown)) _velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 6 * 0.2f, 0.1f) || AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 1 * 0.2f, 0.1f) ? VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
     if (_stateMachine.Is (State.Traversing)) _velocity.y = 0.0f;
     if (_stateMachine.Is (State.CliffHanging)) _velocity.y = 0.0f;
     // @formatter:on
@@ -1111,9 +1111,9 @@ public class Player : KinematicBody2D
 
   private async void Animations()
   {
-    if (_currentAnimation == _animationPlayer.CurrentAnimation) return;
+    if (_currentAnimation == _primaryAnimator.CurrentAnimation) return;
 
-    _currentAnimation = _animationPlayer.CurrentAnimation;
+    _currentAnimation = _primaryAnimator.CurrentAnimation;
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
     _groundAreas.ForEach (x => x.SetBlockSignals (true));
@@ -1125,7 +1125,7 @@ public class Player : KinematicBody2D
     {
       if (node is not CollisionShape2D collider) continue;
 
-      collider.Disabled = collider.Name != _animationPlayer.CurrentAnimation;
+      collider.Disabled = collider.Name != _primaryAnimator.CurrentAnimation;
     }
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
@@ -1181,7 +1181,7 @@ public class Player : KinematicBody2D
   private string DumpState() =>
     "\nState: " + _stateMachine.GetState() +
     "\nWeapon state: " + _weapon.GetState() +
-    "\nAnimation: " + _animationPlayer.CurrentAnimation +
+    "\nAnimation: " + _primaryAnimator.CurrentAnimation +
     "\nSeason: " + _cliffs.CurrentSeason +
     "\nIdle: " + _stateMachine.Is (State.Idle) +
     "\nWalking: " + _stateMachine.Is (State.Walking) +
@@ -1244,13 +1244,13 @@ public class Player : KinematicBody2D
     _stateMachine = new StateMachine <State> (TransitionTable, InitialState) { LogLevel = LogLevel };
     _stateMachine.OnTransitionFrom (State.ReadingSign, StopReadingSign);
     _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
-    _stateMachine.OnTransitionTo (State.Traversing, () => _animationPlayer.Play (TraversingAnimation));
-    _stateMachine.OnTransitionTo (State.FreeFalling, () => _animationPlayer.Play (FreeFallingAnimation));
+    _stateMachine.OnTransitionTo (State.Traversing, () => _primaryAnimator.Play (TraversingAnimation));
+    _stateMachine.OnTransitionTo (State.FreeFalling, () => _primaryAnimator.Play (FreeFallingAnimation));
     _stateMachine.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
-    _stateMachine.OnTransition (State.ReadingSign, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
-    _stateMachine.OnTransition (State.CliffArresting, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
-    _stateMachine.OnTransition (State.ClimbingDown, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
-    _stateMachine.OnTransition (State.FreeFalling, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
+    _stateMachine.OnTransition (State.ReadingSign, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
+    _stateMachine.OnTransition (State.CliffArresting, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
+    _stateMachine.OnTransition (State.ClimbingDown, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
+    _stateMachine.OnTransition (State.FreeFalling, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
     // @formatter:on
 
     _stateMachine.OnTransitionFrom (State.Idle, () =>
@@ -1261,13 +1261,13 @@ public class Player : KinematicBody2D
 
     _stateMachine.OnTransition (State.Running, State.Idle, () =>
     {
-      _animationPlayer.Play (IdleLeftAnimation);
+      _primaryAnimator.Play (IdleLeftAnimation);
       _cameraSmoothingTimer.Start();
     });
 
     _stateMachine.OnTransition (State.Walking, State.Idle, () =>
     {
-      _animationPlayer.Play (IdleLeftAnimation);
+      _primaryAnimator.Play (IdleLeftAnimation);
       _cameraSmoothingTimer.Start();
     });
 
@@ -1284,20 +1284,20 @@ public class Player : KinematicBody2D
 
     _stateMachine.OnTransitionTo (State.CliffHanging, () =>
     {
-      _animationPlayer.Play (CliffHangingAnimation);
+      _primaryAnimator.Play (CliffHangingAnimation);
       _weapon.Unequip();
       if (!IsInGroup ("Perchable Parent")) AddToGroup ("Perchable Parent");
     });
 
     _stateMachine.OnTransitionTo (State.Walking, () =>
     {
-      _animationPlayer.Play (WalkLeftAnimation);
+      _primaryAnimator.Play (WalkLeftAnimation);
       _wasRunning = false;
     });
 
     _stateMachine.OnTransitionTo (State.Jumping, () =>
     {
-      _animationPlayer.Play (IdleLeftAnimation);
+      _primaryAnimator.Play (IdleLeftAnimation);
       _velocity.y -= JumpPower;
     });
 
@@ -1312,7 +1312,7 @@ public class Player : KinematicBody2D
 
     _stateMachine.OnTransitionTo (State.CliffArresting, () =>
     {
-      _animationPlayer.Play (CliffArrestingAnimation);
+      _primaryAnimator.Play (CliffArrestingAnimation);
       _weapon.Unequip();
 
       if (_audio.Playing) return;
@@ -1324,20 +1324,20 @@ public class Player : KinematicBody2D
 
     _stateMachine.OnTransition (State.ClimbingPrep, State.Idle, () =>
     {
-      _animationPlayer.Play (IdleLeftAnimation);
+      _primaryAnimator.Play (IdleLeftAnimation);
       FlipHorizontally (_wasFlippedHorizontally);
     });
 
     _stateMachine.OnTransitionTo (State.ClimbingPrep, () =>
     {
-      _animationPlayer.Play (ClimbingPrepAnimation);
+      _primaryAnimator.Play (ClimbingPrepAnimation);
       _weapon.Unequip();
       _wasFlippedHorizontally = _isFlippedHorizontally;
       FlipHorizontally (false);
       _climbingPrepTimer.Start();
     });
 
-    // TODO Add state machine method OnTransitionExceptFrom (State.ReadingSign, State.Idle, () => _animationPlayer.Play (IdleLeftAnimation));
+    // TODO Add state machine method OnTransitionExceptFrom (State.ReadingSign, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
     // TODO This eliminates transition repetition when an exception is needed (all transitions to a state, except from a specific state).
     // TODO Catch-all OnTransitionFrom (State.Running) replenishes the energy meter before the running => jumping transition has a chance to start depleting it.
     // TODO Running and jumping uses energy energy meter while jumping.
@@ -1350,7 +1350,7 @@ public class Player : KinematicBody2D
 
     _stateMachine.OnTransitionTo (State.Running, () =>
     {
-      _animationPlayer.Play (RunLeftAnimation);
+      _primaryAnimator.Play (RunLeftAnimation);
       _energyTimer.Start (_energyMeterDepletionRatePerUnit);
       _wasRunning = true;
     });
@@ -1369,9 +1369,9 @@ public class Player : KinematicBody2D
     {
       _weapon.Unequip();
       var startFrame = new[] { 1, 6 }[_rng.RandiRange (0, 1)];
-      var startTime = startFrame * _animationPlayer.GetAnimation (ClimbingUpAnimation).Step;
-      _animationPlayer.Play (ClimbingUpAnimation);
-      _animationPlayer.Seek (startTime);
+      var startTime = startFrame * _primaryAnimator.GetAnimation (ClimbingUpAnimation).Step;
+      _primaryAnimator.Play (ClimbingUpAnimation);
+      _primaryAnimator.Seek (startTime);
       FlipHorizontally (false);
     });
 
@@ -1379,9 +1379,9 @@ public class Player : KinematicBody2D
     {
       _weapon.Unequip();
       var startFrame = new[] { 3, 8 }[_rng.RandiRange (0, 1)];
-      var startTime = startFrame * _animationPlayer.GetAnimation (ClimbingUpAnimation).Step;
-      _animationPlayer.PlayBackwards (ClimbingUpAnimation);
-      _animationPlayer.Seek (startTime);
+      var startTime = startFrame * _primaryAnimator.GetAnimation (ClimbingUpAnimation).Step;
+      _primaryAnimator.PlayBackwards (ClimbingUpAnimation);
+      _primaryAnimator.Seek (startTime);
       FlipHorizontally (false);
     });
 
