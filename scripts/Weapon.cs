@@ -31,12 +31,13 @@ public class Weapon
 
   // @formatter:on
 
-  public Weapon (Node sprites, Log.Level logLevel)
+  // ReSharper disable once SuggestBaseTypeForParameterInConstructor
+  public Weapon (Node2D animations, Log.Level logLevel)
   {
-    _playerAnimator1 = sprites.GetNode <AnimationPlayer> ("AnimationPlayer1");
-    _playerAnimator2 = sprites.GetNode <AnimationPlayer> ("AnimationPlayer2");
-    _backpackSprite = sprites.GetNode <Sprite> ("backpack");
-    _itemInBackpackSprite = sprites.GetNode <Sprite> ("item-in-backpack");
+    _playerAnimator1 = animations.GetNode <AnimationPlayer> ("Players/Player1");
+    _playerAnimator2 = animations.GetNode <AnimationPlayer> ("Players/Player2");
+    _backpackSprite = animations.GetNode <Sprite> ("Sprites/backpack");
+    _itemInBackpackSprite = animations.GetNode <Sprite> ("Sprites/item-in-backpack");
     InitializeStateMachine (logLevel);
   }
 
