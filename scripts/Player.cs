@@ -87,7 +87,7 @@ public class Player : KinematicBody2D
   private Vector2 _velocity;
   private RichTextLabel _label = null!;
   private AnimationPlayer _animationPlayer = null!;
-  private Area2D _area = null!;
+  private Area2D _animationAreaColliders = null!;
   private TextureProgress _energyMeter = null!;
   private AudioStreamPlayer _audio = null!;
   private Timer _energyTimer = null!;
@@ -539,53 +539,53 @@ public class Player : KinematicBody2D
     // ReSharper disable once ExplicitCallerInfoArgument
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
-    _weapon = new Weapon (GetNode <Node2D> ("Sprites"), LogLevel);
+    _weapon = new Weapon (GetNode <Node2D> ("Animations"), LogLevel);
     _camera = GetNode <Camera2D> ("Camera2D");
     _groundDetectors = GetTree().GetNodesInGroup ("Ground Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
     _dropdown = new Dropdown (this, _groundDetectors);
     _wallDetectors = GetTree().GetNodesInGroup ("Wall Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
     _cliffs = GetNode <Cliffs> ("../Cliffs");
     _waterfall = _cliffs.GetNode <Area2D> ("Waterfall");
-    _audio = GetNode <AudioStreamPlayer> ("PlayerSoundEffectsPlayer");
+    _audio = GetNode <AudioStreamPlayer> ("SoundEffectsPlayer");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
     _label.Visible = false;
-    _area = GetNode <Area2D> ("Sprites/Area2D");
+    _animationAreaColliders = GetNode <Area2D> ("Animations/Area Colliders");
     _groundAreas = GetTree().GetNodesInGroup ("Ground").Cast <Node2D>().Where (x => x is Area2D).Cast <Area2D>().ToList();
     _energyMeter = GetNode <TextureProgress> ("../UI/Control/Energy Meter");
     _energyMeter.Value = MaxEnergy;
     _energy = MaxEnergy;
-    _energyTimer = GetNode <Timer> ("EnergyTimer");
-    _climbingPrepTimer = GetNode <Timer> ("ClimbingReadyTimer");
+    _energyTimer = GetNode <Timer> ("Timers/EnergyTimer");
+    _climbingPrepTimer = GetNode <Timer> ("Timers/ClimbingPrepTimer");
     _cameraSmoothingTimer = GetNode <Timer> ("Camera2D/SmoothingTimer");
     _energyMeterReplenishRatePerUnit = (float)EnergyMeterReplenishTimeSeconds / EnergyMeterUnits;
     _energyMeterDepletionRatePerUnit = (float)EnergyMeterDepletionTimeSeconds / EnergyMeterUnits;
-    _shirtSprite = GetNode <Sprite> ("Sprites/shirt");
-    _scarfSprite = GetNode <Sprite> ("Sprites/scarf");
-    _pantsSprite = GetNode <Sprite> ("Sprites/pants");
-    _itemInHandSprite = GetNode <Sprite> ("Sprites/item-in-hand");
-    _itemInBackpackSprite = GetNode <Sprite> ("Sprites/item-in-backpack");
-    _headSprite = GetNode <Sprite> ("Sprites/head");
-    _headOutlineRearSprite = GetNode <Sprite> ("Sprites/head-outline-rear");
-    _hatSprite = GetNode <Sprite> ("Sprites/hat");
-    _hatOutlineSprite = GetNode <Sprite> ("Sprites/hat-outline");
-    _handRightSprite = GetNode <Sprite> ("Sprites/hand-right");
-    _handLeftSprite = GetNode <Sprite> ("Sprites/hand-left");
-    _hairSprite = GetNode <Sprite> ("Sprites/hair");
-    _gloveLeftSprite = GetNode <Sprite> ("Sprites/glove-left");
-    _gloveRightSprite = GetNode <Sprite> ("Sprites/glove-right");
-    _footRightSprite = GetNode <Sprite> ("Sprites/foot-right");
-    _footLeftSprite = GetNode <Sprite> ("Sprites/foot-left");
-    _bootRightSprite = GetNode <Sprite> ("Sprites/boot-right");
-    _bootLeftSprite = GetNode <Sprite> ("Sprites/boot-left");
-    _bodySprite = GetNode <Sprite> ("Sprites/body");
-    _beltSprite = GetNode <Sprite> ("Sprites/belt");
-    _shirtSleeveLeftSprite = GetNode <Sprite> ("Sprites/shirt-sleeve-left");
-    _shirtSleeveRightSprite = GetNode <Sprite> ("Sprites/shirt-sleeve-right");
-    _armLeftSprite = GetNode <Sprite> ("Sprites/arm-left");
-    _armRightSprite = GetNode <Sprite> ("Sprites/arm-right");
-    _backpackSprite = GetNode <Sprite> ("Sprites/backpack");
-    _backpackStrapsSprite = GetNode <Sprite> ("Sprites/backpack-straps");
+    _shirtSprite = GetNode <Sprite> ("Animations/Sprites/shirt");
+    _scarfSprite = GetNode <Sprite> ("Animations/Sprites/scarf");
+    _pantsSprite = GetNode <Sprite> ("Animations/Sprites/pants");
+    _itemInHandSprite = GetNode <Sprite> ("Animations/Sprites/item-in-hand");
+    _itemInBackpackSprite = GetNode <Sprite> ("Animations/Sprites/item-in-backpack");
+    _headSprite = GetNode <Sprite> ("Animations/Sprites/head");
+    _headOutlineRearSprite = GetNode <Sprite> ("Animations/Sprites/head-outline-rear");
+    _hatSprite = GetNode <Sprite> ("Animations/Sprites/hat");
+    _hatOutlineSprite = GetNode <Sprite> ("Animations/Sprites/hat-outline");
+    _handRightSprite = GetNode <Sprite> ("Animations/Sprites/hand-right");
+    _handLeftSprite = GetNode <Sprite> ("Animations/Sprites/hand-left");
+    _hairSprite = GetNode <Sprite> ("Animations/Sprites/hair");
+    _gloveLeftSprite = GetNode <Sprite> ("Animations/Sprites/glove-left");
+    _gloveRightSprite = GetNode <Sprite> ("Animations/Sprites/glove-right");
+    _footRightSprite = GetNode <Sprite> ("Animations/Sprites/foot-right");
+    _footLeftSprite = GetNode <Sprite> ("Animations/Sprites/foot-left");
+    _bootRightSprite = GetNode <Sprite> ("Animations/Sprites/boot-right");
+    _bootLeftSprite = GetNode <Sprite> ("Animations/Sprites/boot-left");
+    _bodySprite = GetNode <Sprite> ("Animations/Sprites/body");
+    _beltSprite = GetNode <Sprite> ("Animations/Sprites/belt");
+    _shirtSleeveLeftSprite = GetNode <Sprite> ("Animations/Sprites/shirt-sleeve-left");
+    _shirtSleeveRightSprite = GetNode <Sprite> ("Animations/Sprites/shirt-sleeve-right");
+    _armLeftSprite = GetNode <Sprite> ("Animations/Sprites/arm-left");
+    _armRightSprite = GetNode <Sprite> ("Animations/Sprites/arm-right");
+    _backpackSprite = GetNode <Sprite> ("Animations/Sprites/backpack");
+    _backpackStrapsSprite = GetNode <Sprite> ("Animations/Sprites/backpack-straps");
     // @formatter:on
 
     _clothes = new List <Sprite>
@@ -606,7 +606,7 @@ public class Player : KinematicBody2D
       _itemInBackpackSprite,
     };
 
-    _animationPlayer = GetNode <AnimationPlayer> ("Sprites/AnimationPlayer1");
+    _animationPlayer = GetNode <AnimationPlayer> ("Animations/Players/Player1");
     _animationPlayer.Play (IdleLeftAnimation);
     InitializeStateMachine();
     LoopAudio (_audio.Stream, CliffArrestingSoundLoopBeginSeconds, CliffArrestingSoundLoopEndSeconds);
@@ -745,7 +745,7 @@ public class Player : KinematicBody2D
   // ReSharper disable once UnusedMember.Global
   public void _OnAnimationStarted (string animationName)
   {
-    foreach (var (name, zIndex) in SpriteZIndices[animationName]) GetNode <Sprite> ("Sprites/" + name).ZIndex = zIndex;
+    foreach (var (name, zIndex) in SpriteZIndices[animationName]) GetNode <Sprite> ("Animations/Sprites/" + name).ZIndex = zIndex;
 
     switch (animationName)
     {
@@ -801,7 +801,7 @@ public class Player : KinematicBody2D
 
   private void ReadSign()
   {
-    var cell = GetTileCellAtCenterOf (_area, _animationPlayer.CurrentAnimation, _signsTileMap);
+    var cell = GetTileCellAtCenterOf (_animationAreaColliders, _animationPlayer.CurrentAnimation, _signsTileMap);
     var name = GetReadableSignName (cell);
 
     if (!HasReadableSign (name))
@@ -979,7 +979,7 @@ public class Player : KinematicBody2D
   // @formatter:off
   private bool HasReadableSign() => HasReadableSign (GetReadableSignName());
   private bool HasReadableSign (string name) => _signsTileMap?.HasNode ("../" + name) ?? false;
-  private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_area, _animationPlayer.CurrentAnimation, _signsTileMap));
+  private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_animationAreaColliders, _animationPlayer.CurrentAnimation, _signsTileMap));
   private static string GetReadableSignName (Vector2 tileSignCell) => "Readable Sign (" + tileSignCell.x + ", " + tileSignCell.y + ")";
   private Sprite GetReadableSign (string name) => _signsTileMap?.GetNode <Sprite> ("../" + name);
   private bool IsSpeedClimbing() => (_stateMachine.Is (State.ClimbingUp) || _stateMachine.Is (State.ClimbingDown)) && IsEnergyKeyPressed();
@@ -1117,11 +1117,11 @@ public class Player : KinematicBody2D
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
     _groundAreas.ForEach (x => x.SetBlockSignals (true));
-    _area.SetBlockSignals (true);
+    _animationAreaColliders.SetBlockSignals (true);
     _waterfall.SetBlockSignals (true);
     // End workaround
 
-    foreach (var node in _area.GetChildren())
+    foreach (var node in _animationAreaColliders.GetChildren())
     {
       if (node is not CollisionShape2D collider) continue;
 
@@ -1132,7 +1132,7 @@ public class Player : KinematicBody2D
     await ToSignal (GetTree(), "idle_frame");
     _groundAreas.ForEach (x => x.SetBlockSignals (false));
     await ToSignal (GetTree(), "idle_frame");
-    _area.SetBlockSignals (false);
+    _animationAreaColliders.SetBlockSignals (false);
     _waterfall.SetBlockSignals (false);
     // End workaround
   }
