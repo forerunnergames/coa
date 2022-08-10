@@ -20,7 +20,7 @@ public class Cliffs : Area2D
   }
 
   private Player _player;
-  private AnimationPlayer _playerAnimationPlayer;
+  private AnimationPlayer _playerPrimaryAnimator;
   private Area2D _playerAnimationAreaColliders;
   private Rect2 _playerRect;
   private Vector2 _playerPosition;
@@ -66,13 +66,13 @@ public class Cliffs : Area2D
     _music.Add (Season.Summer, ResourceLoader.Load <AudioStream> ("res://assets/music/music5.wav"));
     _musicVolumes.Add (Season.Winter, -15);
     _musicVolumes.Add (Season.Summer, -25);
-    _ambiencePlayer = GetNode <AudioStreamPlayer> ("../Audio Players/AmbiencePlayer");
-    _musicPlayer = GetNode <AudioStreamPlayer> ("../Audio Players/MusicPlayer");
+    _ambiencePlayer = GetNode <AudioStreamPlayer> ("../Audio Players/Ambience");
+    _musicPlayer = GetNode <AudioStreamPlayer> ("../Audio Players/Music");
     _iceTileMap = GetNode <TileMap> ("Ice");
     _colliders.AddRange (GetTree().GetNodesInGroup ("Extents").Cast <CollisionShape2D>());
     _player = GetNode <Player> ("../Player");
-    _playerAnimationPlayer = _player.GetNode <AnimationPlayer> ("Animations/Players/Player1");
-    _playerAnimation = _playerAnimationPlayer.CurrentAnimation;
+    _playerPrimaryAnimator = _player.GetNode <AnimationPlayer> ("Animations/Players/Primary");
+    _playerAnimation = _playerPrimaryAnimator.CurrentAnimation;
     _playerAnimationAreaColliders = _player.GetNode <Area2D> ("Animations/Area Colliders");
     _playerAnimationCollider = _playerAnimationAreaColliders.GetNode <CollisionShape2D> (_playerAnimation);
     InitializeSeasons();
@@ -249,18 +249,20 @@ public class Cliffs : Area2D
 
   private void UpdatePlayer()
   {
-    if (_playerSeason == CurrentSeason && _playerAnimationPlayer.CurrentAnimation == _playerAnimation &&
+    if (_playerSeason == CurrentSeason && _playerPrimaryAnimator.CurrentAnimation == _playerAnimation &&
         AreAlmostEqual (_playerAnimationCollider.GlobalPosition, _playerPosition, 0.001f)) return;
 
     _playerSeason = CurrentSeason;
-    _playerAnimation = _playerAnimationPlayer.CurrentAnimation;
+    _playerAnimation = _playerPrimaryAnimator.CurrentAnimation;
     _playerAnimationCollider = _playerAnimationAreaColliders.GetNode <CollisionShape2D> (_playerAnimation);
     _playerPosition = _playerAnimationCollider.GlobalPosition;
     _playerRect = GetAreaColliderRect (_playerAnimationAreaColliders, _playerAnimationCollider);
     _cliffRects.Clear();
     _cliffRects.AddRange (_colliders.Select (x => GetAreaColliderRect (this, x)));
     _player.IsInCliffs = IsEnclosedBy (_playerRect, _cliffRects);
-    _player.IsTouchingCliffIce = _iceTileMap.Visible && IsIntersectingAnyTile (_playerAnimationAreaColliders, _playerAnimationCollider, _iceTileMap);
+
+    _player.IsTouchingCliffIce = _iceTileMap.Visible &&
+                                 IsIntersectingAnyTile (_playerAnimationAreaColliders, _playerAnimationCollider, _iceTileMap);
   }
 
   private void ToggleMusic() => _musicPlayer.Playing = !_musicPlayer.Playing;
