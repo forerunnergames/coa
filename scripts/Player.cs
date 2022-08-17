@@ -114,7 +114,6 @@ public class Player : KinematicBody2D
   private Sprite _readableSign;
   private TileMap _signsTileMap;
   private Cliffs _cliffs;
-  private Area2D _waterfall;
   private Weapon _weapon;
   private IDropdownable _dropdown;
   private volatile string _currentAnimation;
@@ -150,6 +149,7 @@ public class Player : KinematicBody2D
   private List <Area2D> _groundAreas;
   private List <RayCast2D> _groundDetectors;
   private List <RayCast2D> _wallDetectors;
+  private List <Area2D> _waterfalls;
   private Log _log;
 
   // @formatter:off
@@ -545,7 +545,7 @@ public class Player : KinematicBody2D
     _dropdown = new Dropdown (this, _groundDetectors);
     _wallDetectors = GetTree().GetNodesInGroup ("Wall Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
     _cliffs = GetNode <Cliffs> ("../Cliffs");
-    _waterfall = _cliffs.GetNode <Area2D> ("Waterfall");
+    _waterfalls = new List <Area2D> {GetNode <Area2D>("../Cliffs/Waterfall - Upper"), GetNode <Area2D>("../Cliffs/Waterfall - Lower")};
     _audio = GetNode <AudioStreamPlayer> ("Audio Players/Sound Effects");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
@@ -813,16 +813,7 @@ public class Player : KinematicBody2D
     }
 
     var readableSign = GetReadableSign (name);
-    _waterfall.GetNode <AudioStreamPlayer2D> ("Water 9/AudioStreamPlayer2D").Attenuation = 4.0f;
-    _waterfall.GetNode <AudioStreamPlayer2D> ("Water 10/AudioStreamPlayer2D").Attenuation = 4.0f;
-
-    for (var i = 1; i <= 3; ++i)
-    {
-      var mist = _waterfall.GetNode <AnimatedSprite> ("Mist " + i);
-      mist.ZIndex = 4;
-      mist.Modulate = new Color (Modulate.r, Modulate.g, Modulate.b, Modulate.a * 0.2f);
-    }
-
+    ChangeWaterfallSettings (4.0f, 2, Modulate.a * 0.2f);
     _signsTileMap.Visible = false;
     _signsTileMap.GetNode <TileMap> ("Winter Layer").Visible = false;
     readableSign.Visible = true;
@@ -846,14 +837,22 @@ public class Player : KinematicBody2D
     _camera.Position = new Vector2 (0, -355);
     _camera.ForceUpdateScroll();
     _camera.Position = new Vector2 (0, 0);
-    _waterfall.GetNode <AudioStreamPlayer2D> ("Water 9/AudioStreamPlayer2D").Attenuation = 8.28f;
-    _waterfall.GetNode <AudioStreamPlayer2D> ("Water 10/AudioStreamPlayer2D").Attenuation = 8.28f;
+    ChangeWaterfallSettings (8.28f, 33);
+  }
 
-    for (var i = 1; i <= 3; ++i)
+  private void ChangeWaterfallSettings (float soundAttenuation, int mistZIndex, float mistAlphaModulation = 1.0f)
+  {
+    foreach (var waterfall in _waterfalls)
     {
-      var mist = _waterfall.GetNode <AnimatedSprite> ("Mist " + i);
-      mist.ZIndex = 33;
-      mist.Modulate = new Color (Modulate.r, Modulate.g, Modulate.b);
+      waterfall.GetNode <AudioStreamPlayer2D> ("Water 9/AudioStreamPlayer2D").Attenuation = soundAttenuation;
+      waterfall.GetNode <AudioStreamPlayer2D> ("Water 10/AudioStreamPlayer2D").Attenuation = soundAttenuation;
+
+      for (var i = 1; i <= 3; ++i)
+      {
+        var mist = waterfall.GetNode <AnimatedSprite> ("Mist " + i);
+        mist.ZIndex = mistZIndex;
+        mist.Modulate = new Color (Modulate.r, Modulate.g, Modulate.b, mistAlphaModulation);
+      }
     }
   }
 
@@ -1116,9 +1115,11 @@ public class Player : KinematicBody2D
     _currentAnimation = _primaryAnimator.CurrentAnimation;
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
+    // @formatter:off
     _groundAreas.ForEach (x => x.SetBlockSignals (true));
     _animationAreaColliders.SetBlockSignals (true);
-    _waterfall.SetBlockSignals (true);
+    _waterfalls.ForEach (x => x.SetBlockSignals (true));
+    // @formatter:on
     // End workaround
 
     foreach (var node in _animationAreaColliders.GetChildren())
@@ -1129,11 +1130,13 @@ public class Player : KinematicBody2D
     }
 
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
+    // @formatter:off
     await ToSignal (GetTree(), "idle_frame");
     _groundAreas.ForEach (x => x.SetBlockSignals (false));
     await ToSignal (GetTree(), "idle_frame");
     _animationAreaColliders.SetBlockSignals (false);
-    _waterfall.SetBlockSignals (false);
+    _waterfalls.ForEach (x => x.SetBlockSignals (false));
+    // @formatter:on
     // End workaround
   }
 
@@ -1428,7 +1431,7 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsDepletingEnergy() );
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && IsDepletingEnergy());
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
-    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && (IsInCliffs || _isInGround));
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && (IsInCliffs || _isInGround) && !IsTouchingCliffIce && !IsInFrozenWaterfall);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, () => IsDownArrowPressed() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
