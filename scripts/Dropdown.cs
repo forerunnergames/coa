@@ -9,6 +9,8 @@ public class Dropdown : AbstractDropdownable
   private readonly GroundColliderComparer _groundColliderComparer = new();
   private readonly CollisionObject2D _droppingNode;
   private readonly List <RayCast2D> _groundDetectors;
+  private readonly List <Task> _tasks = new();
+  private readonly List <TileMap> _tileMapRayCastExceptions = new();
 
   public Dropdown (CollisionObject2D droppingNode, List <RayCast2D> groundDetectors)
   {
@@ -19,24 +21,43 @@ public class Dropdown : AbstractDropdownable
   public override async Task Drop()
   {
     _IsDropping = false;
-    List <Task> tasks = new();
+    _tasks.Clear();
+    _tileMapRayCastExceptions.Clear();
+    var touchingGroundColliders = GetTouchingGroundColliders();
 
-    foreach (var (groundCollider, collisionPoint) in GetTouchingGroundColliders())
+    while (touchingGroundColliders.Count > 0)
     {
-      if (!groundCollider.IsInGroup ("Dropdownable")) continue;
+      foreach (var (groundCollider, collisionPoint) in touchingGroundColliders)
+      {
+        // Workaround for https://github.com/godotengine/godot/issues/17090 "Collision exceptions don't work with TileMap node"
+        if (groundCollider is TileMap tileMap) _tileMapRayCastExceptions.Add (tileMap);
 
-      var dropdownable = DropdownableFactory.Create (_droppingNode, groundCollider, collisionPoint);
-      tasks.Add (dropdownable.Drop());
-      if (dropdownable.IsDropping()) _IsDropping = true;
+        _groundDetectors.ForEach (x =>
+        {
+          x.AddException (groundCollider);
+          x.ForceRaycastUpdate();
+        });
+
+        if (!groundCollider.IsInGroup ("Dropdownable")) continue;
+
+        var dropdownable = DropdownableFactory.Create (_droppingNode, groundCollider, collisionPoint);
+        _tasks.Add (dropdownable.Drop());
+        if (dropdownable.IsDropping()) _IsDropping = true;
+      }
+
+      touchingGroundColliders = GetTouchingGroundColliders (_tileMapRayCastExceptions);
     }
 
-    await Task.WhenAll (tasks);
+    _groundDetectors.ForEach (x => x.ClearExceptions());
+    await Task.WhenAll (_tasks);
     _IsDropping = false;
   }
 
-  private List <Tuple <Node2D, Vector2>> GetTouchingGroundColliders() =>
-    _groundDetectors.Where (x => x.GetCollider() is StaticBody2D or TileMap)
-      .Select (z => Tuple.Create (z.GetCollider() as Node2D, z.GetCollisionPoint())).Distinct (_groundColliderComparer).ToList();
+  private List <Tuple <Node2D, Vector2>> GetTouchingGroundColliders (ICollection <TileMap> tileMapExceptions = null) =>
+    _groundDetectors
+      .Where (x => x.GetCollider() is StaticBody2D ||
+                   x.GetCollider() is TileMap tileMap && (!tileMapExceptions?.Contains (tileMap) ?? true))
+      .Select (y => Tuple.Create (y.GetCollider() as Node2D, y.GetCollisionPoint())).Distinct (_groundColliderComparer).ToList();
 
   private class GroundColliderComparer : IEqualityComparer <Tuple <Node2D, Vector2>>
   {

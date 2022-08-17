@@ -34,7 +34,7 @@ public class TileMapDropdownable : AbstractDropdownable
     if (tileName.Empty()) return;
 
     _IsDropping = true;
-    Log.Info ($"Dropping down through [{tileName}].");
+    Log.Info ($"Dropping down through tile [{tileName}].");
     _droppingThroughTileMap.SetCollisionMaskBit (0, false);
     _droppingNode.SetCollisionMaskBit (1, false);
     for (var i = 0; i < TileNamesToDropdownFrames[tileName]; ++i) await _droppingNode.ToSignal (_droppingNode.GetTree(), "idle_frame");
