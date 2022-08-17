@@ -9,6 +9,7 @@ public class Cliffs : Area2D
   [Export] public Season InitialSeason = Season.Summer;
   [Export] public Color InitialClearColor = Color.Color8 (11, 118, 255);
   [Export] public Log.Level LogLevel = Log.Level.Info;
+  private List <Area2D> _waterfalls;
 
   // Field must be publicly accessible from Player.cs
   public Season CurrentSeason;
@@ -32,6 +33,8 @@ public class Cliffs : Area2D
   private TileMap _iceTileMap;
   private readonly Dictionary <Season, int> _waterfallZIndex = new();
   private readonly Dictionary <Season, int> _waterfallMistZIndex = new();
+  private readonly Dictionary <Season, int> _waterfallPoolZIndex = new();
+  private readonly Dictionary <Season, int> _waterfallWavesZIndex = new();
   private readonly Dictionary <Season, AudioStream> _music = new();
   private readonly Dictionary <Season, AudioStream> _ambience = new();
   private readonly Dictionary <Season, float> _musicVolumes = new();
@@ -54,10 +57,15 @@ public class Cliffs : Area2D
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _clearColor = InitialClearColor;
     VisualServer.SetDefaultClearColor (_clearColor);
+    _waterfalls = new List <Area2D> { GetNode <Area2D> ("Waterfall - Upper"), GetNode <Area2D> ("Waterfall - Lower") };
     _waterfallZIndex.Add (Season.Summer, 33);
     _waterfallZIndex.Add (Season.Winter, 1);
-    _waterfallMistZIndex.Add (Season.Summer, 33);
+    _waterfallMistZIndex.Add (Season.Summer, 2);
     _waterfallMistZIndex.Add (Season.Winter, 33);
+    _waterfallPoolZIndex.Add (Season.Summer, -32);
+    _waterfallPoolZIndex.Add (Season.Winter, -1);
+    _waterfallWavesZIndex.Add (Season.Summer, -32);
+    _waterfallWavesZIndex.Add (Season.Winter, 1);
     _ambience.Add (Season.Summer, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_summer.wav"));
     _ambience.Add (Season.Winter, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_winter.wav"));
     _ambienceVolumes.Add (Season.Summer, -10);
@@ -136,36 +144,42 @@ public class Cliffs : Area2D
 
   private void UpdateWaterfall (Season season, float delta)
   {
-    var isWinter = season == Season.Winter;
-    var waterfall = GetNode <Area2D> ("Waterfall");
-    waterfall.Visible = true;
-    waterfall.ZIndex = _waterfallZIndex[season];
-
-    for (var i = 1; i <= 3; ++i)
+    foreach (var waterfall in _waterfalls)
     {
-      var mist = waterfall.GetNode <AnimatedSprite> ("Mist " + i);
-      mist.ZIndex = _waterfallMistZIndex[season];
-    }
+      var isWinter = season == Season.Winter;
+      waterfall.Visible = true;
+      waterfall.ZIndex = _waterfallZIndex[season];
+      var waterfallPool = waterfall.GetNode <AnimatedSprite> ("Pool");
+      var waterfallWaves = waterfall.GetNode <AnimatedSprite> ("Waves");
+      waterfallPool.ZIndex = _waterfallPoolZIndex[season];
+      waterfallWaves.ZIndex = _waterfallWavesZIndex[season];
 
-    foreach (Node node1 in waterfall.GetChildren())
-    {
-      if (node1 is StaticBody2D body) UpdateFrozenWaterfallTopGround (body, season, delta);
-
-      if (node1 is not AnimatedSprite sprite) continue;
-
-      sprite.Playing = !isWinter;
-      sprite.Visible = true;
-
-      foreach (Node node2 in sprite.GetChildren())
+      for (var i = 1; i <= 3; ++i)
       {
-        if (node2 is not AudioStreamPlayer2D sound) continue;
-
-        LoopAudio (sound.Stream);
-        sound.Playing = !isWinter;
+        var mist = waterfall.GetNode <AnimatedSprite> ("Mist " + i);
+        mist.ZIndex = _waterfallMistZIndex[season];
       }
-    }
 
-    _player.IsInFrozenWaterfall = _isPlayerInWaterfall && isWinter;
+      foreach (Node node1 in waterfall.GetChildren())
+      {
+        if (node1 is StaticBody2D body) UpdateFrozenWaterfallTopGround (body, season, delta);
+
+        if (node1 is not AnimatedSprite sprite) continue;
+
+        sprite.Playing = !isWinter;
+        sprite.Visible = true;
+
+        foreach (Node node2 in sprite.GetChildren())
+        {
+          if (node2 is not AudioStreamPlayer2D sound) continue;
+
+          LoopAudio (sound.Stream);
+          sound.Playing = !isWinter;
+        }
+      }
+
+      _player.IsInFrozenWaterfall = _isPlayerInWaterfall && isWinter;
+    }
   }
 
   private async void UpdateFrozenWaterfallTopGround (PhysicsBody2D waterSurfaceCollider, Season season, float delta)
