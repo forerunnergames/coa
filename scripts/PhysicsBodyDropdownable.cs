@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Godot;
 
@@ -6,7 +7,9 @@ public class PhysicsBodyDropdownable : AbstractDropdownable
   private readonly PhysicsBody2D _droppedThroughNode;
   private readonly CollisionObject2D _droppingNode;
 
-  public PhysicsBodyDropdownable (PhysicsBody2D droppedThroughNode, CollisionObject2D droppingNode)
+  // ReSharper disable once ExplicitCallerInfoArgument
+  public PhysicsBodyDropdownable (PhysicsBody2D droppedThroughNode, CollisionObject2D droppingNode, [CallerFilePath] string name = "")
+    : base (name)
   {
     _droppedThroughNode = droppedThroughNode;
     _droppingNode = droppingNode;

@@ -9,7 +9,6 @@ public class Cliffs : Area2D
   [Export] public Season InitialSeason = Season.Summer;
   [Export] public Color InitialClearColor = Color.Color8 (11, 118, 255);
   [Export] public Log.Level LogLevel = Log.Level.Info;
-  private List <Area2D> _waterfalls;
 
   // Field must be publicly accessible from Player.cs
   public Season CurrentSeason;
@@ -27,25 +26,22 @@ public class Cliffs : Area2D
   private Vector2 _playerPosition;
   private string _playerAnimation;
   private CollisionShape2D _playerAnimationCollider;
-  private bool _isPlayerInWaterfall;
   private AudioStreamPlayer _ambiencePlayer;
   private AudioStreamPlayer _musicPlayer;
   private TileMap _iceTileMap;
-  private readonly Dictionary <Season, int> _waterfallZIndex = new();
-  private readonly Dictionary <Season, int> _waterfallMistZIndex = new();
-  private readonly Dictionary <Season, int> _waterfallPoolZIndex = new();
-  private readonly Dictionary <Season, int> _waterfallWavesZIndex = new();
   private readonly Dictionary <Season, AudioStream> _music = new();
   private readonly Dictionary <Season, AudioStream> _ambience = new();
   private readonly Dictionary <Season, float> _musicVolumes = new();
   private readonly Dictionary <Season, float> _ambienceVolumes = new();
-  private readonly List <CollisionShape2D> _colliders = new();
   private readonly List <Rect2> _cliffRects = new();
+  private List <CollisionShape2D> _colliders;
+  private List <Waterfall> _waterfalls;
   private float _currentSeasonFadeInTimeSeconds;
   private float _currentSeasonFadeOutTimeSeconds;
   private Color _clearColor;
   private bool _seasonChangeInProgress;
   private Season _newSeason;
+  private Season _oldSeason;
   private Season _playerSeason;
   private bool _fadeIn;
   private bool _skipFade;
@@ -57,15 +53,8 @@ public class Cliffs : Area2D
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _clearColor = InitialClearColor;
     VisualServer.SetDefaultClearColor (_clearColor);
-    _waterfalls = new List <Area2D> { GetNode <Area2D> ("Waterfall - Upper"), GetNode <Area2D> ("Waterfall - Lower") };
-    _waterfallZIndex.Add (Season.Summer, 33);
-    _waterfallZIndex.Add (Season.Winter, 1);
-    _waterfallMistZIndex.Add (Season.Summer, 2);
-    _waterfallMistZIndex.Add (Season.Winter, 33);
-    _waterfallPoolZIndex.Add (Season.Summer, -32);
-    _waterfallPoolZIndex.Add (Season.Winter, -1);
-    _waterfallWavesZIndex.Add (Season.Summer, -32);
-    _waterfallWavesZIndex.Add (Season.Winter, 1);
+    _colliders = GetNodesInGroup <CollisionShape2D> (GetTree(), "Extents");
+    _waterfalls = GetNodesInGroups <Waterfall> (GetTree(), "Waterfall", "Parent");
     _ambience.Add (Season.Summer, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_summer.wav"));
     _ambience.Add (Season.Winter, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_winter.wav"));
     _ambienceVolumes.Add (Season.Summer, -10);
@@ -77,7 +66,6 @@ public class Cliffs : Area2D
     _ambiencePlayer = GetNode <AudioStreamPlayer> ("../Audio Players/Ambience");
     _musicPlayer = GetNode <AudioStreamPlayer> ("../Audio Players/Music");
     _iceTileMap = GetNode <TileMap> ("Ice");
-    _colliders.AddRange (GetTree().GetNodesInGroup ("Extents").Cast <CollisionShape2D>());
     _player = GetNode <Player> ("../Player");
     _playerPrimaryAnimator = _player.GetNode <AnimationPlayer> ("Animations/Players/Primary");
     _playerAnimation = _playerPrimaryAnimator.CurrentAnimation;
@@ -99,32 +87,10 @@ public class Cliffs : Area2D
     if (IsReleased (Tools.Input.Music, @event)) ToggleMusic();
   }
 
-  // ReSharper disable once UnusedMember.Global
-  public void _OnWaterfallEntered (Area2D area)
-  {
-    if (!area.IsInGroup ("Player")) return;
-
-    _log.Info ($"Player entered waterfall.");
-    _isPlayerInWaterfall = true;
-    _player.IsInFrozenWaterfall = CurrentSeason == Season.Winter;
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnWaterfallExited (Area2D area)
-  {
-    if (!area.IsInGroup ("Player")) return;
-
-    _log.Info ($"Player exited waterfall.");
-    _isPlayerInWaterfall = false;
-    _player.IsInFrozenWaterfall = false;
-  }
-
   private void InitializeSeasons()
   {
-    foreach (Season season in Enum.GetValues (typeof (Season)))
-    {
-      SetGroupVisible (Enum.GetName (typeof (Season), season), false);
-    }
+    Enum.GetValues (typeof (Season)).Cast <Season>().ToList()
+      .ForEach (x => SetGroupVisible (Enum.GetName (typeof (Season), x), false, GetTree()));
 
     ChangeSeasonTo (InitialSeason);
     _skipFade = true;
@@ -134,78 +100,13 @@ public class Cliffs : Area2D
 
   private void ChangeSeasonTo (Season season)
   {
+    _oldSeason = CurrentSeason;
     _newSeason = season;
     _seasonChangeInProgress = true;
     _currentSeasonFadeOutTimeSeconds = 0.0f;
     _currentSeasonFadeInTimeSeconds = 0.0f;
     _ambiencePlayer.Stop();
     _musicPlayer.Stop();
-  }
-
-  private void UpdateWaterfall (Season season, float delta)
-  {
-    foreach (var waterfall in _waterfalls)
-    {
-      var isWinter = season == Season.Winter;
-      waterfall.Visible = true;
-      waterfall.ZIndex = _waterfallZIndex[season];
-      var waterfallPool = waterfall.GetNode <AnimatedSprite> ("Pool");
-      var waterfallWaves = waterfall.GetNode <AnimatedSprite> ("Waves");
-      waterfallPool.ZIndex = _waterfallPoolZIndex[season];
-      waterfallWaves.ZIndex = _waterfallWavesZIndex[season];
-
-      for (var i = 1; i <= 3; ++i)
-      {
-        var mist = waterfall.GetNode <AnimatedSprite> ("Mist " + i);
-        mist.ZIndex = _waterfallMistZIndex[season];
-      }
-
-      foreach (Node node1 in waterfall.GetChildren())
-      {
-        if (node1 is StaticBody2D body) UpdateFrozenWaterfallTopGround (body, season, delta);
-
-        if (node1 is not AnimatedSprite sprite) continue;
-
-        sprite.Playing = !isWinter;
-        sprite.Visible = true;
-
-        foreach (Node node2 in sprite.GetChildren())
-        {
-          if (node2 is not AudioStreamPlayer2D sound) continue;
-
-          LoopAudio (sound.Stream);
-          sound.Playing = !isWinter;
-        }
-      }
-
-      _player.IsInFrozenWaterfall = _isPlayerInWaterfall && isWinter;
-    }
-  }
-
-  private async void UpdateFrozenWaterfallTopGround (PhysicsBody2D waterSurfaceCollider, Season season, float delta)
-  {
-    var isWinter = season == Season.Winter;
-    waterSurfaceCollider.SetCollisionMaskBit (0, isWinter);
-    waterSurfaceCollider.SetCollisionLayerBit (1, isWinter);
-    GetNode <CollisionShape2D> ("Ground 3/CollisionShape2D").Disabled = isWinter;
-    GetNode <CollisionShape2D> ("Edge 3/CollisionShape2D").Disabled = isWinter;
-    await ToSignal (GetTree().CreateTimer (delta, false), "timeout");
-
-    foreach (int shapeOwnerId in waterSurfaceCollider.GetShapeOwners())
-    {
-      waterSurfaceCollider.ShapeOwnerSetOneWayCollision (Convert.ToUInt32 (shapeOwnerId), isWinter);
-    }
-  }
-
-  private void SetGroupVisible (string groupName, bool isVisible)
-  {
-    foreach (Node node in GetTree().GetNodesInGroup (groupName))
-    {
-      if (node is not CanvasItem item) continue;
-
-      _log.Debug ($"Setting {item.Name} {(item.Visible ? "visible" : "invisible")}.");
-      item.Visible = isVisible;
-    }
   }
 
   private void UpdateSeasons (float delta)
@@ -229,10 +130,12 @@ public class Cliffs : Area2D
       return;
     }
 
+    CurrentSeason = _newSeason;
+
     if (_skipFade || AreAlmostEqual (Modulate, Colors.Black, 0.01f) && AreAlmostEqual (_clearColor, Colors.Black, 0.1f))
     {
-      SetGroupVisible (Enum.GetName (typeof (Season), CurrentSeason), false);
-      SetGroupVisible (Enum.GetName (typeof (Season), _newSeason), true);
+      SetGroupVisible (Enum.GetName (typeof (Season), _oldSeason), false, GetTree());
+      SetGroupVisible (Enum.GetName (typeof (Season), _newSeason), true, GetTree());
       _musicPlayer.Stream = _music[_newSeason];
       _ambiencePlayer.Stream = _ambience[_newSeason];
       _musicPlayer.VolumeDb = _musicVolumes[_newSeason];
@@ -240,7 +143,7 @@ public class Cliffs : Area2D
       LoopAudio (_musicPlayer.Stream);
       LoopAudio (_ambiencePlayer.Stream);
       _ambiencePlayer.Play();
-      UpdateWaterfall (_newSeason, delta);
+      _waterfalls.ForEach (x => x.OnSeasonChange (_newSeason));
     }
 
     if (!_skipFade)
@@ -256,7 +159,6 @@ public class Cliffs : Area2D
 
     if (_seasonChangeInProgress) return;
 
-    CurrentSeason = _newSeason;
     _musicPlayer.Play();
     _log.Info ($"Current season is now: {CurrentSeason}");
   }

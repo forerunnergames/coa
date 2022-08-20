@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Godot;
 using static Tools;
@@ -63,9 +64,6 @@ public class Player : KinematicBody2D
 
   // Field must be publicly accessible from Cliffs.cs
   public bool IsTouchingCliffIce;
-
-  // Field must be publicly accessible from Cliffs.cs
-  public bool IsInFrozenWaterfall;
 
   public enum State
   {
@@ -149,7 +147,7 @@ public class Player : KinematicBody2D
   private List <Area2D> _groundAreas;
   private List <RayCast2D> _groundDetectors;
   private List <RayCast2D> _wallDetectors;
-  private List <Area2D> _waterfalls;
+  private List <Waterfall> _waterfalls;
   private Log _log;
 
   // @formatter:off
@@ -533,25 +531,25 @@ public class Player : KinematicBody2D
     Remove
   }
 
+  [SuppressMessage ("ReSharper", "ExplicitCallerInfoArgument")]
   public override void _Ready()
   {
     // @formatter:off
-    // ReSharper disable once ExplicitCallerInfoArgument
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
     _weapon = new Weapon (GetNode <Node2D> ("Animations"), LogLevel);
     _camera = GetNode <Camera2D> ("Camera");
-    _groundDetectors = GetTree().GetNodesInGroup ("Ground Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
-    _dropdown = new Dropdown (this, _groundDetectors);
-    _wallDetectors = GetTree().GetNodesInGroup ("Wall Detectors").Cast <RayCast2D>().Where (x => x.IsInGroup ("Player")).ToList();
+    _groundDetectors = GetNodesInGroups <RayCast2D> (GetTree(), "Ground Detectors", "Player");
+    _wallDetectors = GetNodesInGroups <RayCast2D> (GetTree(), "Wall Detectors", "Player");
+    _waterfalls = GetNodesInGroups <Waterfall> (GetTree(), "Waterfall", "Parent");
+    _groundAreas = GetNodesInGroup <Area2D> (GetTree(), "Ground");
+    _dropdown = new Dropdown (this, _groundDetectors, Name);
     _cliffs = GetNode <Cliffs> ("../Cliffs");
-    _waterfalls = new List <Area2D> {GetNode <Area2D>("../Cliffs/Waterfall - Upper"), GetNode <Area2D>("../Cliffs/Waterfall - Lower")};
     _audio = GetNode <AudioStreamPlayer> ("Audio Players/Sound Effects");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
     _label.Visible = false;
     _animationAreaColliders = GetNode <Area2D> ("Animations/Area Colliders");
-    _groundAreas = GetTree().GetNodesInGroup ("Ground").Cast <Node2D>().Where (x => x is Area2D).Cast <Area2D>().ToList();
     _energyMeter = GetNode <TextureProgress> ("../UI/Control/Energy Meter");
     _energyMeter.Value = MaxEnergy;
     _energy = MaxEnergy;
@@ -792,6 +790,9 @@ public class Player : KinematicBody2D
     UpdateSecondaryClothing();
   }
 
+  private bool IsInWaterfall() => _waterfalls.Any (x => x.IsInWaterfall);
+  private bool IsInFrozenWaterfall() => IsInWaterfall() && _cliffs.CurrentSeason == Cliffs.Season.Winter;
+
   private async void RestAfterClimbingUp()
   {
     _isResting = true;
@@ -813,7 +814,7 @@ public class Player : KinematicBody2D
     }
 
     var readableSign = GetReadableSign (name);
-    ChangeWaterfallSettings (4.0f, 2, Modulate.a * 0.2f);
+    _waterfalls.ForEach (x => x.ChangeSettings (4.0f, 2, Modulate.a * 0.2f));
     _signsTileMap.Visible = false;
     _signsTileMap.GetNode <TileMap> ("Winter Layer").Visible = false;
     readableSign.Visible = true;
@@ -837,23 +838,7 @@ public class Player : KinematicBody2D
     _camera.Position = new Vector2 (0, -355);
     _camera.ForceUpdateScroll();
     _camera.Position = new Vector2 (0, 0);
-    ChangeWaterfallSettings (8.28f, 33);
-  }
-
-  private void ChangeWaterfallSettings (float soundAttenuation, int mistZIndex, float mistAlphaModulation = 1.0f)
-  {
-    foreach (var waterfall in _waterfalls)
-    {
-      waterfall.GetNode <AudioStreamPlayer2D> ("Water 9/AudioStreamPlayer2D").Attenuation = soundAttenuation;
-      waterfall.GetNode <AudioStreamPlayer2D> ("Water 10/AudioStreamPlayer2D").Attenuation = soundAttenuation;
-
-      for (var i = 1; i <= 3; ++i)
-      {
-        var mist = waterfall.GetNode <AnimatedSprite> ("Mist " + i);
-        mist.ZIndex = mistZIndex;
-        mist.Modulate = new Color (Modulate.r, Modulate.g, Modulate.b, mistAlphaModulation);
-      }
-    }
+    _waterfalls.ForEach (x => x.ChangeSettings (8.8f, 33));
   }
 
   private Sprite GetClickedClothingItemForRemoving() =>
@@ -1133,9 +1118,9 @@ public class Player : KinematicBody2D
     // @formatter:off
     await ToSignal (GetTree(), "idle_frame");
     _groundAreas.ForEach (x => x.SetBlockSignals (false));
+    _waterfalls.ForEach (x => x.SetBlockSignals (false));
     await ToSignal (GetTree(), "idle_frame");
     _animationAreaColliders.SetBlockSignals (false);
-    _waterfalls.ForEach (x => x.SetBlockSignals (false));
     // @formatter:on
     // End workaround
   }
@@ -1197,8 +1182,9 @@ public class Player : KinematicBody2D
     "\nClimbing up: " + _stateMachine.Is (State.ClimbingUp) +
     "\nClimbing down: " + _stateMachine.Is (State.ClimbingDown) +
     "\nIsSpeedClimbing: " + IsSpeedClimbing() +
+    "\nIsInWaterfall: " +  IsInWaterfall() +
     "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
-    "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall +
+    "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall() +
     "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Traversing: " + _stateMachine.Is (State.Traversing) +
@@ -1418,25 +1404,25 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
-    _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall);
-    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => (WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall || JustDepletedAllEnergy()) && !_isResting);
+    _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall());
+    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => (WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall() || JustDepletedAllEnergy()) && !_isResting);
     _stateMachine.AddTrigger (State.ClimbingUp, State.Idle, () => _isResting);
     _stateMachine.AddTrigger (State.ClimbingUp, State.CliffHanging, () => WasUpArrowReleased() && !IsDownArrowPressed() && (IsInCliffs || _isInGround));
     _stateMachine.AddTrigger (State.ClimbingUp, State.ClimbingDown, () => WasUpArrowReleased() && IsDownArrowPressed() && (IsInCliffs || _isInGround));
     _stateMachine.AddTrigger (State.ClimbingDown, State.CliffHanging, () => WasDownArrowReleased() && !IsUpArrowPressed() && (IsInCliffs || _isInGround));
     _stateMachine.AddTrigger (State.ClimbingDown, State.Idle, IsOnFloor);
     _stateMachine.AddTrigger (State.ClimbingDown, State.ClimbingUp, () => WasDownArrowReleased() && IsUpArrowPressed() && (IsInCliffs || _isInGround));
-    _stateMachine.AddTrigger (State.ClimbingDown, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall || _isResting);
+    _stateMachine.AddTrigger (State.ClimbingDown, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall() || _isResting);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsDepletingEnergy() );
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && IsDepletingEnergy());
     _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
-    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && (IsInCliffs || _isInGround) && !IsTouchingCliffIce && !IsInFrozenWaterfall);
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && _isInGround && !IsTouchingCliffIce && !IsInFrozenWaterfall());
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, () => IsDownArrowPressed() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall);
+    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall());
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Godot;
 
@@ -11,11 +12,14 @@ public class Dropdown : AbstractDropdownable
   private readonly List <RayCast2D> _groundDetectors;
   private readonly List <Task> _tasks = new();
   private readonly List <TileMap> _tileMapRayCastExceptions = new();
+  private readonly string _name;
 
-  public Dropdown (CollisionObject2D droppingNode, List <RayCast2D> groundDetectors)
+  // ReSharper disable once ExplicitCallerInfoArgument
+  public Dropdown (CollisionObject2D droppingNode, List <RayCast2D> groundDetectors, [CallerFilePath] string name = "") : base (name)
   {
     _droppingNode = droppingNode;
     _groundDetectors = groundDetectors;
+    _name = name;
   }
 
   public override async Task Drop()
@@ -40,7 +44,8 @@ public class Dropdown : AbstractDropdownable
 
         if (!groundCollider.IsInGroup ("Dropdownable")) continue;
 
-        var dropdownable = DropdownableFactory.Create (_droppingNode, groundCollider, collisionPoint);
+        // ReSharper disable once ExplicitCallerInfoArgument
+        var dropdownable = DropdownableFactory.Create (_droppingNode, groundCollider, collisionPoint, _name);
         _tasks.Add (dropdownable.Drop());
         if (dropdownable.IsDropping()) _IsDropping = true;
       }
