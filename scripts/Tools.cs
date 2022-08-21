@@ -212,6 +212,39 @@ public static class Tools
     playOn.Play (animationName);
   }
 
+  public static void SetGroupVisible (string groupName, bool isVisible, SceneTree sceneTree)
+  {
+    foreach (Node node in sceneTree.GetNodesInGroup (groupName))
+    {
+      if (node is not CanvasItem item) continue;
+
+      Log.Debug ($"Setting {item.Name} {(item.Visible ? "visible" : "invisible")}.");
+      item.Visible = isVisible;
+    }
+  }
+
+  public static List <T> GetNodesInGroup <T> (SceneTree sceneTree, string group) where T : Node =>
+    GetNodesInGroups <T> (sceneTree, group);
+
+  public static List <T> GetNodesInGroupWithParent <T> (string parent, SceneTree sceneTree, string group) where T : Node =>
+    GetNodesInGroupsWithParent <T> (parent, sceneTree, group);
+
+  public static List <T> GetNodesInGroupsWithParent <T> (string parent, SceneTree sceneTree, params string[] groups) where T : Node =>
+    GetNodesInGroups <T> (sceneTree, groups).Where (x => x.GetParent()?.Name == parent).ToList();
+
+  public static List <T> GetNodesInGroupsWithAnyOfParents <T> (string[] parents, SceneTree sceneTree, params string[] groups)
+    where T : Node =>
+    GetNodesInGroups <T> (sceneTree, groups).Where (x => parents.ToList().Any (y => x.GetParent()?.Name == y)).ToList();
+
+  public static List <T> GetNodesInGroups <T> (SceneTree sceneTree, params string[] groups) where T : Node
+  {
+    if (groups == null || groups.Length == 0) return new List <T>();
+
+    var nodes = sceneTree.GetNodesInGroup (groups[0]).Cast <Node>().Where (x => x is T).Cast <T>();
+
+    return groups.Length == 1 ? nodes.ToList() : nodes.Where (x => groups.Distinct().All (x.IsInGroup)).ToList();
+  }
+
   public static bool IsAnyArrowKeyPressedExcept (Input arrow)
   {
     var up = IsUpArrowPressed();

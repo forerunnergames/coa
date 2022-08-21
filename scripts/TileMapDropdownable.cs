@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Godot;
 
@@ -20,7 +21,9 @@ public class TileMapDropdownable : AbstractDropdownable
 
   // @formatter:on
 
-  public TileMapDropdownable (TileMap droppingThroughTileMap, CollisionObject2D droppingNode, Vector2 collisionPoint)
+  // ReSharper disable once ExplicitCallerInfoArgument
+  public TileMapDropdownable (TileMap droppingThroughTileMap, CollisionObject2D droppingNode, Vector2 collisionPoint,
+    [CallerFilePath] string name = "") : base (name)
   {
     _droppingThroughTileMap = droppingThroughTileMap;
     _droppingNode = droppingNode;
