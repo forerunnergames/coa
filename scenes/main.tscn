@@ -4619,16 +4619,13 @@ anims/player_unequipping_back = SubResource( 13 )
 anims/player_unequipping_left = SubResource( 14 )
 
 [node name="Sprites" type="Node2D" parent="Player/Animations"]
-__meta__ = {
-"_edit_group_": true,
-"_edit_lock_": true
-}
 
 [node name="foot-right" type="Sprite" parent="Player/Animations/Sprites"]
 visible = false
 texture = ExtResource( 28 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4636,6 +4633,7 @@ __meta__ = {
 texture = ExtResource( 21 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4643,6 +4641,7 @@ __meta__ = {
 texture = ExtResource( 35 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4651,6 +4650,7 @@ visible = false
 texture = ExtResource( 29 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4658,6 +4658,7 @@ __meta__ = {
 texture = ExtResource( 11 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4665,6 +4666,7 @@ __meta__ = {
 texture = ExtResource( 26 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4672,6 +4674,7 @@ __meta__ = {
 texture = ExtResource( 22 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4679,6 +4682,7 @@ __meta__ = {
 texture = ExtResource( 37 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4686,6 +4690,7 @@ __meta__ = {
 texture = ExtResource( 23 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4694,6 +4699,7 @@ visible = false
 texture = ExtResource( 20 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4701,6 +4707,7 @@ __meta__ = {
 texture = ExtResource( 34 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4708,6 +4715,7 @@ __meta__ = {
 texture = ExtResource( 7 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4715,6 +4723,7 @@ __meta__ = {
 texture = ExtResource( 27 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4722,6 +4731,7 @@ __meta__ = {
 texture = ExtResource( 32 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4730,6 +4740,7 @@ visible = false
 texture = ExtResource( 30 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4738,6 +4749,7 @@ position = Vector2( -0.125, 0 )
 texture = ExtResource( 24 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4746,6 +4758,7 @@ visible = false
 texture = ExtResource( 33 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4754,6 +4767,7 @@ texture = ExtResource( 36 )
 hframes = 42
 frame = 39
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4763,6 +4777,7 @@ texture = SubResource( 25 )
 hframes = 42
 frame = 39
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4772,18 +4787,27 @@ position = Vector2( 1, 2 )
 rotation = -0.349066
 texture = ExtResource( 31 )
 hframes = 42
+__meta__ = {
+"_edit_group_": true,
+"_edit_lock_": true
+}
 
 [node name="item-equipping" type="Sprite" parent="Player/Animations/Sprites"]
 visible = false
 texture = SubResource( 26 )
 hframes = 42
 frame = 40
+__meta__ = {
+"_edit_group_": true,
+"_edit_lock_": true
+}
 
 [node name="arm-left" type="Sprite" parent="Player/Animations/Sprites"]
 visible = false
 texture = ExtResource( 40 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4791,6 +4815,7 @@ __meta__ = {
 texture = ExtResource( 41 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4798,6 +4823,7 @@ __meta__ = {
 texture = ExtResource( 2 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4806,6 +4832,7 @@ visible = false
 texture = ExtResource( 39 )
 hframes = 42
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4815,6 +4842,7 @@ texture = ExtResource( 43 )
 hframes = 42
 frame = 39
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4823,16 +4851,13 @@ texture = ExtResource( 42 )
 hframes = 42
 frame = 39
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
 [node name="Area Colliders" type="Area2D" parent="Player/Animations" groups=["Player"]]
 visible = false
 collision_mask = 6
-__meta__ = {
-"_edit_group_": true,
-"_edit_lock_": true
-}
 
 [node name="player_running_left" type="CollisionShape2D" parent="Player/Animations/Area Colliders" groups=["Player"]]
 visible = false
@@ -4840,6 +4865,7 @@ position = Vector2( 0.5, 1 )
 shape = SubResource( 15 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4849,6 +4875,7 @@ position = Vector2( 1, 1 )
 shape = SubResource( 16 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4857,6 +4884,7 @@ visible = false
 position = Vector2( 1, 1 )
 shape = SubResource( 17 )
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4866,6 +4894,7 @@ position = Vector2( -0.5, 0.5 )
 shape = SubResource( 18 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4875,6 +4904,7 @@ position = Vector2( -0.5, 0.5 )
 shape = SubResource( 19 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4884,6 +4914,7 @@ position = Vector2( -0.5, 0 )
 shape = SubResource( 20 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4893,6 +4924,7 @@ position = Vector2( -0.5, 0 )
 shape = SubResource( 21 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4902,6 +4934,7 @@ position = Vector2( -0.5, 1 )
 shape = SubResource( 22 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4911,6 +4944,7 @@ position = Vector2( 1, 1 )
 shape = SubResource( 23 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -4920,6 +4954,7 @@ position = Vector2( -0.5, 0 )
 shape = SubResource( 24 )
 disabled = true
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -5025,6 +5060,7 @@ __meta__ = {
 }
 
 [node name="Snow" type="TileMap" parent="Cliffs" groups=["Cliffs", "Winter"]]
+visible = false
 scale = Vector2( 8, 8 )
 z_index = 1
 tile_set = ExtResource( 3 )
@@ -5039,6 +5075,7 @@ __meta__ = {
 }
 
 [node name="Ice" type="TileMap" parent="Cliffs" groups=["Cliffs", "Ice", "Winter"]]
+visible = false
 scale = Vector2( 8, 8 )
 tile_set = ExtResource( 3 )
 cell_size = Vector2( 16, 16 )
@@ -6599,9 +6636,6 @@ __meta__ = {
 polygon = PoolVector2Array( 4, -56, 12, -48, 20, -40, 20, 8, 12, 24, 4, 40, -4, 48, -12, 56, -20, 64, -4, -64 )
 
 [node name="Butterflies" type="Node2D" parent="."]
-__meta__ = {
-"_edit_lock_": true
-}
 
 [node name="Butterfly 1" type="AnimatedSprite" parent="Butterflies" groups=["Summer"]]
 position = Vector2( 248, -16 )
@@ -6999,10 +7033,6 @@ one_shot = true
 one_shot = true
 
 [node name="Scene Boundaries" type="Node2D" parent="."]
-__meta__ = {
-"_edit_group_": true,
-"_edit_lock_": true
-}
 
 [node name="Left" type="StaticBody2D" parent="Scene Boundaries" groups=["Walls"]]
 visible = false
