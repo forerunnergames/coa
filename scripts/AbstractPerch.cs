@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using static Tools;
-using GetLocalTransform = Tools.GetLocalTransform;
 
 public abstract class AbstractPerch : IPerchable
 {
