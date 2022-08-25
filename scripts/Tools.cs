@@ -143,47 +143,14 @@ public static class Tools
     return id != -1 ? t.TileSet.TileGetName (id) : "";
   }
 
-  public static Vector2 GetTileCellAtCenterOf (Area2D area, CollisionShape2D collider, TileMap t)
-  {
-    var rect = GetAreaColliderRect (area, collider);
+  public static Vector2 GetTileCellAtCenterOf (Area2D area, CollisionShape2D collider, TileMap t) =>
+    GetIntersectingTileCell (new Rect2 (GetAreaColliderRect (area, collider).GetCenter(), Vector2.One), t);
 
-    return GetTileCellAtAnyOf (new List <Vector2> { t.WorldToMap (t.ToLocal (rect.Position + rect.Size / 2)) }, t);
-  }
+  public static Vector2 GetCollidingTileCell (Vector2 collisionPoint, TileMap t) =>
+    GetIntersectingTileCell (new Rect2 (collisionPoint, Vector2.One), t);
 
-  public static Vector2 GetCollidingTileCell (Vector2 collisionPoint, TileMap t)
-  {
-    var collisionCell = t.WorldToMap (t.ToLocal (collisionPoint));
-
-    var collisionCells = new List <Vector2>
-    {
-      collisionCell,
-      collisionCell + Vector2.Left,
-      collisionCell + Vector2.Right,
-      collisionCell + Vector2.Up,
-      collisionCell + Vector2.Down,
-      collisionCell + Vector2.Left + Vector2.Up,
-      collisionCell + Vector2.Left + Vector2.Down,
-      collisionCell + Vector2.Right + Vector2.Up,
-      collisionCell + Vector2.Right + Vector2.Down
-    };
-
-    return GetTileCellAtAnyOf (collisionCells, t);
-  }
-
-  public static Vector2 GetIntersectingTileCell (Area2D area, CollisionShape2D collider, TileMap t)
-  {
-    var rect = GetAreaColliderRect (area, collider);
-
-    var cornerCells = new List <Vector2>
-    {
-      t.WorldToMap (t.ToLocal (rect.Position)),
-      t.WorldToMap (t.ToLocal (new Vector2 (rect.End.x - 1, rect.Position.y))),
-      t.WorldToMap (t.ToLocal (new Vector2 (rect.Position.x, rect.End.y - 1))),
-      t.WorldToMap (t.ToLocal (rect.End - Vector2.One))
-    };
-
-    return GetTileCellAtAnyOf (cornerCells, t);
-  }
+  public static Vector2 GetIntersectingTileCell (Area2D area, CollisionShape2D collider, TileMap t) =>
+    GetIntersectingTileCell (GetAreaColliderRect (area, collider), t);
 
   public static Vector2 GetTileCellGlobalOrigin (Vector2 cell, TileMap t)
   {
@@ -199,11 +166,13 @@ public static class Tools
 
   public static Vector2 GetTileCellGlobalSize (Vector2 cell, TileMap t)
   {
-    var cellId = t.GetCell ((int)cell.x, (int)cell.y);
+    var id = t.GetCell ((int)cell.x, (int)cell.y);
 
-    if (cellId == -1) return Vector2.Zero;
+    if (id == -1) return Vector2.Zero;
 
-    return t.TileSet.TileGetRegion (cellId).Size * t.Scale;
+    return t.TileSet.TileGetTileMode (id) == Godot.TileSet.TileMode.AutoTile
+      ? t.TileSet.AutotileGetSize (id) * t.Scale
+      : t.TileSet.TileGetRegion (id).Size * t.Scale;
   }
 
   public static async void PlaySyncedAnimation (string animationName, AnimationPlayer playOn, AnimationPlayer syncTo, float delta)
@@ -368,10 +337,9 @@ public static class Tools
     return p;
   }
 
-  private static Vector2 GetTileCellAtAnyOf (IReadOnlyCollection <Vector2> cells, TileMap t) =>
-    t.GetUsedCells().Cast <Vector2>().FirstOrDefault (a => cells.Any (b =>
-      GreaterThanOrEqual (b, a) && LessThan (b - a,
-        (t.CellSize.Inverse() * t.TileSet.TileGetRegion (t.GetCell ((int)a.x, (int)a.y)).Size).Round())));
+  private static Vector2 GetIntersectingTileCell (Rect2 collider, TileMap t) =>
+    t.GetUsedCells().Cast <Vector2>().ToList().DefaultIfEmpty (Vector2.Zero).FirstOrDefault (x =>
+      collider.Intersects (new Rect2 (GetTileCellGlobalOrigin (x, t), GetTileCellGlobalSize (x, t))));
 
   private static List <Rect2> GetUncoveredRects (IEnumerable <Rect2> originals, IReadOnlyCollection <Rect2> overlaps) =>
     originals.Where (x => !overlaps.Any (y => IsEnclosedBy (x, y))).Aggregate (new List <Rect2>(),
