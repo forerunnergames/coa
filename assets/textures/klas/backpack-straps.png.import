@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/foot-right.png-e4902d12d6b1895e8efa2c65e5a83a62.stex"
+path="res://.import/backpack-straps.png-56ca0f578b5cf535e91e54f6d607a6a1.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/foot-right.png"
-dest_files=[ "res://.import/foot-right.png-e4902d12d6b1895e8efa2c65e5a83a62.stex" ]
+source_file="res://assets/textures/klas/backpack-straps.png"
+dest_files=[ "res://.import/backpack-straps.png-56ca0f578b5cf535e91e54f6d607a6a1.stex" ]
 
 [params]
 
@@ -28,7 +28,8 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
-detect_3d=true
+detect_3d=false
 svg/scale=1.0

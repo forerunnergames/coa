@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/shirt-sleeve-right.png-c9586fb192fee4c3778ee8b0ec132cde.stex"
+path="res://.import/arm-right.png-2399292066a22b47fd485e0ec06163c1.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/shirt-sleeve-right.png"
-dest_files=[ "res://.import/shirt-sleeve-right.png-c9586fb192fee4c3778ee8b0ec132cde.stex" ]
+source_file="res://assets/textures/klas/arm-right.png"
+dest_files=[ "res://.import/arm-right.png-2399292066a22b47fd485e0ec06163c1.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true
