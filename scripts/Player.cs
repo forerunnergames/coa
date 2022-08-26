@@ -697,7 +697,7 @@ public class Player : KinematicBody2D
   {
     if (!area.IsInGroup ("Player")) return;
 
-    _log.Debug ($"Player entered ground.");
+    _log.Debug ("Player entered ground.");
     _isInGround = true;
   }
 
@@ -706,7 +706,7 @@ public class Player : KinematicBody2D
   {
     if (!area.IsInGroup ("Player")) return;
 
-    _log.Debug ($"Player exited ground.");
+    _log.Debug ("Player exited ground.");
     _isInGround = false;
     if (_stateMachine.Is (State.ClimbingUp)) RestAfterClimbingUp();
   }
@@ -725,7 +725,7 @@ public class Player : KinematicBody2D
   {
     if (body is not TileMap { Name: "Signs" } tileMap) return;
 
-    _log.Debug ($"Player entered sign.");
+    _log.Debug ("Player entered sign.");
     _isInSign = true;
     _signsTileMap = tileMap;
   }
@@ -735,7 +735,7 @@ public class Player : KinematicBody2D
   {
     if (body is not TileMap { Name: "Signs" }) return;
 
-    _log.Debug ($"Player exited sign.");
+    _log.Debug ("Player exited sign.");
     _isInSign = false;
     if (_stateMachine.Is (State.ReadingSign)) _stateMachine.To (State.Idle);
   }
