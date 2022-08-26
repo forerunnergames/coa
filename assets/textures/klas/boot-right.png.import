@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/head-outline-rear.png-af778f948f103c91935594f6edb6dd2f.stex"
+path="res://.import/boot-right.png-d1aef1308495693f1eb8fffa93d18ca3.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/head-outline-rear.png"
-dest_files=[ "res://.import/head-outline-rear.png-af778f948f103c91935594f6edb6dd2f.stex" ]
+source_file="res://assets/textures/klas/boot-right.png"
+dest_files=[ "res://.import/boot-right.png-d1aef1308495693f1eb8fffa93d18ca3.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/hat-outline.png-84116ee00a1f773e8560eb4505107b16.stex"
+path="res://.import/scarf.png-bd3b6fefb7a3b3886a367aa106880ecc.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/hat-outline.png"
-dest_files=[ "res://.import/hat-outline.png-84116ee00a1f773e8560eb4505107b16.stex" ]
+source_file="res://assets/textures/klas/scarf.png"
+dest_files=[ "res://.import/scarf.png-bd3b6fefb7a3b3886a367aa106880ecc.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

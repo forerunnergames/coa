@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/pants.png-f896d746ade843752a707c38df35784f.stex"
+path="res://.import/body.png-a45125ef98ee1d5de19e1f1c9b5d71eb.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/pants.png"
-dest_files=[ "res://.import/pants.png-f896d746ade843752a707c38df35784f.stex" ]
+source_file="res://assets/textures/klas/body.png"
+dest_files=[ "res://.import/body.png-a45125ef98ee1d5de19e1f1c9b5d71eb.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

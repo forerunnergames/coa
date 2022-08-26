@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/hat.png-17fa483495f411a9789a07c97bdc82c4.stex"
+path="res://.import/boot-left.png-4e34a882e250cc7f70e2692911f84719.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/hat.png"
-dest_files=[ "res://.import/hat.png-17fa483495f411a9789a07c97bdc82c4.stex" ]
+source_file="res://assets/textures/klas/boot-left.png"
+dest_files=[ "res://.import/boot-left.png-4e34a882e250cc7f70e2692911f84719.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

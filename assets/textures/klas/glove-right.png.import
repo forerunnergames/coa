@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/item-in-hand.png-2256283a96ce3e3f7c09b46d62fce0ef.stex"
+path="res://.import/glove-right.png-848f990d8b5c9f6ffa8c1a54b72a404c.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/item-in-hand.png"
-dest_files=[ "res://.import/item-in-hand.png-2256283a96ce3e3f7c09b46d62fce0ef.stex" ]
+source_file="res://assets/textures/klas/glove-right.png"
+dest_files=[ "res://.import/glove-right.png-848f990d8b5c9f6ffa8c1a54b72a404c.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

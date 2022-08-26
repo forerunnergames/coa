@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/body.png-a42bee7814d346be5f40878e998bb3f7.stex"
+path="res://.import/hair.png-153ef3f32f6834c6fefde2c93f403884.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/body.png"
-dest_files=[ "res://.import/body.png-a42bee7814d346be5f40878e998bb3f7.stex" ]
+source_file="res://assets/textures/klas/hair.png"
+dest_files=[ "res://.import/hair.png-153ef3f32f6834c6fefde2c93f403884.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

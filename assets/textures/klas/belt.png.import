@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/hand-left.png-1ac786205a51b32f2776960b6ae71e2a.stex"
+path="res://.import/belt.png-4b52a9498d4b03a83351b88e341ff170.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/klas-layers/hand-left.png"
-dest_files=[ "res://.import/hand-left.png-1ac786205a51b32f2776960b6ae71e2a.stex" ]
+source_file="res://assets/textures/klas/belt.png"
+dest_files=[ "res://.import/belt.png-4b52a9498d4b03a83351b88e341ff170.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true
