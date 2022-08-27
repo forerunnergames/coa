@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Godot;
+using static Seasons;
 using static Tools;
 using Input = Tools.Input;
 
@@ -791,7 +792,7 @@ public class Player : KinematicBody2D
   }
 
   private bool IsInWaterfall() => _waterfalls.Any (x => x.IsInWaterfall);
-  private bool IsInFrozenWaterfall() => IsInWaterfall() && _cliffs.CurrentSeason == Cliffs.Season.Winter;
+  private bool IsInFrozenWaterfall() => IsInWaterfall() && _cliffs.CurrentSeasonIs (Season.Winter);
 
   private async void RestAfterClimbingUp()
   {
@@ -833,7 +834,7 @@ public class Player : KinematicBody2D
     Visible = true;
     _readableSign.Visible = false;
     _signsTileMap.Visible = true;
-    _signsTileMap.GetNode <TileMap> ("Winter Layer").Visible = _cliffs.CurrentSeason == Cliffs.Season.Winter;
+    _signsTileMap.GetNode <TileMap> ("Winter Layer").Visible = _cliffs.CurrentSeasonIs (Season.Winter);
     _camera.Zoom = Vector2.One;
     _camera.Position = new Vector2 (0, -355);
     _camera.ForceUpdateScroll();
@@ -1170,7 +1171,7 @@ public class Player : KinematicBody2D
     "\nState: " + _stateMachine.GetState() +
     "\nWeapon state: " + _weapon.GetState() +
     "\nAnimation: " + _primaryAnimator.CurrentAnimation +
-    "\nSeason: " + _cliffs.CurrentSeason +
+    "\nSeason: " + _cliffs.GetCurrentSeason() +
     "\nIdle: " + _stateMachine.Is (State.Idle) +
     "\nWalking: " + _stateMachine.Is (State.Walking) +
     "\nRunning: " + _stateMachine.Is (State.Running) +
