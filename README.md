@@ -4,6 +4,9 @@
 
 ***Cliffs of Akaia*** (pronounced: Uh-KAY-uh) is a 2D, side-scrolling, role-playing survival game set on a very large mountain, featuring climbing mechanics, puzzles, story elements, day/night/season cycles, procedurally-generated areas, open world exploration, NPC relationships, crafting, and more!
 
+<br/>
+
+![Screenshot](screenshot.png)
 
 # Download
 
