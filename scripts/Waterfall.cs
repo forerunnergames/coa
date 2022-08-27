@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using static Seasons;
 using static Tools;
 
 public class Waterfall : Area2D
@@ -16,11 +17,11 @@ public class Waterfall : Area2D
   private List <CollisionObject2D> _summerGrounds;
   private List <AudioStreamPlayer2D> _audioPlayers;
   private List <AudioStreamPlayer2D> _attenuateables;
-  private readonly Dictionary <Cliffs.Season, int> _zIndex = new();
-  private readonly Dictionary <Cliffs.Season, int> _poolZIndex = new();
-  private readonly Dictionary <Cliffs.Season, int> _wavesZIndex = new();
-  private readonly Dictionary <Cliffs.Season, int> _innerMistsZIndex = new();
-  private readonly Dictionary <Cliffs.Season, int> _outerMistsZIndex = new();
+  private readonly Dictionary <Season, int> _zIndex = new();
+  private readonly Dictionary <Season, int> _poolZIndex = new();
+  private readonly Dictionary <Season, int> _wavesZIndex = new();
+  private readonly Dictionary <Season, int> _innerMistsZIndex = new();
+  private readonly Dictionary <Season, int> _outerMistsZIndex = new();
 
   public override void _Ready()
   {
@@ -36,16 +37,16 @@ public class Waterfall : Area2D
     _attenuateables = GetNodesInGroupsWithParent <AudioStreamPlayer2D> (Name, GetTree(), "Waterfall", "Audio", "Attenuateable");
     _pool = GetNode <Node2D> ("Pool");
     _waves = GetNode <Node2D> ("Waves");
-    _zIndex.Add (Cliffs.Season.Summer, 33);
-    _zIndex.Add (Cliffs.Season.Winter, 1);
-    _poolZIndex.Add (Cliffs.Season.Summer, -32);
-    _poolZIndex.Add (Cliffs.Season.Winter, -1);
-    _wavesZIndex.Add (Cliffs.Season.Summer, -32);
-    _wavesZIndex.Add (Cliffs.Season.Winter, 1);
-    _outerMistsZIndex.Add (Cliffs.Season.Summer, 2);
-    _outerMistsZIndex.Add (Cliffs.Season.Winter, 33);
-    _innerMistsZIndex.Add (Cliffs.Season.Summer, 1);
-    _innerMistsZIndex.Add (Cliffs.Season.Winter, 33);
+    _zIndex.Add (Season.Summer, 33);
+    _zIndex.Add (Season.Winter, 1);
+    _poolZIndex.Add (Season.Summer, -32);
+    _poolZIndex.Add (Season.Winter, -1);
+    _wavesZIndex.Add (Season.Summer, -32);
+    _wavesZIndex.Add (Season.Winter, 1);
+    _outerMistsZIndex.Add (Season.Summer, 2);
+    _outerMistsZIndex.Add (Season.Winter, 33);
+    _innerMistsZIndex.Add (Season.Summer, 1);
+    _innerMistsZIndex.Add (Season.Winter, 33);
     // @formatter:on
   }
 
@@ -67,7 +68,7 @@ public class Waterfall : Area2D
     IsInWaterfall = false;
   }
 
-  public void OnSeasonChange (Cliffs.Season season)
+  public void OnSeasonChange (Season season)
   {
     Visible = true;
     ZIndex = _zIndex[season];
@@ -75,8 +76,8 @@ public class Waterfall : Area2D
     _waves.ZIndex = _wavesZIndex[season];
     _innerMists.ForEach (x => x.ZIndex = _innerMistsZIndex[season]);
     _outerMists.ForEach (x => x.ZIndex = _outerMistsZIndex[season]);
-    var isWinter = season == Cliffs.Season.Winter;
-    var isSummer = season == Cliffs.Season.Summer;
+    var isWinter = season == Season.Winter;
+    var isSummer = season == Season.Summer;
 
     _animations.ForEach (x =>
     {
@@ -110,10 +111,10 @@ public class Waterfall : Area2D
     });
   }
 
-  private void UpdateAudio (Cliffs.Season season) =>
+  private void UpdateAudio (Season season) =>
     _audioPlayers.ForEach (x =>
     {
       LoopAudio (x.Stream);
-      x.Playing = season != Cliffs.Season.Winter;
+      x.Playing = season != Season.Winter;
     });
 }
