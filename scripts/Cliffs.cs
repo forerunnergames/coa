@@ -9,6 +9,22 @@ public class Cliffs : Area2D
   [Export] public Season InitialSeason = Season.Summer;
   [Export] public Color InitialClearColor = Color.Color8 (11, 118, 255);
   [Export] public Log.Level LogLevel = Log.Level.Info;
+
+  [Export]
+  public bool MusicPlaying
+  {
+    get => _musicPlayer?.Playing ?? true;
+
+    // ReSharper disable once ValueParameterNotUsed
+    set
+    {
+      if (_musicPlayer == null) return;
+
+      _musicPlayer.Playing = !_musicPlayer.Playing;
+      _seasons?.ToggleMusic();
+    }
+  }
+
   private Seasons _seasons;
   private Player _player;
   private AnimationPlayer _playerPrimaryAnimator;
@@ -26,7 +42,7 @@ public class Cliffs : Area2D
   public override void _Ready()
   {
     // ReSharper disable once ExplicitCallerInfoArgument
-    _seasons = new Seasons (GetTree(), InitialSeason, InitialClearColor, LogLevel);
+    _seasons = new Seasons (GetTree(), InitialSeason, InitialClearColor, true, LogLevel);
     _colliders = GetNodesInGroup <CollisionShape2D> (GetTree(), "Extents");
     _musicPlayer = GetNode <AudioStreamPlayer> ("../Audio Players/Music");
     _iceTileMap = GetNode <TileMap> ("Ice");
@@ -35,6 +51,7 @@ public class Cliffs : Area2D
     _playerAnimation = _playerPrimaryAnimator.CurrentAnimation;
     _playerAnimationAreaColliders = _player.GetNode <Area2D> ("Animations/Area Colliders");
     _playerAnimationCollider = _playerAnimationAreaColliders.GetNode <CollisionShape2D> (_playerAnimation);
+    if (MusicPlaying) _musicPlayer.Play();
   }
 
   public override void _Process (float delta)
@@ -72,5 +89,9 @@ public class Cliffs : Area2D
                                  IsIntersectingAnyTile (_playerAnimationAreaColliders, _playerAnimationCollider, _iceTileMap);
   }
 
-  private void ToggleMusic() => _musicPlayer.Playing = !_musicPlayer.Playing;
+  private void ToggleMusic()
+  {
+    _musicPlayer.Playing = !_musicPlayer.Playing;
+    _seasons.ToggleMusic();
+  }
 }

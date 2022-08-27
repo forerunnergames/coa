@@ -31,15 +31,17 @@ public class Seasons
   private Season _oldSeason;
   private bool _fadeIn;
   private bool _skipFade;
+  private bool _isMusicPlaying;
   private readonly Log _log;
 
-  public Seasons (SceneTree sceneTree, Season initialSeason, Color initialClearColor, Log.Level logLevel,
+  public Seasons (SceneTree sceneTree, Season initialSeason, Color initialClearColor, bool isMusicPlayingInitially, Log.Level logLevel,
     [CallerFilePath] string name = "")
   {
     // ReSharper disable once ExplicitCallerInfoArgument
     _log = new Log (name) { CurrentLevel = logLevel };
     _initialClearColor = initialClearColor;
     _clearColor = initialClearColor;
+    _isMusicPlaying = isMusicPlayingInitially;
     _waterfalls = GetNodesInGroups <Waterfall> (sceneTree, "Waterfall", "Parent");
     _ambience.Add (Season.Summer, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_summer.wav"));
     _ambience.Add (Season.Winter, ResourceLoader.Load <AudioStream> ("res://assets/sounds/ambience_winter.wav"));
@@ -58,6 +60,8 @@ public class Seasons
   {
     if (IsReleased (Tools.Input.Season, @event) && !_seasonChangeInProgress) NextSeason();
   }
+
+  public void ToggleMusic() => _isMusicPlaying = !_isMusicPlaying;
 
   public void Update (SceneTree sceneTree, CanvasItem canvas, float delta)
   {
@@ -109,7 +113,7 @@ public class Seasons
 
     if (_seasonChangeInProgress) return;
 
-    _musicPlayer.Play();
+    if (_isMusicPlaying) _musicPlayer.Play();
     _log.Info ($"Current season is now: {CurrentSeason}");
   }
 
