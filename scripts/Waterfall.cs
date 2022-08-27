@@ -6,7 +6,8 @@ using static Tools;
 public class Waterfall : Area2D
 {
   [Export] public Log.Level LogLevel = Log.Level.Info;
-  public bool IsInWaterfall { get; private set; }
+  public bool IsPlayerInWaterfall { get; private set; }
+  public bool IsPlayerInFrozenWaterfall { get; private set; }
   private Log _log;
   private Node2D _pool;
   private Node2D _waves;
@@ -22,6 +23,7 @@ public class Waterfall : Area2D
   private readonly Dictionary <Season, int> _wavesZIndex = new();
   private readonly Dictionary <Season, int> _innerMistsZIndex = new();
   private readonly Dictionary <Season, int> _outerMistsZIndex = new();
+  private Season _currentSeason;
 
   public override void _Ready()
   {
@@ -56,7 +58,8 @@ public class Waterfall : Area2D
     if (!area.IsInGroup ("Player")) return;
 
     _log.Info ($"Player entered {Name}.");
-    IsInWaterfall = true;
+    IsPlayerInWaterfall = true;
+    IsPlayerInFrozenWaterfall = _currentSeason == Season.Winter;
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -65,11 +68,13 @@ public class Waterfall : Area2D
     if (!area.IsInGroup ("Player")) return;
 
     _log.Info ($"Player exited {Name}.");
-    IsInWaterfall = false;
+    IsPlayerInWaterfall = false;
+    IsPlayerInFrozenWaterfall = false;
   }
 
-  public void OnSeasonChange (Season season)
+  public void OnSeason (Season season)
   {
+    _currentSeason = season;
     Visible = true;
     ZIndex = _zIndex[season];
     _pool.ZIndex = _poolZIndex[season];
@@ -78,6 +83,7 @@ public class Waterfall : Area2D
     _outerMists.ForEach (x => x.ZIndex = _outerMistsZIndex[season]);
     var isWinter = season == Season.Winter;
     var isSummer = season == Season.Summer;
+    IsPlayerInFrozenWaterfall = IsPlayerInWaterfall && isWinter;
 
     _animations.ForEach (x =>
     {

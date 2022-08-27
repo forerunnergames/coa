@@ -93,7 +93,7 @@ public class Seasons
       LoopAudio (_musicPlayer.Stream);
       LoopAudio (_ambiencePlayer.Stream);
       _ambiencePlayer.Play();
-      _waterfalls.ForEach (x => x.OnSeasonChange (_newSeason));
+      _waterfalls.ForEach (x => x.OnSeason (_newSeason));
     }
 
     if (!_skipFade)
