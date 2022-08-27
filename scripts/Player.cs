@@ -791,8 +791,8 @@ public class Player : KinematicBody2D
     UpdateSecondaryClothing();
   }
 
-  private bool IsInWaterfall() => _waterfalls.Any (x => x.IsInWaterfall);
-  private bool IsInFrozenWaterfall() => IsInWaterfall() && _cliffs.CurrentSeasonIs (Season.Winter);
+  private bool IsInWaterfall() => _waterfalls.Any (x => x.IsPlayerInWaterfall);
+  private bool IsInFrozenWaterfall() => _waterfalls.Any (x => x.IsPlayerInFrozenWaterfall);
 
   private async void RestAfterClimbingUp()
   {
@@ -1184,8 +1184,8 @@ public class Player : KinematicBody2D
     "\nClimbing down: " + _stateMachine.Is (State.ClimbingDown) +
     "\nIsSpeedClimbing: " + IsSpeedClimbing() +
     "\nIsInWaterfall: " +  IsInWaterfall() +
-    "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
     "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall() +
+    "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
     "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Traversing: " + _stateMachine.Is (State.Traversing) +
