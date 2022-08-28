@@ -1,4 +1,4 @@
-[gd_scene load_steps=174 format=2]
+[gd_scene load_steps=175 format=2]
 
 [ext_resource path="res://scripts/Player.cs" type="Script" id=1]
 [ext_resource path="res://assets/textures/klas/hand-left.png" type="Texture" id=2]
@@ -43,6 +43,7 @@
 [ext_resource path="res://assets/textures/klas/shirt-sleeve-left.png" type="Texture" id=41]
 [ext_resource path="res://assets/textures/klas/shirt-sleeve-right.png" type="Texture" id=42]
 [ext_resource path="res://assets/textures/klas/arm-right.png" type="Texture" id=43]
+[ext_resource path="res://assets/textures/light.png" type="Texture" id=44]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 28, 56 )
@@ -5031,6 +5032,7 @@ z_index = -2
 collision_layer = 2
 collision_mask = 13
 script = ExtResource( 4 )
+MusicPlaying = false
 
 [node name="Rock" type="TileMap" parent="Cliffs" groups=["Cliffs"]]
 scale = Vector2( 8, 8 )
@@ -7127,6 +7129,17 @@ volume_db = -10.156
 [node name="Music" type="AudioStreamPlayer" parent="Audio Players"]
 stream = ExtResource( 9 )
 volume_db = -15.0
+
+[node name="Light2D" type="Light2D" parent="."]
+position = Vector2( 3872, -1888 )
+scale = Vector2( 1, 1.20242 )
+texture = ExtResource( 44 )
+texture_scale = 10.01
+energy = 3.15
+shadow_enabled = true
+shadow_gradient_length = 10.0
+shadow_filter = 5
+shadow_filter_smooth = 6.0
 
 [connection signal="timeout" from="Player/Camera/SmoothingTimer" to="Player" method="_OnCameraSmoothingTimerTimeout"]
 [connection signal="animation_finished" from="Player/Animations/Players/Primary" to="Player" method="_OnAnimationFinished"]
