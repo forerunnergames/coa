@@ -31,7 +31,7 @@
 
 - Original 8 Bit Music
 
-- Created with the Godot Engine
+- Created with Godot Engine
 
 </td>
 <td>
