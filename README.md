@@ -1,8 +1,9 @@
-# Summary
-
-<br/>
-
-***Cliffs of Akaia*** (pronounced: Uh-KAY-uh)
+<table>
+<tr>
+<th colspan="2"><h1>Cliffs of Akaia</h1><sup>(Pronounced: <i>Uh-KAY-uh</i>)</sup></th>
+</tr>
+<tr>
+<td>
 
 - 2D Side-Scrolling RPG
 
@@ -32,34 +33,19 @@
 
 - Created with the Godot Engine
 
-<br/>
-
-![Screenshot](screenshot.png)
-
-# Download
-
-<br/>
-
-[![Available on Itch.io](http://jessemillar.github.io/available-on-itchio-badge/badge-bw.png)](https://forerunnergames.itch.io/coa)
-
-# Made With
-
-<br/>
-
-[![Made with Godot game engine](godot.png)](https://github.com/godotengine/godot/blob/master/LOGO_LICENSE.md)
-
-# Status
-
-<br/>
-
-Development Build (unstable 'develop' branch):
-
-[![develop](https://github.com/forerunnergames/coa/actions/workflows/build.yml/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/build.yml)
-
-Release Build (stable 'master' branch):
-
-[![master](https://github.com/forerunnergames/coa/actions/workflows/release.yml/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/release.yml)
-
-Deployment (Itch.io):
-
-[![master](https://github.com/forerunnergames/coa/actions/workflows/deploy.yml/badge.svg)](https://github.com/forerunnergames/coa/actions/workflows/deploy.yml)
+</td>
+<td>
+<a href="https://raw.githubusercontent.com/forerunnergames/coa/develop/screenshot.png"><img src="./screenshot.png" alt="Screenshot" width="600px"/></a>
+<br/><a href="https://forerunnergames.itch.io/coa"><sub><img src="http://jessemillar.github.io/available-on-itchio-badge/badge-bw.png" alt="Download on itch.io" width="300px"/></sub></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://godotengine.org/"><sup><img src="./godot.png" width="250px"/></sup></a></td>
+</tr>
+<tr>
+<th colspan="2"><br/><sup>
+<a href="https://github.com/forerunnergames/coa/actions/workflows/build.yml"><img src="https://github.com/forerunnergames/coa/actions/workflows/build.yml/badge.svg?branch=develop" alt="develop branch build status"/></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/forerunnergames/coa/actions/workflows/release.yml"><img src="https://github.com/forerunnergames/coa/actions/workflows/release.yml/badge.svg?branch=master" alt="master branch release status"/></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/forerunnergames/coa/actions/workflows/deploy.yml"><img src="https://github.com/forerunnergames/coa/actions/workflows/deploy.yml/badge.svg?branch=master" alt="master branch deployment status"/></a>
+</sup>
+</th>
+</tr>
+</table>
