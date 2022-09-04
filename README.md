@@ -36,7 +36,7 @@
 </td>
 <td>
 <a href="https://raw.githubusercontent.com/forerunnergames/coa/develop/screenshot.png"><img src="./screenshot.png" alt="Screenshot" width="600px"/></a>
-<br/><a href="https://forerunnergames.itch.io/coa"><sub><img src="http://jessemillar.github.io/available-on-itchio-badge/badge-bw.png" alt="Download on itch.io" width="250px"/></sub></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://godotengine.org/"><sup><img src="./godot.png" width="250px"/></sup></a></td>
+<br/><br/><br/><a href="https://forerunnergames.itch.io/coa"><sub><img src="http://jessemillar.github.io/available-on-itchio-badge/badge-bw.png" alt="Download on itch.io" width="250px"/></sub></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://godotengine.org/"><sup><img src="./godot.png" width="250px"/></sup></a></td>
 </tr>
 <tr>
 <th colspan="2"><br/><sup>
