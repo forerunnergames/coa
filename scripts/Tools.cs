@@ -95,6 +95,8 @@ public static class Tools
   public static bool IsEnclosedBy (Rect2 r1, Rect2 r2) => r1.Position.x >= r2.Position.x && r1.End.x <= r2.End.x && r1.Position.y >= r2.Position.y && r1.End.y <= r2.End.y;
   public static Vector2 GetTileCellAtCenterOf (Area2D area, string colliderName, TileMap t) => GetTileCellAtCenterOf (area, area.GetNode <CollisionShape2D> (colliderName), t);
   public static bool IsIntersectingAnyTile (Area2D area, CollisionShape2D collider, TileMap t) => GetIntersectingTileId (area, collider, t) != -1;
+  public static bool IsIntersectingAnyTile (Rect2 rect, TileMap t) => GetIntersectingTileId (rect, t) != -1;
+  public static int GetIntersectingTileId (Rect2 rect, TileMap t) => t.GetCellv (GetIntersectingTileCell (rect, t));
   public static int GetIntersectingTileId (Area2D area, CollisionShape2D collider, TileMap t) => t.GetCellv (GetIntersectingTileCell (area, collider, t));
   public static Vector2 GetIntersectingTileCell (Area2D area, string colliderName, TileMap t) => GetIntersectingTileCell (area, area.GetNode <CollisionShape2D> (colliderName), t);
   public static string GetIntersectingTileName (Area2D area, CollisionShape2D collider, TileMap t) => GetTileName (GetIntersectingTileCell (area, collider, t), t);
@@ -127,7 +129,7 @@ public static class Tools
     Func <T, string> f = null) =>
     e.Select (f ?? (s => prepend + s + append)).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
 
-  public static Rect2 GetAreaColliderRect (Area2D area, CollisionShape2D collider)
+  public static Rect2 GetColliderRect (Area2D area, CollisionShape2D collider)
   {
     if (!area.HasNode (collider.Name) || collider.Shape is not RectangleShape2D rect) return new Rect2();
 
@@ -144,13 +146,17 @@ public static class Tools
   }
 
   public static Vector2 GetTileCellAtCenterOf (Area2D area, CollisionShape2D collider, TileMap t) =>
-    GetIntersectingTileCell (new Rect2 (GetAreaColliderRect (area, collider).GetCenter(), Vector2.One), t);
+    GetIntersectingTileCell (new Rect2 (GetColliderRect (area, collider).GetCenter(), Vector2.One), t);
 
   public static Vector2 GetCollidingTileCell (Vector2 collisionPoint, TileMap t) =>
     GetIntersectingTileCell (new Rect2 (collisionPoint, Vector2.One), t);
 
   public static Vector2 GetIntersectingTileCell (Area2D area, CollisionShape2D collider, TileMap t) =>
-    GetIntersectingTileCell (GetAreaColliderRect (area, collider), t);
+    GetIntersectingTileCell (GetColliderRect (area, collider), t);
+
+  public static Vector2 GetIntersectingTileCell (Rect2 collider, TileMap t) =>
+    t.GetUsedCells().Cast <Vector2>().ToList().DefaultIfEmpty (Vector2.Zero).FirstOrDefault (x =>
+      collider.Intersects (new Rect2 (GetTileCellGlobalOrigin (x, t), GetTileCellGlobalSize (x, t))));
 
   public static Vector2 GetTileCellGlobalOrigin (Vector2 cell, TileMap t)
   {
@@ -336,10 +342,6 @@ public static class Tools
 
     return p;
   }
-
-  private static Vector2 GetIntersectingTileCell (Rect2 collider, TileMap t) =>
-    t.GetUsedCells().Cast <Vector2>().ToList().DefaultIfEmpty (Vector2.Zero).FirstOrDefault (x =>
-      collider.Intersects (new Rect2 (GetTileCellGlobalOrigin (x, t), GetTileCellGlobalSize (x, t))));
 
   private static List <Rect2> GetUncoveredRects (IEnumerable <Rect2> originals, IReadOnlyCollection <Rect2> overlaps) =>
     originals.Where (x => !overlaps.Any (y => IsEnclosedBy (x, y))).Aggregate (new List <Rect2>(),

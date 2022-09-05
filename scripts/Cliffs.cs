@@ -26,31 +26,18 @@ public class Cliffs : Area2D
   }
 
   private Seasons _seasons;
-  private Player _player;
-  private AnimationPlayer _playerPrimaryAnimator;
-  private Area2D _playerAnimationAreaColliders;
-  private Rect2 _playerRect;
-  private Vector2 _playerPosition;
-  private string _playerAnimation;
-  private CollisionShape2D _playerAnimationCollider;
-  private AudioStreamPlayer _musicPlayer;
   private TileMap _iceTileMap;
-  private readonly List <Rect2> _cliffRects = new();
+  private List <Rect2> _cliffRects;
   private List <CollisionShape2D> _colliders;
-  private Season _playerSeason;
+  private AudioStreamPlayer _musicPlayer;
 
   public override void _Ready()
   {
-    // ReSharper disable once ExplicitCallerInfoArgument
-    _seasons = new Seasons (GetTree(), InitialSeason, InitialClearColor, true, LogLevel);
+    _iceTileMap = GetNode <TileMap> ("Ice");
     _colliders = GetNodesInGroup <CollisionShape2D> (GetTree(), "Extents");
     _musicPlayer = GetNode <AudioStreamPlayer> ("../Audio Players/Music");
-    _iceTileMap = GetNode <TileMap> ("Ice");
-    _player = GetNode <Player> ("../Player");
-    _playerPrimaryAnimator = _player.GetNode <AnimationPlayer> ("Animations/Players/Primary");
-    _playerAnimation = _playerPrimaryAnimator.CurrentAnimation;
-    _playerAnimationAreaColliders = _player.GetNode <Area2D> ("Animations/Area Colliders");
-    _playerAnimationCollider = _playerAnimationAreaColliders.GetNode <CollisionShape2D> (_playerAnimation);
+    _seasons = new Seasons (GetTree(), InitialSeason, InitialClearColor, MusicPlaying, LogLevel);
+    _cliffRects = new List <Rect2> (_colliders.Select (x => GetColliderRect (this, x)));
     if (MusicPlaying) _musicPlayer.Play();
   }
 
@@ -58,7 +45,6 @@ public class Cliffs : Area2D
   {
     Update();
     UpdateSeasons (delta);
-    UpdatePlayer();
   }
 
   public override void _UnhandledInput (InputEvent @event)
@@ -67,27 +53,13 @@ public class Cliffs : Area2D
     if (IsReleased (Tools.Input.Music, @event)) ToggleMusic();
   }
 
+  // @formatter:off
   public Season GetCurrentSeason() => _seasons.CurrentSeason;
   public bool CurrentSeasonIs (Season season) => _seasons.CurrentSeason == season;
+  public bool Encloses (Rect2 rect) => IsEnclosedBy (rect, _cliffRects);
+  public bool IsTouchingIce (Rect2 rect) => _iceTileMap.Visible && IsIntersectingAnyTile (rect, _iceTileMap);
   private void UpdateSeasons (float delta) => _seasons.Update (GetTree(), this, delta);
-
-  private void UpdatePlayer()
-  {
-    if (_playerSeason == _seasons.CurrentSeason && _playerPrimaryAnimator.CurrentAnimation == _playerAnimation &&
-        AreAlmostEqual (_playerAnimationCollider.GlobalPosition, _playerPosition, 0.001f)) return;
-
-    _playerSeason = _seasons.CurrentSeason;
-    _playerAnimation = _playerPrimaryAnimator.CurrentAnimation;
-    _playerAnimationCollider = _playerAnimationAreaColliders.GetNode <CollisionShape2D> (_playerAnimation);
-    _playerPosition = _playerAnimationCollider.GlobalPosition;
-    _playerRect = GetAreaColliderRect (_playerAnimationAreaColliders, _playerAnimationCollider);
-    _cliffRects.Clear();
-    _cliffRects.AddRange (_colliders.Select (x => GetAreaColliderRect (this, x)));
-    _player.IsInCliffs = IsEnclosedBy (_playerRect, _cliffRects);
-
-    _player.IsTouchingCliffIce = _iceTileMap.Visible &&
-                                 IsIntersectingAnyTile (_playerAnimationAreaColliders, _playerAnimationCollider, _iceTileMap);
-  }
+  // @formatter:on
 
   private void ToggleMusic()
   {

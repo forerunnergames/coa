@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Godot;
+using static PlayerStateMachine;
 using static Seasons;
 using static Tools;
 using Input = Tools.Input;
@@ -15,10 +16,10 @@ using Input = Tools.Input;
 // TODO   The cliff arresting sound effect will need to be adjusted as well to not begin until
 // TODO   _isPreparingToCliffArrest is complete (may resolve itself automatically).
 // Climbing terminology:
-// Cliff arresting: Using pickaxe to slow a cliff fall
-// Cliffhanging: Attached to a cliff above the ground, not moving
-// Traversing: Climbing horizontally
-// Free falling: Moving down, without cliff arresting, can also be coming down from a jump.
+//   Cliff arresting: Using pickaxe to slow a cliff fall
+//   Cliffhanging: Attached to a cliff above the ground, not moving
+//   Traversing: Climbing horizontally
+//   Free falling: Moving down, without cliff arresting, can also be coming down from a jump.
 public class Player : KinematicBody2D
 {
   [Export] public float HorizontalWalkingSpeed = 20.0f;
@@ -59,34 +60,11 @@ public class Player : KinematicBody2D
   [Export] public int EnergyMeterDepletionTimeSeconds = 3;
   [Export] public State InitialState = State.Idle;
   [Export] public Log.Level LogLevel = Log.Level.Info;
-
-  // Field must be publicly accessible from Cliffs.cs
-  public bool IsInCliffs;
-
-  // Field must be publicly accessible from Cliffs.cs
-  public bool IsTouchingCliffIce;
-
-  public enum State
-  {
-    Idle,
-    ReadingSign,
-    Walking,
-    Running,
-    Jumping,
-    ClimbingPrep,
-    ClimbingUp,
-    ClimbingDown,
-    CliffHanging,
-    Traversing,
-    CliffArresting,
-    FreeFalling,
-  }
-
   private readonly RandomNumberGenerator _rng = new();
   private Vector2 _velocity;
   private RichTextLabel _label = null!;
   private AnimationPlayer _primaryAnimator = null!;
-  private Area2D _animationAreaColliders = null!;
+  private Area2D _animationColliderParent = null!;
   private TextureProgress _energyMeter = null!;
   private AudioStreamPlayer _audio = null!;
   private Timer _energyTimer = null!;
@@ -100,6 +78,7 @@ public class Player : KinematicBody2D
   private readonly List <string> _printLinesOnce = new();
   private readonly List <string> _printLinesContinuously = new();
   private IStateMachine <State> _stateMachine = null!;
+  private PlayerClothing _clothing;
   private ulong _fallingStartTimeMs;
   private ulong _elapsedFallingTimeMs;
   private ulong _lastTotalFallingTimeMs;
@@ -117,427 +96,18 @@ public class Player : KinematicBody2D
   private IDropdownable _dropdown;
   private volatile string _currentAnimation;
   private volatile bool _isResting;
-  private ClothingClickMode _clothingClickMode = ClothingClickMode.Remove;
-  private Sprite _shirtSprite;
-  private Sprite _scarfSprite;
-  private Sprite _pantsSprite;
-  private Sprite _itemInHandSprite;
-  private Sprite _itemInBackpackSprite;
-  private Sprite _headSprite;
-  private Sprite _headOutlineRearSprite;
-  private Sprite _hatSprite;
-  private Sprite _hatOutlineSprite;
-  private Sprite _handRightSprite;
-  private Sprite _handLeftSprite;
-  private Sprite _hairSprite;
-  private Sprite _gloveLeftSprite;
-  private Sprite _gloveRightSprite;
-  private Sprite _footRightSprite;
-  private Sprite _footLeftSprite;
-  private Sprite _bootRightSprite;
-  private Sprite _bootLeftSprite;
-  private Sprite _bodySprite;
-  private Sprite _beltSprite;
-  private Sprite _shirtSleeveLeftSprite;
-  private Sprite _shirtSleeveRightSprite;
-  private Sprite _armLeftSprite;
-  private Sprite _armRightSprite;
-  private Sprite _backpackSprite;
-  private Sprite _backpackStrapsSprite;
-  private List <Sprite> _clothes;
   private List <Area2D> _groundAreas;
   private List <RayCast2D> _groundDetectors;
   private List <RayCast2D> _wallDetectors;
   private List <Waterfall> _waterfalls;
   private Log _log;
 
-  // @formatter:off
-
-  private static readonly Dictionary <State, State[]> TransitionTable = new()
-  {
-    { State.Idle, new[] { State.Walking, State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.ClimbingDown, State.FreeFalling, State.ReadingSign }},
-    { State.Walking, new[] { State.Idle, State.Running, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign }},
-    { State.Running, new[] { State.Idle, State.Walking, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign }},
-    { State.Jumping, new[] { State.Idle, State.FreeFalling, State.Walking }},
-    { State.ClimbingPrep, new[] { State.ClimbingUp, State.Idle, State.Walking, State.Jumping }},
-    { State.ClimbingUp, new[] { State.ClimbingDown, State.CliffHanging, State.FreeFalling, State.Idle }},
-    { State.ClimbingDown, new[] { State.ClimbingUp, State.CliffHanging, State.FreeFalling, State.Idle }},
-    { State.CliffHanging, new[] { State.ClimbingUp, State.ClimbingDown, State.Traversing, State.FreeFalling }},
-    { State.Traversing, new[] { State.CliffHanging, State.FreeFalling }},
-    { State.CliffArresting, new[] { State.CliffHanging, State.FreeFalling, State.Idle }},
-    { State.FreeFalling, new[] { State.CliffArresting, State.CliffHanging, State.Idle, State.Walking, State.Running, State.Jumping }},
-    { State.ReadingSign, new[] { State.Idle, State.Walking, State.Running }}
-  };
-
-  private static readonly Dictionary <string, Dictionary <string, int>> SpriteZIndices = new()
-  {
-    { "player_idle_left", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_idle_back", new Dictionary <string, int> {
-      { "item-in-hand", 0 },
-      { "body", 1 },
-      { "head", 2 },
-      { "head-outline-rear", 2 },
-      { "foot-left", 3 },
-      { "foot-right", 3 },
-      { "boot-left", 4 },
-      { "boot-right", 4 },
-      { "pants", 5 },
-      { "shirt", 6 },
-      { "belt", 7 },
-      { "arm-left", 8 },
-      { "arm-right", 8 },
-      { "shirt-sleeve-left", 9 },
-      { "shirt-sleeve-right", 9 },
-      { "hand-left", 10 },
-      { "hand-right", 10 },
-      { "glove-left", 11 },
-      { "glove-right", 11 },
-      { "scarf", 12 },
-      { "backpack", 13 },
-      { "backpack-straps", 13 },
-      { "hair", 14 },
-      { "hat-outline", 15 },
-      { "hat", 16 },
-      { "item-in-backpack", 17 }}},
-    { "player_cliff_hanging", new Dictionary <string, int> {
-      { "item-in-hand", 0 },
-      { "body", 1 },
-      { "head", 2 },
-      { "head-outline-rear", 2 },
-      { "foot-left", 3 },
-      { "foot-right", 3 },
-      { "boot-left", 4 },
-      { "boot-right", 4 },
-      { "pants", 5 },
-      { "shirt", 6 },
-      { "belt", 7 },
-      { "arm-left", 8 },
-      { "arm-right", 8 },
-      { "shirt-sleeve-left", 9 },
-      { "shirt-sleeve-right", 9 },
-      { "hand-left", 10 },
-      { "hand-right", 10 },
-      { "glove-left", 11 },
-      { "glove-right", 11 },
-      { "scarf", 12 },
-      { "backpack", 13 },
-      { "backpack-straps", 13 },
-      { "hair", 14 },
-      { "hat-outline", 15 },
-      { "hat", 16 },
-      { "item-in-backpack", 17 }}},
-    { "player_cliff_arresting", new Dictionary <string, int> {
-      { "item-in-hand", 0 },
-      { "body", 1 },
-      { "head", 2 },
-      { "head-outline-rear", 2 },
-      { "foot-left", 3 },
-      { "foot-right", 3 },
-      { "boot-left", 4 },
-      { "boot-right", 4 },
-      { "pants", 5 },
-      { "shirt", 6 },
-      { "belt", 7 },
-      { "arm-left", 8 },
-      { "arm-right", 8 },
-      { "shirt-sleeve-left", 9 },
-      { "shirt-sleeve-right", 9 },
-      { "hand-left", 10 },
-      { "hand-right", 10 },
-      { "glove-left", 11 },
-      { "glove-right", 11 },
-      { "scarf", 12 },
-      { "backpack", 13 },
-      { "backpack-straps", 13 },
-      { "hair", 14 },
-      { "hat-outline", 15 },
-      { "hat", 16 },
-      { "item-in-backpack", 17 }}},
-    { "player_free_falling", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_equipping_left", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_unequipping_left", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_equipping_back", new Dictionary <string, int> {
-      { "item-in-hand", 0 },
-      { "body", 1 },
-      { "head", 2 },
-      { "head-outline-rear", 2 },
-      { "foot-left", 3 },
-      { "foot-right", 3 },
-      { "boot-left", 4 },
-      { "boot-right", 4 },
-      { "pants", 5 },
-      { "shirt", 6 },
-      { "belt", 7 },
-      { "arm-left", 8 },
-      { "shirt-sleeve-left", 9 },
-      { "hand-left", 10 },
-      { "glove-left", 11 },
-      { "scarf", 12 },
-      { "backpack", 13 },
-      { "backpack-straps", 13 },
-      { "hair", 14 },
-      { "hat-outline", 15 },
-      { "hat", 16 },
-      { "item-in-backpack", 17 },
-      { "arm-right", 18 },
-      { "shirt-sleeve-right", 19 },
-      { "hand-right", 20 },
-      { "glove-right", 21 }}},
-    { "player_unequipping_back", new Dictionary <string, int> {
-      { "item-in-hand", 0 },
-      { "body", 1 },
-      { "head", 2 },
-      { "head-outline-rear", 2 },
-      { "foot-left", 3 },
-      { "foot-right", 3 },
-      { "boot-left", 4 },
-      { "boot-right", 4 },
-      { "pants", 5 },
-      { "shirt", 6 },
-      { "belt", 7 },
-      { "arm-left", 8 },
-      { "shirt-sleeve-left", 9 },
-      { "hand-left", 10 },
-      { "glove-left", 11 },
-      { "scarf", 12 },
-      { "backpack", 13 },
-      { "backpack-straps", 13 },
-      { "hair", 14 },
-      { "hat-outline", 15 },
-      { "hat", 16 },
-      { "item-in-backpack", 17 },
-      { "arm-right", 18 },
-      { "shirt-sleeve-right", 19 },
-      { "hand-right", 20 },
-      { "glove-right", 21 }}},
-    { "player_walking_left", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_running_left", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_attacking", new Dictionary <string, int> {
-      { "item-in-backpack", 0 },
-      { "backpack", 1 },
-      { "shirt-sleeve-right", 2 },
-      { "foot-right", 3 },
-      { "boot-right", 4 },
-      { "arm-right", 5 },
-      { "hand-right", 5 },
-      { "glove-right", 6 },
-      { "foot-left", 7 },
-      { "body", 8 },
-      { "shirt", 9 },
-      { "backpack-straps", 10 },
-      { "head", 11 },
-      { "head-outline-rear", 11 },
-      { "boot-left", 12 },
-      { "pants", 13 },
-      { "belt", 14 },
-      { "hair", 15 },
-      { "scarf", 16 },
-      { "hat", 17 },
-      { "hat-outline", 17 },
-      { "item-in-hand", 18 },
-      { "arm-left", 19 },
-      { "hand-left", 19 },
-      { "shirt-sleeve-left", 20 },
-      { "glove-left", 20 }}},
-    { "player_climbing_up", new Dictionary <string, int> {
-      { "item-in-hand", 0 },
-      { "body", 1 },
-      { "head", 2 },
-      { "head-outline-rear", 2 },
-      { "foot-left", 3 },
-      { "foot-right", 3 },
-      { "boot-left", 4 },
-      { "boot-right", 4 },
-      { "pants", 5 },
-      { "shirt", 6 },
-      { "belt", 7 },
-      { "arm-left", 8 },
-      { "arm-right", 8 },
-      { "shirt-sleeve-left", 9 },
-      { "shirt-sleeve-right", 9 },
-      { "hand-left", 10 },
-      { "hand-right", 10 },
-      { "glove-left", 11 },
-      { "glove-right", 11 },
-      { "scarf", 12 },
-      { "backpack", 13 },
-      { "backpack-straps", 13 },
-      { "hair", 14 },
-      { "hat-outline", 15 },
-      { "hat", 16 },
-      { "item-in-backpack", 17 }}}
-  };
-
-  // @formatter:on
-
-  private enum ClothingClickMode
-  {
-    Add,
-    Remove
-  }
-
   [SuppressMessage ("ReSharper", "ExplicitCallerInfoArgument")]
   public override void _Ready()
   {
-    // @formatter:off
     _log = new Log (Name) { CurrentLevel = LogLevel };
     _rng.Randomize();
+    _clothing = new PlayerClothing (GetNode ("Animations/Sprites"), LogLevel, Name);
     _weapon = new Weapon (GetNode <Node2D> ("Animations"), LogLevel);
     _camera = GetNode <Camera2D> ("Camera");
     _groundDetectors = GetNodesInGroups <RayCast2D> (GetTree(), "Ground Detectors", "Player");
@@ -550,7 +120,7 @@ public class Player : KinematicBody2D
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
     _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
     _label.Visible = false;
-    _animationAreaColliders = GetNode <Area2D> ("Animations/Area Colliders");
+    _animationColliderParent = GetNode <Area2D> ("Animations/Area Colliders");
     _energyMeter = GetNode <TextureProgress> ("../UI/Control/Energy Meter");
     _energyMeter.Value = MaxEnergy;
     _energy = MaxEnergy;
@@ -559,52 +129,6 @@ public class Player : KinematicBody2D
     _cameraSmoothingTimer = GetNode <Timer> ("Camera/SmoothingTimer");
     _energyMeterReplenishRatePerUnit = (float)EnergyMeterReplenishTimeSeconds / EnergyMeterUnits;
     _energyMeterDepletionRatePerUnit = (float)EnergyMeterDepletionTimeSeconds / EnergyMeterUnits;
-    _shirtSprite = GetNode <Sprite> ("Animations/Sprites/shirt");
-    _scarfSprite = GetNode <Sprite> ("Animations/Sprites/scarf");
-    _pantsSprite = GetNode <Sprite> ("Animations/Sprites/pants");
-    _itemInHandSprite = GetNode <Sprite> ("Animations/Sprites/item-in-hand");
-    _itemInBackpackSprite = GetNode <Sprite> ("Animations/Sprites/item-in-backpack");
-    _headSprite = GetNode <Sprite> ("Animations/Sprites/head");
-    _headOutlineRearSprite = GetNode <Sprite> ("Animations/Sprites/head-outline-rear");
-    _hatSprite = GetNode <Sprite> ("Animations/Sprites/hat");
-    _hatOutlineSprite = GetNode <Sprite> ("Animations/Sprites/hat-outline");
-    _handRightSprite = GetNode <Sprite> ("Animations/Sprites/hand-right");
-    _handLeftSprite = GetNode <Sprite> ("Animations/Sprites/hand-left");
-    _hairSprite = GetNode <Sprite> ("Animations/Sprites/hair");
-    _gloveLeftSprite = GetNode <Sprite> ("Animations/Sprites/glove-left");
-    _gloveRightSprite = GetNode <Sprite> ("Animations/Sprites/glove-right");
-    _footRightSprite = GetNode <Sprite> ("Animations/Sprites/foot-right");
-    _footLeftSprite = GetNode <Sprite> ("Animations/Sprites/foot-left");
-    _bootRightSprite = GetNode <Sprite> ("Animations/Sprites/boot-right");
-    _bootLeftSprite = GetNode <Sprite> ("Animations/Sprites/boot-left");
-    _bodySprite = GetNode <Sprite> ("Animations/Sprites/body");
-    _beltSprite = GetNode <Sprite> ("Animations/Sprites/belt");
-    _shirtSleeveLeftSprite = GetNode <Sprite> ("Animations/Sprites/shirt-sleeve-left");
-    _shirtSleeveRightSprite = GetNode <Sprite> ("Animations/Sprites/shirt-sleeve-right");
-    _armLeftSprite = GetNode <Sprite> ("Animations/Sprites/arm-left");
-    _armRightSprite = GetNode <Sprite> ("Animations/Sprites/arm-right");
-    _backpackSprite = GetNode <Sprite> ("Animations/Sprites/backpack");
-    _backpackStrapsSprite = GetNode <Sprite> ("Animations/Sprites/backpack-straps");
-    // @formatter:on
-
-    _clothes = new List <Sprite>
-    {
-      _gloveLeftSprite,
-      _gloveRightSprite,
-      _scarfSprite,
-      _hatSprite,
-      _backpackSprite,
-      _backpackStrapsSprite,
-      _beltSprite,
-      _shirtSprite,
-      _shirtSleeveLeftSprite,
-      _shirtSleeveRightSprite,
-      _bootLeftSprite,
-      _pantsSprite,
-      _bootRightSprite,
-      _itemInBackpackSprite,
-    };
-
     _primaryAnimator = GetNode <AnimationPlayer> ("Animations/Players/Primary");
     _primaryAnimator.Play (IdleLeftAnimation);
     InitializeStateMachine();
@@ -655,7 +179,7 @@ public class Player : KinematicBody2D
   {
     if (IsReleased (Input.Text, @event)) _label.Visible = !_label.Visible;
     if (IsReleased (Input.Respawn, @event)) Respawn();
-    if (WasMouseLeftClicked (@event)) UpdateClothing();
+    if (WasMouseLeftClicked (@event)) _clothing.UpdateAll (_primaryAnimator.CurrentAnimation);
 
     // This async call must be the last line in this method.
     if (IsDownArrowPressed() && !_stateMachine.Is (State.ReadingSign)) await _dropdown.Drop();
@@ -744,7 +268,7 @@ public class Player : KinematicBody2D
   // ReSharper disable once UnusedMember.Global
   public void _OnAnimationStarted (string animationName)
   {
-    foreach (var (name, zIndex) in SpriteZIndices[animationName]) GetNode <Sprite> ("Animations/Sprites/" + name).ZIndex = zIndex;
+    _clothing.OnAnimation (animationName);
 
     switch (animationName)
     {
@@ -764,7 +288,7 @@ public class Player : KinematicBody2D
       }
     }
 
-    UpdateSecondaryClothing();
+    _clothing.UpdateSecondary();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -788,7 +312,7 @@ public class Player : KinematicBody2D
       }
     }
 
-    UpdateSecondaryClothing();
+    _clothing.UpdateSecondary();
   }
 
   private bool IsInWaterfall() => _waterfalls.Any (x => x.IsPlayerInWaterfall);
@@ -803,7 +327,7 @@ public class Player : KinematicBody2D
 
   private void ReadSign()
   {
-    var cell = GetTileCellAtCenterOf (_animationAreaColliders, _primaryAnimator.CurrentAnimation, _signsTileMap);
+    var cell = GetTileCellAtCenterOf (_animationColliderParent, _primaryAnimator.CurrentAnimation, _signsTileMap);
     var name = GetReadableSignName (cell);
 
     if (!HasReadableSign (name))
@@ -842,103 +366,6 @@ public class Player : KinematicBody2D
     _waterfalls.ForEach (x => x.ChangeSettings (8.8f, 33));
   }
 
-  private Sprite GetClickedClothingItemForRemoving() =>
-    _clothes.OrderByDescending (clothes => SpriteZIndices[_primaryAnimator.CurrentAnimation][clothes.Name])
-      .Where (clothing => MouseInSprite (clothing, GetMousePositionInSpriteSpace (clothing)))
-      .OrderByDescending (clothing => clothing.Visible).FirstOrDefault();
-
-  private Sprite GetClickedClothingItemForAdding() =>
-    _clothes.OrderBy (clothes => SpriteZIndices[_primaryAnimator.CurrentAnimation][clothes.Name])
-      .Where (clothing => MouseInSprite (clothing, GetMousePositionInSpriteSpace (clothing)))
-      .OrderByDescending (clothing => !clothing.Visible).FirstOrDefault();
-
-  private void UpdateClothing()
-  {
-    Sprite clothingItem;
-
-    switch (_clothingClickMode)
-    {
-      case ClothingClickMode.Remove:
-      {
-        clothingItem = GetClickedClothingItemForRemoving();
-
-        if (clothingItem == null) return;
-
-        if (!clothingItem.Visible)
-        {
-          _clothingClickMode = ClothingClickMode.Add;
-          clothingItem = GetClickedClothingItemForAdding();
-        }
-
-        break;
-      }
-      case ClothingClickMode.Add:
-      {
-        clothingItem = GetClickedClothingItemForAdding();
-
-        if (clothingItem == null) return;
-
-        if (clothingItem.Visible)
-        {
-          _clothingClickMode = ClothingClickMode.Remove;
-          clothingItem = GetClickedClothingItemForRemoving();
-        }
-
-        break;
-      }
-      default:
-      {
-        _log.Warn ($"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode}");
-
-        return;
-      }
-    }
-
-    if (clothingItem == null) return;
-
-    ToggleVisibility (clothingItem);
-    UpdateSecondaryClothing();
-  }
-
-  private void UpdateSecondaryClothing()
-  {
-    _shirtSprite.Visible = _clothingClickMode switch
-    {
-      ClothingClickMode.Add => _shirtSprite.Visible || _shirtSleeveLeftSprite.Visible || _shirtSleeveRightSprite.Visible,
-      ClothingClickMode.Remove => _shirtSprite.Visible && _shirtSleeveLeftSprite.Visible && _shirtSleeveRightSprite.Visible,
-      _ => _log.Warn (
-        $"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode} for {_shirtSprite.GetType()}: {_shirtSprite.Name}")
-    };
-
-    _backpackSprite.Visible = _clothingClickMode switch
-    {
-      ClothingClickMode.Add => _backpackSprite.Visible || _backpackStrapsSprite.Visible || _itemInBackpackSprite.Visible,
-      ClothingClickMode.Remove => _backpackSprite.Visible && _backpackStrapsSprite.Visible,
-      _ => _log.Warn (
-        $"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode} for {_backpackSprite.GetType()}: {_backpackSprite.Name}")
-    };
-
-    _itemInBackpackSprite.Visible = _clothingClickMode switch
-    {
-      ClothingClickMode.Add => !_itemInHandSprite.Visible && (_itemInBackpackSprite.Visible || _backpackSprite.Visible),
-      ClothingClickMode.Remove => _itemInBackpackSprite.Visible && _backpackSprite.Visible,
-      _ => _log.Warn (
-        $"Ignoring unrecognized value for {nameof (ClothingClickMode)}: {_clothingClickMode} for {_itemInBackpackSprite.GetType()}: {_itemInBackpackSprite.Name}")
-    };
-
-    _backpackStrapsSprite.Visible = _backpackSprite.Visible;
-    _shirtSleeveLeftSprite.Visible = _shirtSprite.Visible;
-    _shirtSleeveRightSprite.Visible = _shirtSprite.Visible;
-    _armLeftSprite.Visible = !_shirtSleeveLeftSprite.Visible;
-    _armRightSprite.Visible = !_shirtSleeveRightSprite.Visible;
-    _handLeftSprite.Visible = !_gloveLeftSprite.Visible;
-    _handRightSprite.Visible = !_gloveRightSprite.Visible;
-    _footLeftSprite.Visible = !_bootLeftSprite.Visible;
-    _footRightSprite.Visible = !_bootRightSprite.Visible;
-    _hatOutlineSprite.Visible = _hatSprite.Visible;
-    _hairSprite.Visible = !_hatSprite.Visible;
-  }
-
   private void Respawn()
   {
     _stateMachine.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
@@ -962,9 +389,13 @@ public class Player : KinematicBody2D
   }
 
   // @formatter:off
+  private bool IsInCliffs() => _cliffs.Encloses (GetCurrentAnimationColliderRect);
+  private bool IsTouchingCliffIce() => _cliffs.IsTouchingIce (GetCurrentAnimationColliderRect);
+  private Rect2 GetCurrentAnimationColliderRect => GetColliderRect (_animationColliderParent, GetCurrentAnimationCollider());
+  private CollisionShape2D GetCurrentAnimationCollider() => _animationColliderParent.GetNode <CollisionShape2D> (_primaryAnimator.CurrentAnimation);
   private bool HasReadableSign() => HasReadableSign (GetReadableSignName());
   private bool HasReadableSign (string name) => _signsTileMap?.HasNode ("../" + name) ?? false;
-  private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_animationAreaColliders, _primaryAnimator.CurrentAnimation, _signsTileMap));
+  private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_animationColliderParent, _primaryAnimator.CurrentAnimation, _signsTileMap));
   private static string GetReadableSignName (Vector2 tileSignCell) => "Readable Sign (" + tileSignCell.x + ", " + tileSignCell.y + ")";
   private Sprite GetReadableSign (string name) => _signsTileMap?.GetNode <Sprite> ("../" + name);
   private bool IsSpeedClimbing() => (_stateMachine.Is (State.ClimbingUp) || _stateMachine.Is (State.ClimbingDown)) && IsEnergyKeyPressed();
@@ -1103,12 +534,12 @@ public class Player : KinematicBody2D
     // Workaround for https://github.com/godotengine/godot/issues/14578 "Changing node parent produces Area2D/3D signal duplicates"
     // @formatter:off
     _groundAreas.ForEach (x => x.SetBlockSignals (true));
-    _animationAreaColliders.SetBlockSignals (true);
+    _animationColliderParent.SetBlockSignals (true);
     _waterfalls.ForEach (x => x.SetBlockSignals (true));
     // @formatter:on
     // End workaround
 
-    foreach (var node in _animationAreaColliders.GetChildren())
+    foreach (var node in _animationColliderParent.GetChildren())
     {
       if (node is not CollisionShape2D collider) continue;
 
@@ -1121,7 +552,7 @@ public class Player : KinematicBody2D
     _groundAreas.ForEach (x => x.SetBlockSignals (false));
     _waterfalls.ForEach (x => x.SetBlockSignals (false));
     await ToSignal (GetTree(), "idle_frame");
-    _animationAreaColliders.SetBlockSignals (false);
+    _animationColliderParent.SetBlockSignals (false);
     // @formatter:on
     // End workaround
   }
@@ -1185,7 +616,7 @@ public class Player : KinematicBody2D
     "\nIsSpeedClimbing: " + IsSpeedClimbing() +
     "\nIsInWaterfall: " +  IsInWaterfall() +
     "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall() +
-    "\nIsTouchingCliffIce: " + IsTouchingCliffIce +
+    "\nIsTouchingCliffIce: " + IsTouchingCliffIce() +
     "\nCliff arresting: " + _stateMachine.Is (State.CliffArresting) +
     "\nCliff hanging: " + _stateMachine.Is (State.CliffHanging) +
     "\nClimbing Traversing: " + _stateMachine.Is (State.Traversing) +
@@ -1194,7 +625,7 @@ public class Player : KinematicBody2D
     "\nIsOnFloor(): " + IsOnFloor() +
     "\nIsTouchingGround(): " + IsTouchingGround() +
     "\nIsTouchingWall(): " + IsTouchingWall() +
-    "\nIsInCliffs: " + IsInCliffs +
+    "\nIsInCliffs: " + IsInCliffs() +
     "\nIsInGround: " + _isInGround +
     "\n_isInSign: " + _isInSign +
     "\n_isResting: " + _isResting +
@@ -1231,7 +662,8 @@ public class Player : KinematicBody2D
   private void InitializeStateMachine()
   {
     // @formatter:off
-    _stateMachine = new StateMachine <State> (TransitionTable, InitialState) { LogLevel = LogLevel };
+    // ReSharper disable once ExplicitCallerInfoArgument
+    _stateMachine = new PlayerStateMachine (InitialState, LogLevel, Name);
     _stateMachine.OnTransitionFrom (State.ReadingSign, StopReadingSign);
     _stateMachine.OnTransitionTo (State.ReadingSign, ReadSign);
     _stateMachine.OnTransitionTo (State.Traversing, () => _primaryAnimator.Play (TraversingAnimation));
@@ -1387,46 +819,46 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() && IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsTouchingWall() && IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.Jumping, () => WasJumpKeyPressed() && IsOnFloor());
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign && !_isResting);
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs && !_dropdown.IsDropping() && !IsOneActiveOf (Input.Horizontal));
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs() && !_dropdown.IsDropping() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => !IsDownArrowPressed() && IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !_isResting);
     _stateMachine.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally() && !(_isInSign && IsUpArrowPressed()));
     _stateMachine.AddTrigger (State.Walking, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsMovingHorizontally() && IsDepletingEnergy());
     _stateMachine.AddTrigger (State.Walking, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Walking, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
-    _stateMachine.AddTrigger (State.Walking, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign);
+    _stateMachine.AddTrigger (State.Walking, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign);
     _stateMachine.AddTrigger (State.Walking, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
     _stateMachine.AddTrigger (State.Running, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Running, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() || JustDepletedAllEnergy());
     _stateMachine.AddTrigger (State.Running, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Running, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
-    _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs && !_isInSign);
+    _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign);
     _stateMachine.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
-    _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce && !IsInFrozenWaterfall());
-    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => (WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall() || JustDepletedAllEnergy()) && !_isResting);
+    _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce() && !IsInFrozenWaterfall());
+    _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => (WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall() || JustDepletedAllEnergy()) && !_isResting);
     _stateMachine.AddTrigger (State.ClimbingUp, State.Idle, () => _isResting);
-    _stateMachine.AddTrigger (State.ClimbingUp, State.CliffHanging, () => WasUpArrowReleased() && !IsDownArrowPressed() && (IsInCliffs || _isInGround));
-    _stateMachine.AddTrigger (State.ClimbingUp, State.ClimbingDown, () => WasUpArrowReleased() && IsDownArrowPressed() && (IsInCliffs || _isInGround));
-    _stateMachine.AddTrigger (State.ClimbingDown, State.CliffHanging, () => WasDownArrowReleased() && !IsUpArrowPressed() && (IsInCliffs || _isInGround));
+    _stateMachine.AddTrigger (State.ClimbingUp, State.CliffHanging, () => WasUpArrowReleased() && !IsDownArrowPressed() && (IsInCliffs() || _isInGround));
+    _stateMachine.AddTrigger (State.ClimbingUp, State.ClimbingDown, () => WasUpArrowReleased() && IsDownArrowPressed() && (IsInCliffs() || _isInGround));
+    _stateMachine.AddTrigger (State.ClimbingDown, State.CliffHanging, () => WasDownArrowReleased() && !IsUpArrowPressed() && (IsInCliffs() || _isInGround));
     _stateMachine.AddTrigger (State.ClimbingDown, State.Idle, IsOnFloor);
-    _stateMachine.AddTrigger (State.ClimbingDown, State.ClimbingUp, () => WasDownArrowReleased() && IsUpArrowPressed() && (IsInCliffs || _isInGround));
-    _stateMachine.AddTrigger (State.ClimbingDown, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall() || _isResting);
+    _stateMachine.AddTrigger (State.ClimbingDown, State.ClimbingUp, () => WasDownArrowReleased() && IsUpArrowPressed() && (IsInCliffs() || _isInGround));
+    _stateMachine.AddTrigger (State.ClimbingDown, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall() || _isResting);
     _stateMachine.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsDepletingEnergy() );
     _stateMachine.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && IsDepletingEnergy());
-    _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs && _velocity.y >= CliffArrestingActivationVelocity);
-    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && _isInGround && !IsTouchingCliffIce && !IsInFrozenWaterfall());
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs() && _velocity.y >= CliffArrestingActivationVelocity);
+    _stateMachine.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && _isInGround && !IsTouchingCliffIce() && !IsInFrozenWaterfall());
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.ClimbingDown, () => IsDownArrowPressed() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs && !_isInGround || IsTouchingCliffIce || IsInFrozenWaterfall());
+    _stateMachine.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall());
     _stateMachine.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
-    _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs);
+    _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs());
     _stateMachine.AddTrigger (State.CliffArresting, State.Idle, IsOnFloor);
     _stateMachine.AddTrigger (State.ReadingSign, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
     _stateMachine.AddTrigger (State.ReadingSign, State.Walking, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && _isInSign);
