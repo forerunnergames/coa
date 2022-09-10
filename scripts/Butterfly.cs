@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Godot;
+using static Gravity;
 using static Tools;
 
 // TODO Adjust idle position to synchronize with sprite animation for KinematicPerch.
@@ -121,7 +122,7 @@ public class Butterfly : AnimatedSprite
   private bool _drawFlightPath;
   private CatmullRom _flightPathCurve;
   private Timer _idleTimer = null!;
-  private IStateMachine <State> _stateMachine = null!;
+  private IStateMachine <State> _sm = null!;
   private Vector2 _lastPosition;
   private float _lerp;
   private DrawPrimitive _drawPrimitive;
@@ -171,16 +172,19 @@ public class Butterfly : AnimatedSprite
     _drawRect = delegate (Rect2 rect, Color color, bool filled) { DrawRect (rect, color, filled); };
     _idleTimer = GetNode <Timer> ("IdleTimer");
     _lastPosition = Position;
-    _stateMachine = new StateMachine <State> (TransitionTable, State.Flying, Name) { LogLevel = LogLevel };
-    _stateMachine.OnTransitionTo (State.Perching, () => Animation = PerchingAnimation);
-    _stateMachine.OnTransitionTo (State.Evading, () => Animation = EvadingAnimation);
-    _stateMachine.OnTransitionTo (State.Flying, () => Animation = FlyingAnimation);
-    _stateMachine.OnTransitionTo (State.Idle, StopMoving);
-    _stateMachine.OnTransitionFrom (State.Idle, _idleTimer.Stop);
-    _stateMachine.OnTransition (State.Idle, State.Evading, StartMoving);
-    _stateMachine.OnTransition (State.Idle, State.Flying, StartMoving);
-    _stateMachine.AddTrigger (State.Idle, State.Flying, () => _idleTimer.IsStopped());
-    _stateMachine.AddTrigger (State.Flying, State.Perching, ArrivedAtPerch);
+    _sm = new StateMachine <State> (TransitionTable, State.Flying, LogLevel, Name);
+    _sm.OnTransitionTo (State.Perching, () => Animation = PerchingAnimation);
+    _sm.OnTransitionTo (State.Evading, () => Animation = EvadingAnimation);
+    _sm.OnTransitionTo (State.Flying, () => Animation = FlyingAnimation);
+    _sm.OnTransitionTo (State.Idle, StopMoving);
+    _sm.OnTransitionFrom (State.Idle, _idleTimer.Stop);
+    _sm.OnTransition (State.Idle, State.Evading, StartMoving);
+    _sm.OnTransition (State.Idle, State.Flying, StartMoving);
+    _sm.AddTrigger (State.Idle, State.Flying, condition: _idleTimer.IsStopped);
+    _sm.AddTrigger (State.Flying, State.Perching, condition: ArrivedAtPerch);
+    _sm.AddFrameAction (State.Flying, GravityType.None, Fly);
+    _sm.AddFrameAction (State.Evading, GravityType.None, Evade);
+    _sm.AddFrameAction (State.Perching, GravityType.None, Perch);
     InitializePerches();
     StartMoving();
     Play();
@@ -234,15 +238,12 @@ public class Butterfly : AnimatedSprite
 
       if (_perch.Name != unperchablePerch.Name) continue;
 
-      var previousState = _stateMachine.GetState();
-      _stateMachine.To (State.Flying);
+      var previousState = _sm.GetState();
+      _sm.To (State.Flying);
       if (previousState != State.Idle) StartMoving();
     }
 
-    if (_stateMachine.Is (State.Flying)) Fly (delta);
-    if (_stateMachine.Is (State.Evading)) Evade (delta);
-    if (_stateMachine.Is (State.Perching)) Perch (delta);
-    _stateMachine.Update();
+    _sm.Update (delta: delta);
     Update();
   }
 
@@ -278,7 +279,7 @@ public class Butterfly : AnimatedSprite
     if (body is Node2D {Visible: false} or StaticBody2D || body.IsInGroup (PerchableGroupName) || body.IsInGroup (PerchableGroupName + " Parent") || body.IsInGroup ("Ground")) return;
 
     _log.Debug ($"Encountered obstacle: {NameOf (body)}");
-    _stateMachine.To (State.Evading);
+    _sm.To (State.Evading);
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -287,7 +288,7 @@ public class Butterfly : AnimatedSprite
     if (body is Node2D {Visible: false} or StaticBody2D || body.IsInGroup (PerchableGroupName) || body.IsInGroup (PerchableGroupName + " Parent") || body.IsInGroup ("Ground")) return;
 
     _log.Debug ($"Evaded obstacle: {NameOf (body)}.");
-    _stateMachine.To (State.Flying);
+    _sm.To (State.Flying);
   }
 
   // @formatter:on
@@ -322,7 +323,7 @@ public class Butterfly : AnimatedSprite
       return;
     }
 
-    _stateMachine.To (State.Idle);
+    _sm.To (State.Idle);
     _perchesUnvisited.Remove (_perch);
     if (ReachedDestination()) _log.Debug ($"Reached destination! Position: {Position}, perch point: {_perchPoint}.");
     _log.Debug ($"Perched on {_perch.Name} at position {Position}.");

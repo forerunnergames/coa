@@ -3,40 +3,213 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static System.Collections.Immutable.ImmutableList;
+using static Gravity;
+using static Inputs;
+using static Motions;
+using static Positionings;
 
-// TODO Implement per-frame delegate actions that repeat while in a specific state.
 // TODO Implement Godot callback triggers or allow the state machine to register / listen for emitted signals.
 // 1. Child states can be pushed and popped from a parent state.
 // 2. Child state can transition to new parent state.
 // 3. Parent states cannot be pushed / popped.
 // 3. Any child states are lost when changing to new parent state.
 // 4. Initial state is a parent state.
+// ReSharper disable ExplicitCallerInfoArgument
 public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 {
-  public Log.Level LogLevel { set => _log.CurrentLevel = value; }
   private T _currentState;
   private T _parentState;
   private readonly T _initialState;
   private static readonly T AnyState = (T)(object)-1;
   private readonly Dictionary <T, HashSet <T>> _transitionTable;
   private readonly Stack <T> _childStates = new();
-  private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionAction>> _actions = new();
-  private readonly Dictionary <T, Dictionary <T, IStateMachine <T>.TransitionTrigger>> _triggers = new();
+  private readonly Dictionary <T, Dictionary <T, TransitionAction>> _transitionActions = new();
+  private readonly Dictionary <T, Dictionary <T, TransitionTrigger>> _triggers = new();
+  private readonly Dictionary <T, FrameAction> _frameActions = new();
+  private readonly Dictionary <T, HashSet <T>> _fromExceptions = new();
+  private readonly Dictionary <T, HashSet <T>> _toExceptions = new();
   private readonly List <T> _triggeredFromStates = new();
   private readonly List <T> _triggeredToStates = new();
-  private readonly List <T> _fromStates = new();
-  private readonly List <T> _toStates = new();
-  private bool _isFirstUpdate = true;
+  private readonly string _name;
   private readonly Log _log;
 
-  // ReSharper disable once ExplicitCallerInfoArgument
-  public StateMachine (Dictionary <T, T[]> transitionTable, T initialState, [CallerFilePath] string name = "") : this (
-    transitionTable.ToDictionary (kvp => kvp.Key, kvp => kvp.Value.ToHashSet()), initialState, name)
+  private class TransitionTrigger
+  {
+    public Log.Level LogLevel
+    {
+      set
+      {
+        _logLevel = value;
+        if (_log != null) _log.CurrentLevel = _logLevel;
+      }
+    }
+
+    private readonly IInputWrapper _inputs;
+    private readonly IMotionWrapper _motions;
+    private readonly Positioning? _positioning;
+    private readonly Func <bool> _condition;
+    private readonly Func <bool> _and;
+    private readonly Func <bool> _or;
+    private readonly IBooleanOperator _operators;
+    private Log.Level _logLevel;
+    private readonly Log _log;
+
+    public TransitionTrigger (Input? input = null, IEnumerable <IInputWrapper> inputs = null, Motion? motion = null,
+      IEnumerable <IMotionWrapper> motions = null, Positioning? positioning = null, Func <bool> condition = null,
+      Func <bool> and = null, Func <bool> or = null, IBooleanOperator[] others = null, Log.Level logLevel = Log.Level.Info,
+      [CallerFilePath] string name = "")
+    {
+      var inputWrapper = input.HasValue ? _ (Required (input.Value)) : null;
+      var inputsList = inputs?.ToList();
+      if (inputWrapper != null) inputsList?.AddRange (inputWrapper);
+
+      _inputs = inputsList != null ? new CompositeInputWrapper (inputsList.ToArray()) :
+        inputWrapper != null ? new CompositeInputWrapper (inputWrapper) : null;
+
+      var motionWrapper = motion.HasValue ? _ (Required (motion.Value)) : null;
+      var motionsList = motions?.ToList();
+      if (motionWrapper != null) motionsList?.AddRange (motionWrapper);
+
+      _motions = motionsList != null ? new CompositeMotionWrapper (motionsList.ToArray()) :
+        motionWrapper != null ? new CompositeMotionWrapper (motionWrapper) : null;
+
+      _positioning = positioning;
+      _condition = condition;
+      _and = and;
+      _or = or;
+      _operators = others != null ? new CompositeBooleanOperator (others) : null;
+      _logLevel = logLevel;
+      _log = new Log (name) { CurrentLevel = logLevel };
+    }
+
+    public bool CanTransition (T from, T to, Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+      Godot.Vector2? velocity = null, GravityType? gravity = null)
+    {
+      // @formatter:off
+      var input = inputFunc == null || (_inputs?.Compose (inputFunc) ?? true);
+      var physicsBodyData = new PhysicsBodyData (velocity, gravity, _positioning);
+      var motion = !velocity.HasValue || (_motions?.ComposeFromRequired (input, ref physicsBodyData, (motion1, data) => motion1.IsActive (ref data)) ?? input);
+      var positioning = body == null || !_positioning.HasValue || _positioning.Value.IsActive (body);
+      var conditions = (_condition?.Invoke() ?? true) && (_and?.Invoke() ?? true) || (_or?.Invoke() ?? false);
+      var result = input && motion && positioning && conditions;
+      var canTransition = _operators?.Compose (result) ?? result;
+
+      _log.Debug ($"{nameof (TransitionTrigger)}: {from} => {to}: " +
+                 $"inputs: {input} ({(_inputs != null ? _inputs : "null")}), " +
+                 $"motions: {motion} ({(_motions != null ? _motions : "null")}), " +
+                 $"gravity type: {(gravity != null ? gravity : "null")}, " +
+                 $"velocity: {StateMachine <T>.ToString (velocity)}, " +
+                 $"positioning: {positioning} ({(_positioning != null ? _positioning : "null")}, " +
+                 $"body: {(body != null ? body.Name : "null")}), " +
+                 $"conditions: {conditions} (condition: {(_condition != null ? _condition() : "null")}, " +
+                 $"and: {(_and != null ? _and() : "null")}, or: {(_or != null ? _or() : "null")}), " +
+                 $"operators: {_operators?.Compose (true) ?? true} ({(_operators != null ? _operators : "null")}), " +
+                 $"can transition: {canTransition}");
+      // @formatter:on
+
+      return canTransition;
+    }
+  }
+
+  private class TransitionAction
+  {
+    private readonly IStateMachine <T>.NonVelocityTransitionAction _nonVelocityAction;
+    private readonly IStateMachine <T>.VelocityTransitionAction _velocityAction;
+    private readonly Log _log;
+
+    public TransitionAction (IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+      IStateMachine <T>.VelocityTransitionAction velocityAction = null, Log.Level logLevel = Log.Level.Info,
+      [CallerFilePath] string name = "")
+    {
+      _nonVelocityAction = nonVelocityAction;
+      _velocityAction = velocityAction;
+      _log = new Log (name) { CurrentLevel = logLevel };
+    }
+
+    public Godot.Vector2? Run (T fromState, T toState, Godot.Vector2? velocity)
+    {
+      _log.Debug ($"BEFORE: Executing {(fromState.Equals (AnyState) || toState.Equals (AnyState) ? "wildcard" : "specific")} " +
+                  ToString (_nonVelocityAction, _velocityAction) +
+                  $" {StateMachine <T>.ToString (fromState)} {(fromState.Equals (AnyState) ? "(any)" : "(specific)")} =>" +
+                  $" {StateMachine <T>.ToString (toState)} {(toState.Equals (AnyState) ? "(any)" : "(specific)")}." +
+                  $" Velocity: {StateMachine <T>.ToString (velocity)}");
+
+      if (_velocityAction != null) velocity = _velocityAction();
+      _nonVelocityAction?.Invoke();
+
+      _log.Debug ($"AFTER: Executing {(fromState.Equals (AnyState) || toState.Equals (AnyState) ? "wildcard" : "specific")} " +
+                  ToString (_nonVelocityAction, _velocityAction) +
+                  $" {StateMachine <T>.ToString (fromState)} {(fromState.Equals (AnyState) ? "(any)" : "(specific)")} =>" +
+                  $" {StateMachine <T>.ToString (toState)} {(toState.Equals (AnyState) ? "(any)" : "(specific)")}." +
+                  $" Velocity: {StateMachine <T>.ToString (velocity)}");
+
+      return velocity;
+    }
+
+    private static string ToString (IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+      IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+      $"{(nonVelocityAction != null ? nameof (IStateMachine <T>.NonVelocityTransitionAction) : velocityAction != null ? nameof (IStateMachine <T>.VelocityTransitionAction) : $"null {nameof (TransitionAction)}")}";
+  }
+
+  private class FrameAction
+  {
+    public GravityType Gravity { get; }
+    private readonly IStateMachine <T>.NonVelocityFrameAction _nonVelocityAction;
+    private readonly IStateMachine <T>.VelocityFrameAction _velocityAction;
+    private readonly Log _log;
+
+    public FrameAction (GravityType gravity, IStateMachine <T>.NonVelocityFrameAction nonVelocityAction = null,
+      IStateMachine <T>.VelocityFrameAction velocityAction = null, Log.Level logLevel = Log.Level.Info,
+      [CallerFilePath] string name = "")
+    {
+      Gravity = gravity;
+      _nonVelocityAction = nonVelocityAction;
+      _velocityAction = velocityAction;
+      _log = new Log (name) { CurrentLevel = logLevel };
+    }
+
+    public Godot.Vector2? Run (Godot.Vector2? velocity, float delta, T state)
+    {
+      velocity = Gravity.ApplyBefore (velocity);
+
+      if (velocity.HasValue || _velocityAction == null)
+      {
+        _log.All ($"BEFORE: Executing {ToString (_nonVelocityAction, _velocityAction)} for state {state}. " +
+                  $"Velocity (before gravity): {StateMachine <T>.ToString (velocity)}");
+      }
+      else
+      {
+        _log.Warn ($"Not executing {nameof (IStateMachine <T>.VelocityFrameAction)} " +
+                   $"because velocity is null. Did you forget to pass velocity into {nameof (IStateMachine <T>)}.Update?");
+      }
+
+      velocity = velocity.HasValue ? _velocityAction?.Invoke (velocity.Value, delta) ?? velocity : null;
+      _nonVelocityAction?.Invoke (delta);
+      velocity = Gravity.ApplyAfter (velocity);
+
+      if (velocity.HasValue || _velocityAction == null)
+      {
+        _log.All ($"AFTER: Executing {ToString (_nonVelocityAction, _velocityAction)} for state {state}. " +
+                  $"Velocity (after gravity): {StateMachine <T>.ToString (velocity)}");
+      }
+
+      return velocity;
+    }
+
+    private static string ToString (IStateMachine <T>.NonVelocityFrameAction nonVelocityAction = null,
+      IStateMachine <T>.VelocityFrameAction velocityAction = null) =>
+      $"{(nonVelocityAction != null ? nameof (IStateMachine <T>.NonVelocityFrameAction) : velocityAction != null ? nameof (IStateMachine <T>.VelocityFrameAction) : $"null {nameof (FrameAction)}")}";
+  }
+
+  public StateMachine (Dictionary <T, T[]> transitionTable, T initialState, Log.Level logLevel = Log.Level.Info,
+    [CallerFilePath] string name = "") : this (transitionTable.ToDictionary (kvp => kvp.Key, kvp => kvp.Value.ToHashSet()),
+    initialState, logLevel, name)
   {
   }
 
-  // ReSharper disable once ExplicitCallerInfoArgument
-  private StateMachine (Dictionary <T, HashSet <T>> transitionTable, T initialState, [CallerFilePath] string name = "")
+  private StateMachine (Dictionary <T, HashSet <T>> transitionTable, T initialState, Log.Level logLevel = Log.Level.Info,
+    [CallerFilePath] string name = "")
   {
     if (typeof (T).IsEnumDefined (-1))
     {
@@ -67,98 +240,86 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       throw new ArgumentException ($"Initial state [{initialState}] not found in transition table.");
     }
 
-    _log = new Log (name);
+    _log = new Log (name) { CurrentLevel = logLevel };
+    _name = name;
     _initialState = initialState;
     _currentState = initialState;
     _parentState = initialState;
     _transitionTable = transitionTable;
+    _log.Info ($"Initial state: {ToString (_initialState)}");
   }
 
   public T GetState() => _currentState;
   public bool Is (T state) => Equals (_currentState, state);
 
-  public void OnTransitionTo (T to, IStateMachine <T>.TransitionAction action)
-  {
-    if (to.Equals (AnyState)) throw new ArgumentException ($"Transition to {ToString (to)} cannot contain {ToString (AnyState)}.");
+  public void OnTransitionTo (T to, IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransitionTo (to, new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
 
-    AddWildcardableTransition (AnyState, to, action);
+  public void OnTransitionToExceptFrom (T to, T exception, IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransitionToExceptFrom (to, Create (exception),
+      new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
+
+  public void OnTransitionToExceptFrom (T to, ImmutableList <T> exceptions,
+    IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransitionToExceptFrom (to, exceptions, new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
+
+  public void OnTransitionFrom (T from, IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransitionFrom (from, new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
+
+  public void OnTransitionFromExceptTo (T from, T exception, IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransitionFromExceptTo (from, Create (exception),
+      new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
+
+  public void OnTransitionFromExceptTo (T from, ImmutableList <T> exceptions,
+    IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransitionFromExceptTo (from, exceptions, new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
+
+  public void OnTransition (T from, T to, IStateMachine <T>.NonVelocityTransitionAction nonVelocityAction = null,
+    IStateMachine <T>.VelocityTransitionAction velocityAction = null) =>
+    OnTransition (from, to, new TransitionAction (nonVelocityAction, velocityAction, _log.CurrentLevel, _name));
+
+  public void SetLogLevel (Log.Level level)
+  {
+    _log.CurrentLevel = level;
+    foreach (var trigger in _triggers.Values.SelectMany (x => x.Values)) trigger.LogLevel = level;
   }
 
-  public void OnTransitionFrom (T from, IStateMachine <T>.TransitionAction action)
+  public void AddFrameAction (T state, GravityType gravity = GravityType.AfterApplied,
+    IStateMachine <T>.NonVelocityFrameAction nonVelocityAction = null, IStateMachine <T>.VelocityFrameAction velocityAction = null)
   {
-    if (from.Equals (AnyState))
-    {
-      throw new ArgumentException ($"Transition from {ToString (from)} cannot contain {ToString (AnyState)}.");
-    }
+    if (state.Equals (AnyState))
+      throw new ArgumentException ($"Frame action state {ToString (state)} cannot contain {ToString (AnyState)}.");
 
-    AddWildcardableTransition (from, AnyState, action);
+    if (_frameActions.ContainsKey (state)) throw new ArgumentException ($"State {ToString (state)} already contains a frame action.");
+
+    _frameActions[state] = new FrameAction (gravity, nonVelocityAction, velocityAction, _log.CurrentLevel, _name);
   }
 
-  public void OnTransition (T from, T to, IStateMachine <T>.TransitionAction action)
-  {
-    if (from.Equals (AnyState) || to.Equals (AnyState))
-    {
-      throw new ArgumentException ($"Transition from {ToString (from)} to {ToString (to)} cannot contain {ToString (AnyState)}.");
-    }
+  public void AddTrigger (T from, T to, Input? input = null, IEnumerable <IInputWrapper> inputs = null, Motion? motion = null,
+    IEnumerable <IMotionWrapper> motions = null, Positioning? positioning = null, Func <bool> condition = null, Func <bool> and = null,
+    Func <bool> or = null, IBooleanOperator[] conditions = null) =>
+    AddTrigger (from, to,
+      new TransitionTrigger (input, inputs, motion, motions, positioning, condition, and, or, conditions, _log.CurrentLevel, _name));
 
-    AddWildcardableTransition (from, to, action);
-  }
-
-  public void AddTriggerTo (T to, IStateMachine <T>.TransitionTrigger trigger)
+  public void AddTriggerTo (T to, Input? input = null, IEnumerable <IInputWrapper> inputs = null, Motion? motion = null,
+    IEnumerable <IMotionWrapper> motions = null, Positioning? positioning = null, Func <bool> condition = null, Func <bool> and = null,
+    Func <bool> or = null, IBooleanOperator[] conditions = null)
   {
     if (to.Equals (AnyState)) throw new ArgumentException ($"Trigger to {ToString (to)} cannot contain {ToString (AnyState)}.");
 
-    AddWildcardableTrigger (AnyState, to, trigger);
+    AddWildcardableTrigger (AnyState, to,
+      new TransitionTrigger (input, inputs, motion, motions, positioning, condition, and, or, conditions, _log.CurrentLevel, _name));
   }
 
-  public void AddTrigger (T from, T to, IStateMachine <T>.TransitionTrigger trigger)
-  {
-    if (from.Equals (AnyState) || to.Equals (AnyState))
-    {
-      throw new ArgumentException ($"Trigger from {ToString (from)} to {ToString (to)} cannot contain {ToString (AnyState)}.");
-    }
-
-    AddWildcardableTrigger (from, to, trigger);
-  }
-
-  public void Update()
-  {
-    if (_isFirstUpdate)
-    {
-      _log.Info ($"Initial state: {ToString (_initialState)}");
-      _isFirstUpdate = false;
-    }
-
-    if (!_triggers.ContainsKey (_currentState) && !_triggers.ContainsKey (AnyState)) return;
-
-    _fromStates.Clear();
-    _fromStates.Add (_currentState);
-    _fromStates.Add (AnyState);
-    _triggeredFromStates.Clear();
-    _triggeredToStates.Clear();
-
-    foreach (var fromState in ImmutableList.CreateRange (_fromStates))
-    {
-      if (!_triggers.ContainsKey (fromState)) continue;
-
-      foreach (var toState in _triggers[fromState].Keys.Where (to => _triggers[fromState][to]()))
-      {
-        _triggeredFromStates.Add (fromState);
-        _triggeredToStates.Add (toState);
-      }
-    }
-
-    if (_triggeredFromStates.Count == 0 || _triggeredToStates.Count == 0) return;
-
-    if (_triggeredFromStates.Count > 1 || _triggeredToStates.Count > 1)
-    {
-      _log.Warn ($"Ignoring multiple valid triggers from {ToString (_currentState)} to [{Tools.ToString (_triggeredToStates)}].");
-
-      return;
-    }
-
-    TriggerState (_triggeredFromStates.Single(), _triggeredToStates.Single());
-  }
+  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+    Godot.Vector2? velocity = null, float delta = 0.0f) =>
+    ExecuteTriggers (body, inputFunc, ExecuteFrameAction (velocity, delta));
 
   public void Reset (IStateMachine <T>.ResetOption resetOption)
   {
@@ -190,83 +351,221 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     _log.Info ("Reset state machine.");
   }
 
-  public void To (T to)
+  public Godot.Vector2? To (T to, Godot.Vector2? velocity = null)
   {
-    if (!ShouldExecuteChangeState (to)) return;
+    if (!ShouldExecuteChangeState (to)) return null;
 
-    ExecuteChangeState (to);
+    velocity = ExecuteChangeState (to, velocity);
     _childStates.Clear();
     _parentState = to;
+
+    return velocity;
   }
 
-  public void ToIf (T to, bool condition)
+  public Godot.Vector2? Push (T to, Godot.Vector2? velocity = null)
   {
-    if (condition) To (to);
-  }
-
-  public void Push (T to)
-  {
-    if (!ShouldExecuteChangeState (to)) return;
+    if (!ShouldExecuteChangeState (to)) return velocity;
 
     if (!IsReversible (to))
     {
       _log.Warn ($"Cannot push {ToString (to)}: Would not be able to change back to {ToString (_currentState)} " +
                  $"from {ToString (to)}.\nUse {nameof (IStateMachine <T>)}#{nameof (To)} for a one-way transition.");
 
-      return;
+      return velocity;
     }
 
     if (!IsCurrentChild (to)) _childStates.Push (to);
     _log.Debug ($"Pushed: {ToString (to)}");
     _log.All (PrintStates());
-    ExecuteChangeState (to);
+
+    return ExecuteChangeState (to, velocity);
   }
 
-  public void PushIf (T to, bool condition)
-  {
-    if (condition) Push (to);
-  }
-
-  public void Pop()
+  public Godot.Vector2? Pop (Godot.Vector2? velocity)
   {
     if (!CanPop())
     {
       _log.Warn ($"Cannot pop {ToString (_currentState)}: wasn't pushed.\nUse {nameof (IStateMachine <T>)}#{nameof (To)} instead.");
 
-      return;
+      return velocity;
     }
 
     var to = DoublePeek();
 
-    if (!ShouldExecuteChangeState (to)) return;
+    if (!ShouldExecuteChangeState (to)) return velocity;
 
     _childStates.Pop();
     _log.Debug ($"Popped: {ToString (_currentState)}");
     _log.Debug (PrintStates());
-    ExecuteChangeState (to);
-  }
 
-  public void PopIf (bool condition)
-  {
-    if (condition) Pop();
+    return ExecuteChangeState (to, velocity);
   }
 
   // @formatter:off
-  public void PopIf (T state, bool condition) => PopIf (Is (state) && condition);
-  public void PopIf (T state) => PopIf (Is (state));
+  public Godot.Vector2? ToIf (T to, bool condition, Godot.Vector2? velocity = null) => condition ? To (to, velocity) : velocity;
+  public Godot.Vector2? PushIf (T to, bool condition, Godot.Vector2? velocity = null) => condition ? Push (to, velocity) : velocity;
+  public Godot.Vector2? PopIf (bool condition, Godot.Vector2? velocity = null) => condition ? Pop (velocity) : velocity;
+  public Godot.Vector2? PopIf (T state, bool condition, Godot.Vector2? velocity = null) => PopIf (Is (state) && condition, velocity);
+  public Godot.Vector2? PopIf (T state, Godot.Vector2? velocity = null) => PopIf (Is (state), velocity);
   private bool IsReversible (T state) => CanTransition (state, _currentState);
   private bool CanPopTo (T to) => CanPop() && Equals (DoublePeek(), to);
   private bool CanPop() => IsCurrentChild (_currentState);
   private bool IsCurrentChild (T state) => _childStates.Count > 0 && Equals (state, _childStates.Peek());
   private bool CanTransitionTo (T to) => CanTransition (_currentState, to);
   private bool CanTransition (T from, T to) => _transitionTable.TryGetValue (from, out var toStates) && toStates.Contains (to);
-  private bool HasTransitionAction (T from, T to) => _actions.TryGetValue (from, out var actions) && actions.ContainsKey (to);
   private static bool HasWildcards (params T[] states) => states.Any (state => Equals (state, AnyState));
   private string PrintStates() => $"States:\nChildren:\n{Tools.ToString (_childStates, "\n", "[", "]")}\nParent:\n{ToString (_parentState)}";
   private static string ToString (T t) => Equals (t, AnyState) ? $"internal wildcard state [{nameof (AnyState)} = -1]" : $"[{t.ToString()}]";
+  private static string ToString (Godot.Vector2? velocity) => $"{(velocity.HasValue ? velocity.Value : "null")}";
   // @formatter:on
 
-  private void AddWildcardableTransition (T from, T to, IStateMachine <T>.TransitionAction action)
+  private void OnTransitionTo (T to, TransitionAction action)
+  {
+    if (to.Equals (AnyState)) throw new ArgumentException ($"Transition to {ToString (to)} cannot contain {ToString (AnyState)}.");
+
+    AddWildcardableTransition (AnyState, to, action);
+  }
+
+  private void OnTransitionToExceptFrom (T to, ImmutableList <T> exceptions, TransitionAction action)
+  {
+    if (exceptions.Any (x => x.Equals (AnyState)))
+    {
+      throw new ArgumentException (
+        $"Transition to {ToString (to)} with exceptions {Tools.ToString (exceptions)} cannot contain {ToString (AnyState)}.");
+    }
+
+    var duplicates = _toExceptions.ContainsKey (to)
+      ? _toExceptions[to].Intersect (exceptions).ToList()
+      : ImmutableList <T>.Empty.ToList();
+
+    foreach (var duplicate in duplicates)
+    {
+      _log.Warn ($"Not adding duplicate transition to {ToString (to)} except from {ToString (duplicate)}.");
+    }
+
+    var nonDuplicates = exceptions.Except (duplicates).ToList();
+
+    if (!nonDuplicates.Any()) return;
+
+    if (!_toExceptions.ContainsKey (to)) _toExceptions.Add (to, new HashSet <T>());
+
+    foreach (var nonDuplicate in nonDuplicates)
+    {
+      _toExceptions[to].Add (nonDuplicate);
+    }
+
+    OnTransitionTo (to, action);
+  }
+
+  private void OnTransitionFrom (T from, TransitionAction action)
+  {
+    if (from.Equals (AnyState))
+    {
+      throw new ArgumentException ($"Transition from {ToString (from)} cannot contain {ToString (AnyState)}.");
+    }
+
+    AddWildcardableTransition (from, AnyState, action);
+  }
+
+  private void OnTransitionFromExceptTo (T from, ImmutableList <T> exceptions, TransitionAction action)
+  {
+    if (exceptions.Any (x => x.Equals (AnyState)))
+    {
+      throw new ArgumentException (
+        $"Transition from {ToString (from)} with exceptions {Tools.ToString (exceptions)} cannot contain {ToString (AnyState)}.");
+    }
+
+    var duplicates = _fromExceptions.ContainsKey (from)
+      ? _fromExceptions[from].Intersect (exceptions).ToList()
+      : ImmutableList <T>.Empty.ToList();
+
+    foreach (var duplicate in duplicates)
+    {
+      _log.Warn ($"Not adding duplicate transition from {ToString (from)} except to {ToString (duplicate)}.");
+    }
+
+    var nonDuplicates = exceptions.Except (duplicates).ToList();
+
+    if (!nonDuplicates.Any()) return;
+
+    if (!_fromExceptions.ContainsKey (from)) _fromExceptions.Add (from, new HashSet <T>());
+
+    foreach (var nonDuplicate in nonDuplicates)
+    {
+      _fromExceptions[from].Add (nonDuplicate);
+    }
+
+    OnTransitionFrom (from, action);
+  }
+
+  private void OnTransition (T from, T to, TransitionAction action)
+  {
+    if (from.Equals (AnyState) || to.Equals (AnyState))
+    {
+      throw new ArgumentException ($"Transition from {ToString (from)} to {ToString (to)} cannot contain {ToString (AnyState)}.");
+    }
+
+    AddWildcardableTransition (from, to, action);
+  }
+
+  private void AddTrigger (T from, T to, TransitionTrigger trigger)
+  {
+    if (from.Equals (AnyState) || to.Equals (AnyState))
+    {
+      throw new ArgumentException ($"Trigger from {ToString (from)} to {ToString (to)} cannot contain {ToString (AnyState)}.");
+    }
+
+    AddWildcardableTrigger (from, to, trigger);
+  }
+
+  private bool HasTransitionAction (T from, T to) =>
+    _transitionActions.TryGetValue (from, out var actions) && actions.ContainsKey (to) &&
+    !(to.Equals (AnyState) && !from.Equals (AnyState) && _fromExceptions.ContainsKey (from)) &&
+    !(from.Equals (AnyState) && !to.Equals (AnyState) && _toExceptions.ContainsKey (to));
+
+  private Godot.Vector2? ExecuteTriggers (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+    Godot.Vector2? velocity = null)
+  {
+    if (!_triggers.ContainsKey (_currentState) && !_triggers.ContainsKey (AnyState)) return velocity;
+
+    _triggeredFromStates.Clear();
+    _triggeredToStates.Clear();
+
+    // @formatter:off
+    GravityType? gravity = _frameActions.ContainsKey (_currentState) ? _frameActions[_currentState].Gravity : null;
+
+    // Because frame actions, where gravity would be applied, always occur before transition triggers,
+    // by this point (executing transition triggers), gravity has already been applied regardless.
+    // Therefore the only valid gravity type for motion calculations is either None or AfterApplied.
+    gravity = gravity == GravityType.BeforeApplied ? GravityType.AfterApplied : gravity;
+
+    foreach (var from in Create (_currentState, AnyState).Where (x => _triggers.ContainsKey (x)))
+    {
+      foreach (var to in _triggers[from].Keys.Where (x => _triggers[from][x].CanTransition (from, x, body, inputFunc, velocity, gravity)))
+      {
+        _triggeredFromStates.Add (from);
+        _triggeredToStates.Add (to);
+      }
+    }
+    // @formatter:on
+
+    if (_triggeredFromStates.Count == 0 || _triggeredToStates.Count == 0) return velocity;
+
+    // ReSharper disable once InvertIf
+    if (_triggeredFromStates.Count > 1 || _triggeredToStates.Count > 1)
+    {
+      _log.Warn ($"Ignoring multiple valid triggers from {ToString (_currentState)} to [{Tools.ToString (_triggeredToStates)}].");
+
+      return velocity;
+    }
+
+    return TriggerState (_triggeredFromStates.Single(), _triggeredToStates.Single(), velocity);
+  }
+
+  private Godot.Vector2? ExecuteFrameAction (Godot.Vector2? velocity, float delta) =>
+    !_frameActions.ContainsKey (_currentState) ? null : _frameActions[_currentState].Run (velocity, delta, _currentState);
+
+  private void AddWildcardableTransition (T from, T to, TransitionAction action)
   {
     if (!HasWildcards (from, to) && !CanTransition (from, to))
     {
@@ -275,18 +574,18 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       return;
     }
 
-    if (_actions.ContainsKey (from) && _actions[from].ContainsKey (to))
+    if (_transitionActions.ContainsKey (from) && _transitionActions[from].ContainsKey (to))
     {
       _log.Warn ($"Not adding duplicate transition from {ToString (from)} to {ToString (to)}.");
 
       return;
     }
 
-    if (!_actions.ContainsKey (from)) _actions.Add (from, new Dictionary <T, IStateMachine <T>.TransitionAction>());
-    _actions[from].Add (to, action);
+    if (!_transitionActions.ContainsKey (from)) _transitionActions.Add (from, new Dictionary <T, TransitionAction>());
+    _transitionActions[from].Add (to, action);
   }
 
-  private void AddWildcardableTrigger (T from, T to, IStateMachine <T>.TransitionTrigger trigger)
+  private void AddWildcardableTrigger (T from, T to, TransitionTrigger trigger)
   {
     if (!HasWildcards (from, to) && !CanTransition (from, to))
     {
@@ -302,7 +601,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       return;
     }
 
-    if (!_triggers.ContainsKey (from)) _triggers.Add (from, new Dictionary <T, IStateMachine <T>.TransitionTrigger>());
+    if (!_triggers.ContainsKey (from)) _triggers.Add (from, new Dictionary <T, TransitionTrigger>());
     _triggers[from].Add (to, trigger);
   }
 
@@ -316,24 +615,13 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     return _childStates.Count > 1 ? _childStates.Skip (1).First() : _parentState;
   }
 
-  private void TriggerState (T from, T to)
+  private Godot.Vector2? TriggerState (T from, T to, Godot.Vector2? velocity = null)
   {
     _log.Debug ($"Executing {(from.Equals (AnyState) ? "wildcard" : "specific")} " +
                 $"trigger {ToString (_currentState)} {(from.Equals (AnyState) ? "(any)" : "(specific)")} " +
                 $"=> {ToString (to)} (specific).");
 
-    if (CanPopTo (to))
-    {
-      Pop();
-    }
-    else if (IsReversible (to))
-    {
-      Push (to);
-    }
-    else
-    {
-      To (to);
-    }
+    return CanPopTo (to) ? Pop (velocity) : IsReversible (to) ? Push (to, velocity) : To (to, velocity);
   }
 
   private bool ShouldExecuteChangeState (T to)
@@ -352,32 +640,17 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     return false;
   }
 
-  private void ExecuteChangeState (T to)
+  private Godot.Vector2? ExecuteChangeState (T to, Godot.Vector2? velocity)
   {
-    ExecuteTransitionActionsTo (to);
+    velocity = ExecuteTransitionActionsTo (to, velocity);
     _log.Info ($"State transition: {ToString (_currentState)} => {ToString (to)}");
     _currentState = to;
+
+    return velocity;
   }
 
-  private void ExecuteTransitionActionsTo (T to)
-  {
-    _fromStates.Clear();
-    _fromStates.Add (_currentState);
-    _fromStates.Add (AnyState);
-    _toStates.Clear();
-    _toStates.Add (to);
-    _toStates.Add (AnyState);
-
-    foreach (var fromState in ImmutableList.CreateRange (_fromStates))
-    {
-      foreach (var toState in ImmutableList.CreateRange (_toStates).Where (toState => HasTransitionAction (fromState, toState)))
-      {
-        _log.Debug ($"Executing {(fromState.Equals (AnyState) || toState.Equals (AnyState) ? "wildcard" : "specific")} " +
-                    $"transition action {ToString (_currentState)} {(fromState.Equals (AnyState) ? "(any)" : "(specific)")} " +
-                    $"=> {ToString (to)} {(toState.Equals (AnyState) ? "(any)" : "(specific)")}.");
-
-        _actions[fromState][toState]();
-      }
-    }
-  }
+  private Godot.Vector2? ExecuteTransitionActionsTo (T to, Godot.Vector2? velocity1) =>
+    Create (_currentState, AnyState).Aggregate (velocity1,
+      (velocity2, fromState) => Create (to, AnyState).Where (toState => HasTransitionAction (fromState, toState)).Aggregate (velocity2,
+        (velocity3, toState) => _transitionActions[fromState][toState].Run (fromState, toState, velocity3)));
 }

@@ -45,7 +45,7 @@ public class PlayerStateMachine : StateMachine <State>
 
   // ReSharper disable once ExplicitCallerInfoArgument
   public PlayerStateMachine (State initialState, Log.Level logLevel, [CallerFilePath] string name = "") : base (TransitionTable,
-    initialState, name) => LogLevel = logLevel;
+    initialState, logLevel, name) {}
 
   // @formatter:on
 }

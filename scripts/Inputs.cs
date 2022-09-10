@@ -82,11 +82,11 @@ public static class Inputs
   }
 
   // @formatter:off
-  public static bool IsPressed (Input i) => Mapping[i].Any (Godot.Input.IsActionPressed);
-  public static bool WasPressed (Input i) => Mapping[i].Any (Godot.Input.IsActionJustPressed);
+  public static bool IsPressed (Input i) => Mapping[i].Any (x => Godot.Input.IsActionPressed (x));
+  public static bool WasPressed (Input i) => Mapping[i].Any (x => Godot.Input.IsActionJustPressed (x));
   public static bool WasPressed (Input i, Godot.InputEvent e) => e is Godot.InputEventKey k && Mapping[i].Any (x => k.IsActionPressed (x));
   public static bool WasReleased (Input i, Godot.InputEvent e) => e is Godot.InputEventKey k && Mapping[i].Any (x => k.IsActionReleased (x));
-  public static bool WasReleased (Input i) => Mapping[i].Any (Godot.Input.IsActionJustReleased);
+  public static bool WasReleased (Input i) => Mapping[i].Any (x => Godot.Input.IsActionJustReleased (x));
   // @formatter:on
 }
 

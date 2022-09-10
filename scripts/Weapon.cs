@@ -45,7 +45,7 @@ public class Weapon
   public void Update (float delta)
   {
     _delta = delta;
-    _sm.Update();
+    _sm.Update (delta: delta);
   }
 
   public State GetState() => _sm.GetState();
@@ -119,12 +119,12 @@ public class Weapon
 
   private void InitializeStateMachine (Log.Level logLevel)
   {
-    _sm = new StateMachine <State> (TransitionTable, State.Unequipped) { LogLevel = logLevel };
+    _sm = new StateMachine <State> (TransitionTable, State.Unequipped, logLevel);
     _sm.OnTransition (State.Unequipped, State.Equipped, StartEquipping);
     _sm.OnTransition (State.Equipped, State.Unequipped, StartUnequipping);
-    _sm.AddTrigger (State.Unequipped, State.Equipped, ShouldEquip);
-    _sm.AddTrigger (State.Equipped, State.Unequipped, ShouldUnequip);
-    // _sm.AddTrigger (State.Equipped, State.Attacking, WasAttackKeyPressedOnce);
-    // _sm.AddTrigger (State.Attacking, State.Equipped, IsAttackFinished);
+    _sm.AddTrigger (State.Unequipped, State.Equipped, condition: ShouldEquip);
+    _sm.AddTrigger (State.Equipped, State.Unequipped, condition: ShouldUnequip);
+    // _sm.AddTrigger (State.Equipped, State.Attacking, condition: WasAttackKeyPressedOnce);
+    // _sm.AddTrigger (State.Attacking, State.Equipped, condition: IsAttackFinished);
   }
 }
