@@ -14,6 +14,7 @@ public static class Inputs
   public static IInputWrapper Optional (IInputWrapper wrapper) => Optional (wrapper.GetItems().ToArray());
   public static IInputWrapper[] _ (params IInputWrapper[] wrappers) => new IInputWrapper[] { new CompositeInputWrapper (wrappers) };
   public static readonly IEnumerable <Input> Values = Enum.GetValues (typeof (Input)).Cast <Input>();
+  public delegate bool IsInputActive (string action);
 
   public static readonly ImmutableDictionary <Input, string[]> Mapping = new Dictionary <Input, string[]>
   {
@@ -63,19 +64,21 @@ public static class Inputs
     Energy
   }
 
-  public static bool IsActive (this Input i, Func <Input, string, bool> inputFunc)
+  public static bool IsActive (this Input i, IsInputActive isInputActive)
   {
+    // TODO Remove.
     Godot.GD.Print ("IsActive: Input: ", i);
 
+    // TODO Remove.
     foreach (var action in Mapping[i])
     {
-      Godot.GD.Print ("action: ", action, ", inputFunc: ", inputFunc.Invoke (i, action), ", is pressed (should match inputFunc): ",
+      Godot.GD.Print ("action: ", action, ", isInputActive: ", isInputActive (action), ", is pressed (should match isInputActive): ",
         Godot.Input.IsActionPressed (action));
     }
 
-    if (i == Input.None) return Mapping.All (x => !x.Value.Any (y => inputFunc.Invoke (x.Key, y)));
+    if (i == Input.None) return Mapping.All (x => x.Value.All (y => !isInputActive (y)));
 
-    var count = Mapping[i].Count (x => inputFunc.Invoke (i, x));
+    var count = Mapping[i].Count (x => isInputActive (x));
     var max = MaxActiveActions.GetValueOrDefault (i, 1);
 
     return count >= Math.Min (max, 1) && count <= max;
@@ -91,11 +94,11 @@ public static class Inputs
   // @formatter:on
 }
 
-public interface IInputWrapper : IRequiredOptionalWrapper <Input, string>
+public interface IInputWrapper : IRequiredOptionalWrapper <Input>
 {
 }
 
-public class RequiredInputWrapper : RequiredWrapper <Input, string>, IInputWrapper
+public class RequiredInputWrapper : RequiredWrapper <Input>, IInputWrapper
 {
   public RequiredInputWrapper (IReadOnlyCollection <Input> inputs) : base (inputs,
     Values().Where (x => inputs.Any (y => x == y || y != Input.None && Mapping[y].All (z => Mapping[x].Any (a => a == z)))),
@@ -104,7 +107,7 @@ public class RequiredInputWrapper : RequiredWrapper <Input, string>, IInputWrapp
   }
 }
 
-public class OptionalInputWrapper : OptionalWrapper <Input, string>, IInputWrapper
+public class OptionalInputWrapper : OptionalWrapper <Input>, IInputWrapper
 {
   public OptionalInputWrapper (IReadOnlyCollection <Input> inputs) : base (inputs,
     Values().Where (x => inputs.Any (y => x == y || Mapping[y].Any (z => Mapping[x].All (a => a == z)))),
@@ -113,7 +116,7 @@ public class OptionalInputWrapper : OptionalWrapper <Input, string>, IInputWrapp
   }
 }
 
-public class CompositeInputWrapper : CompositeRequiredOptionalWrapper <Input, string>, IInputWrapper
+public class CompositeInputWrapper : CompositeRequiredOptionalWrapper <Input>, IInputWrapper
 {
   public CompositeInputWrapper (IEnumerable <IInputWrapper> wrappers) : base (wrappers) { }
 }

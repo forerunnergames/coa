@@ -104,11 +104,11 @@ public static class Motions
   // @formatter:on
 }
 
-public interface IMotionWrapper : IRequiredOptionalWrapper <Motion, PhysicsBodyData>
+public interface IMotionWrapper : IRequiredOptionalWrapper <Motion>
 {
 }
 
-public class RequiredMotionWrapper : RequiredWrapper <Motion, PhysicsBodyData>, IMotionWrapper
+public class RequiredMotionWrapper : RequiredWrapper <Motion>, IMotionWrapper
 {
   public RequiredMotionWrapper (IReadOnlyCollection <Motion> motions) : base (motions,
     Values().Where (x => motions.Any (y => x == y || y != Motion.None && Mapping[y].All (z => Mapping[x].Any (a => a == z)))),
@@ -117,7 +117,7 @@ public class RequiredMotionWrapper : RequiredWrapper <Motion, PhysicsBodyData>, 
   }
 }
 
-public class OptionalMotionWrapper : OptionalWrapper <Motion, PhysicsBodyData>, IMotionWrapper
+public class OptionalMotionWrapper : OptionalWrapper <Motion>, IMotionWrapper
 {
   public OptionalMotionWrapper (IReadOnlyCollection <Motion> motions) : base (motions,
     Values().Where (x => motions.Any (y => x == y || Mapping[y].Any (z => Mapping[x].All (a => a == z)))),
@@ -126,7 +126,7 @@ public class OptionalMotionWrapper : OptionalWrapper <Motion, PhysicsBodyData>, 
   }
 }
 
-public class CompositeMotionWrapper : CompositeRequiredOptionalWrapper <Motion, PhysicsBodyData>, IMotionWrapper
+public class CompositeMotionWrapper : CompositeRequiredOptionalWrapper <Motion>, IMotionWrapper
 {
   public CompositeMotionWrapper (IEnumerable <IMotionWrapper> wrappers) : base (wrappers) { }
 }

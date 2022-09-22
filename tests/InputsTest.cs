@@ -9,21 +9,21 @@ using static Inputs.Input;
 
 public class InputsTest : Test
 {
-  private static readonly Func <Inputs.Input, string, bool> Pressed = (_, _) => true;
-  private static readonly Func <Inputs.Input, string, bool> Unpressed = (_, _) => false;
+  private static readonly IsInputActive Active = _ => true;
+  private static readonly IsInputActive Inactive = _ => false;
 
   [Test]
   public void TestInputActiveWhenButtonPressed()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
-    Assert.IsTrue (Energy.IsActive (Pressed));
+    Assert.IsTrue (Energy.IsActive (Active));
   }
 
   [Test]
   public void TestInputNotActiveWhenNotPressed()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
-    Assert.IsFalse (Energy.IsActive (Unpressed));
+    Assert.IsFalse (Energy.IsActive (Inactive));
   }
 
   [Test]
@@ -32,7 +32,7 @@ public class InputsTest : Test
     GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
 
     // @formatter:off
-    TestInput (Optional, Pressed, new List <Inputs.Input> { Right, Up }, false, new List <Inputs.Input> { Right, Up, None },
+    TestInput (Optional, Active, new List <Inputs.Input> { Right, Up }, false, new List <Inputs.Input> { Right, Up, None },
       new List <Inputs.Input> { Item, Text, Respawn, Season, Music, Down, Left, Jump, Energy }, "optional");
     // @formatter:on
   }
@@ -44,21 +44,20 @@ public class InputsTest : Test
     GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
 
     // @formatter:off
-    TestInput (Optional, Pressed, new List <Inputs.Input> { Music, Horizontal }, false,
+    TestInput (Optional, Active, new List <Inputs.Input> { Music, Horizontal }, false,
       new List <Inputs.Input> { Music, Horizontal, Left, Right, None },
       new List <Inputs.Input> { Item, Text, Respawn, Season, Up, Down, Jump, Energy, Vertical }, "optional");
     // @formatter:on
   }
 
-  private void TestInput (Func <Inputs.Input[], IInputWrapper> wrapperFunc, Func <Inputs.Input, string, bool> inputFunc,
-    List <Inputs.Input> inputs, bool expectedResult, IReadOnlyCollection <Inputs.Input> expectedAllowed,
-    IReadOnlyCollection <Inputs.Input> expectedDisallowed, string name)
+  private void TestInput (Func <Inputs.Input[], IInputWrapper> wrapperFunc, IsInputActive isInputActive, List <Inputs.Input> inputs,
+    bool expectedResult, IReadOnlyCollection <Inputs.Input> expectedAllowed, IReadOnlyCollection <Inputs.Input> expectedDisallowed,
+    string name)
   {
     var wrapper = new CompositeInputWrapper (_ (wrapperFunc (inputs.ToArray())));
     var actualAllowed = wrapper.Allowed().ToList();
     var actualDisallowed = wrapper.Disallowed().ToList();
-    var data = "";
-    var actual = wrapper.Compose (ref data, inputFunc);
+    var actual = wrapper.Compose (x => x.IsActive (isInputActive));
 
     // @formatter:off
 
@@ -120,20 +119,17 @@ public class InputsTest : Test
             // @formatter:off
 
             var requiredWrapper = new CompositeInputWrapper (_ (Required (inputs.ToArray())));
-            var requiredExpected = inputs.All (x => x.IsActive (Pressed)) && requiredWrapper.Disallowed().All (x => !x.IsActive (Unpressed));
-            var requiredData = "";
-            var requiredActual = requiredWrapper.Compose (ref requiredData, Pressed);
+            var requiredExpected = inputs.All (x => x.IsActive (Active)) && requiredWrapper.Disallowed().All (x => !x.IsActive (Inactive));
+            var requiredActual = requiredWrapper.Compose (x => x.IsActive (Active));
 
             var optionalExpectedWrapper = new CompositeInputWrapper (_ (Optional (inputs.ToArray())));
-            var optionalExpectedResult = inputs.Any (x => x.IsActive (Pressed)) && optionalExpectedWrapper.Disallowed().All (x => !x.IsActive (Unpressed));
+            var optionalExpectedResult = inputs.Any (x => x.IsActive (Active)) && optionalExpectedWrapper.Disallowed().All (x => !x.IsActive (Inactive));
             var optionalActualWrapper = new CompositeInputWrapper (_ (Optional (inputs.ToArray())));
-            var optionalData = "";
-            var optionalActualResult = optionalActualWrapper.Compose (ref optionalData, Pressed);
+            var optionalActualResult = optionalActualWrapper.Compose (x => x.IsActive (Active));
 
             var mixedWrapper = new CompositeInputWrapper (_ (Required (requiredInputs.ToArray()), Optional (optionalInputs.ToArray())));
-            var mixedExpected = requiredInputs.All (x => x.IsActive (Pressed)) && mixedWrapper.Disallowed().All (x => !x.IsActive (Unpressed));
-            var mixedData = "";
-            var mixedActual = mixedWrapper.Compose (ref mixedData, Pressed);
+            var mixedExpected = requiredInputs.All (x => x.IsActive (Active)) && mixedWrapper.Disallowed().All (x => !x.IsActive (Inactive));
+            var mixedActual = mixedWrapper.Compose (x => x.IsActive (Active));
 
             ++tests;
             if (requiredExpected == requiredActual) ++passed;

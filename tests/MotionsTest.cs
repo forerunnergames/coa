@@ -12,12 +12,12 @@ using static Positionings;
 public class MotionsTest : Test
 {
   private static readonly IEnumerable <Motion> Values = Enum.GetValues (typeof (Motion)).Cast <Motion>();
-  private static readonly Func <Motion, PhysicsBodyData, bool> ActiveFunc = (motion, data) => motion.IsActive (ref data);
+  // private static readonly Func <Motion, bool> ActiveFunc = motion => motion.IsActive ();
 
   [Test]
   public void TestMotionNoneIsActiveWithOnlyGravity()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (GravityForce, GravityType.AfterApplied, Positioning.Ground);
     Assert.IsTrue (Motion.None.IsActive (ref physicsBodyData));
   }
@@ -25,50 +25,53 @@ public class MotionsTest : Test
   [Test]
   public void TestNothingOtherThanRequiredMotionNoneIsActiveWithOnlyGravity()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (GravityForce, GravityType.AfterApplied, Positioning.Ground);
-    Assert.IsTrue (Required (Motion.None).Compose (ref physicsBodyData, ActiveFunc));
+    Assert.IsTrue (Required (Motion.None).Compose (x => x.IsActive (ref physicsBodyData)));
   }
 
   [Test]
   public void TestNothingOtherThanWrappedRequiredMotionNoneIsActiveWithOnlyGravity()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (GravityForce, GravityType.AfterApplied, Positioning.Ground);
     // @formatter:off
-    Assert.IsTrue (new CompositeMotionWrapper (_ (Required (Motion.None))).Compose (ref physicsBodyData, ActiveFunc));
+    Assert.IsTrue (new CompositeMotionWrapper (_ (Required (Motion.None))).Compose (x => x.IsActive (ref physicsBodyData)));
     // @formatter:on
   }
 
   [Test]
   public void TestRequiredAnyUpHorizontal()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (new Vector2 (-2, -2), GravityType.AfterApplied, Positioning.Air);
+    var physicsBodyData1 = physicsBodyData;
 
-    TestMotion (Required, new List <Motion> { Motion.Any, Motion.Up, Motion.Horizontal }, ref physicsBodyData, ActiveFunc, true,
-      new List <Motion> { Motion.Any, Motion.Up, Motion.Horizontal, Motion.Vertical }, new List <Motion> { Motion.None, Motion.Down },
-      "required");
+    TestMotion (Required, new List <Motion> { Motion.Any, Motion.Up, Motion.Horizontal }, ref physicsBodyData,
+      x => x.IsActive (ref physicsBodyData1), true, new List <Motion> { Motion.Any, Motion.Up, Motion.Horizontal, Motion.Vertical },
+      new List <Motion> { Motion.None, Motion.Down }, "required");
   }
 
   [Test]
   public void TestOptionalRightUp()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (new Vector2 (-2, -2), GravityType.AfterApplied, Positioning.Air);
+    var physicsBodyData1 = physicsBodyData;
 
-    TestMotion (Optional, new List <Motion> { Motion.Right, Motion.Up }, ref physicsBodyData, ActiveFunc, false,
-      new List <Motion> { Motion.Right, Motion.Up, Motion.None }, new List <Motion> { Motion.Left, Motion.Down }, "optional");
+    TestMotion (Optional, new List <Motion> { Motion.Right, Motion.Up }, ref physicsBodyData, x => x.IsActive (ref physicsBodyData1),
+      false, new List <Motion> { Motion.Right, Motion.Up, Motion.None }, new List <Motion> { Motion.Left, Motion.Down }, "optional");
   }
 
   [Test]
   public void TestOptionalAny()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (new Vector2 (-2, -2), GravityType.AfterApplied, Positioning.Air);
+    var physicsBodyData1 = physicsBodyData;
 
     // @formatter:off
-    TestMotion (Optional, new List <Motion> { Motion.Any }, ref physicsBodyData, ActiveFunc, true,
+    TestMotion (Optional, new List <Motion> { Motion.Any }, ref physicsBodyData, x => x.IsActive (ref physicsBodyData1), true,
       new List <Motion> { Motion.Any, Motion.None, Motion.Up, Motion.Down, Motion.Left, Motion.Right }, new List <Motion>(),
       "optional");
     // @formatter:on
@@ -77,12 +80,13 @@ public class MotionsTest : Test
   [Test]
   public void TestOptionalAnyNone()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     var physicsBodyData = new PhysicsBodyData (new Vector2 (-2, -2), GravityType.AfterApplied, Positioning.Air);
+    var physicsBodyData1 = physicsBodyData;
 
     // @formatter:off
-    TestMotion (Optional, new List <Motion> { Motion.Any, Motion.None }, ref physicsBodyData, ActiveFunc, true,
-      new List <Motion> { Motion.Any, Motion.None, Motion.Up, Motion.Down, Motion.Left, Motion.Right }, new List <Motion>(),
+    TestMotion (Optional, new List <Motion> { Motion.Any, Motion.None }, ref physicsBodyData, x => x.IsActive (ref physicsBodyData1),
+      true, new List <Motion> { Motion.Any, Motion.None, Motion.Up, Motion.Down, Motion.Left, Motion.Right }, new List <Motion>(),
       "optional");
     // @formatter:on
   }
@@ -90,15 +94,15 @@ public class MotionsTest : Test
   [Test]
   public void TestOptionalAnyRightUp()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
 
     // TestAll 23612: Optional (Any, Right, Up), velocity: (0, 0), allowed: (None, Any, Up, Down, Left, Right), disallowed: (), expected: True, actual: False, result: FAILED
     var physicsBodyData = new PhysicsBodyData (Vector2.Zero, GravityType.AfterApplied, Positioning.Air);
+    var physicsBodyData1 = physicsBodyData;
 
     // @formatter:off
-    TestMotion (Optional, new List <Motion> { Motion.Any, Motion.Right, Motion.Up }, ref physicsBodyData, ActiveFunc, true,
-      new List <Motion> { Motion.Any, Motion.None, Motion.Up, Motion.Down, Motion.Left, Motion.Right }, new List <Motion>(),
-      "optional");
+    TestMotion (Optional, new List <Motion> { Motion.Any, Motion.Right, Motion.Up }, ref physicsBodyData, x => x.IsActive (ref physicsBodyData1),
+      true, new List <Motion> { Motion.Any, Motion.None, Motion.Up, Motion.Down, Motion.Left, Motion.Right }, new List <Motion>(), "optional");
     // @formatter:on
   }
 
@@ -106,7 +110,7 @@ public class MotionsTest : Test
   [Test]
   public void TestAll()
   {
-    var methodName = MethodBase.GetCurrentMethod().Name;
+    var methodName = MethodBase.GetCurrentMethod()?.Name;
     GD.Print ($"---\n{methodName}:\n---");
     var velocityComponents = ImmutableList.Create (-2, 0, 2);
     var velocity = Vector2.Zero;
@@ -149,17 +153,17 @@ public class MotionsTest : Test
                 // @formatter:off
 
                 var requiredWrapper = new CompositeMotionWrapper (_ (Required (motions.ToArray())));
-                var requiredExpected = motions.All (x => ActiveFunc.Invoke (x, physicsBodyData)) && requiredWrapper.Disallowed().All (x => !ActiveFunc.Invoke (x, physicsBodyData));
-                var requiredActual = requiredWrapper.Compose (ref physicsBodyData, ActiveFunc);
+                var requiredExpected = motions.All (x => x.IsActive (ref physicsBodyData)) && requiredWrapper.Disallowed().All (x => !x.IsActive (ref physicsBodyData));
+                var requiredActual = requiredWrapper.Compose (x => x.IsActive (ref physicsBodyData));
 
                 var optionalExpectedWrapper = new CompositeMotionWrapper (_ (Optional (motions.ToArray())));
-                var optionalExpectedResult = motions.Any (x => velocity.Equals (Vector2.Zero) || ActiveFunc.Invoke (x, physicsBodyData)) && optionalExpectedWrapper.Disallowed().All (x => !ActiveFunc.Invoke (x, physicsBodyData));
+                var optionalExpectedResult = motions.Any (x => velocity.Equals (Vector2.Zero) || x.IsActive (ref physicsBodyData)) && optionalExpectedWrapper.Disallowed().All (x => !x.IsActive (ref physicsBodyData));
                 var optionalActualWrapper = new CompositeMotionWrapper (_ (Optional (motions.ToArray())));
-                var optionalActualResult = optionalActualWrapper.Compose (ref physicsBodyData, ActiveFunc);
+                var optionalActualResult = optionalActualWrapper.Compose (x => x.IsActive (ref physicsBodyData));
 
                 var mixedWrapper = new CompositeMotionWrapper (_ (Required (requiredMotions.ToArray()), Optional (optionalMotions.ToArray())));
-                var mixedExpected = requiredMotions.All (x => ActiveFunc.Invoke (x, physicsBodyData)) && mixedWrapper.Disallowed().All (x => !ActiveFunc.Invoke (x, physicsBodyData));
-                var mixedActual = mixedWrapper.Compose (ref physicsBodyData, ActiveFunc);
+                var mixedExpected = requiredMotions.All (x => x.IsActive (ref physicsBodyData)) && mixedWrapper.Disallowed().All (x => !x.IsActive (ref physicsBodyData));
+                var mixedActual = mixedWrapper.Compose (x => x.IsActive (ref physicsBodyData));
 
                 ++tests;
                 if (requiredExpected == requiredActual) ++passed;
@@ -222,13 +226,13 @@ public class MotionsTest : Test
   }
 
   private void TestMotion (Func <Motion[], IMotionWrapper> wrapperFunc, List <Motion> motions, ref PhysicsBodyData physicsBodyData,
-    Func <Motion, PhysicsBodyData, bool> activeFunc, bool expectedResult, IReadOnlyCollection <Motion> expectedAllowed,
+    Func <Motion, bool> activeFunc, bool expectedResult, IReadOnlyCollection <Motion> expectedAllowed,
     IReadOnlyCollection <Motion> expectedDisallowed, string name)
   {
     var wrapper = new CompositeMotionWrapper (_ (wrapperFunc (motions.ToArray())));
     var actualAllowed = wrapper.Allowed().ToList();
     var actualDisallowed = wrapper.Disallowed().ToList();
-    var actual = wrapper.Compose (ref physicsBodyData, activeFunc);
+    var actual = wrapper.Compose (activeFunc);
 
     // @formatter:off
 

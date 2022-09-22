@@ -352,7 +352,7 @@ public class Player : KinematicBody2D
   }
 
   // @formatter:off
-  private void StateMachine (float delta) => UpdateVelocity (_sm.Update (this, s => Godot.Input.IsActionPressed (s), _velocity, delta));
+  private void StateMachine (float delta) => UpdateVelocity (_sm.Update (this, x => Godot.Input.IsActionPressed (x), _velocity, delta));
   private void Collisions() => UpdateVelocity (MoveAndSlide (_velocity, Vector2.Up));
   private void UpdateVelocity (Vector2? velocity) => _velocity = velocity ?? _velocity;
   private Vector2 MoveHorizontally (Vector2 velocity, float delta) => MoveHorizontally (velocity, true);

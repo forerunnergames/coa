@@ -83,13 +83,13 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       _log = new Log (name) { CurrentLevel = logLevel };
     }
 
-    public bool CanTransition (T from, T to, Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+    public bool CanTransition (T from, T to, Godot.KinematicBody2D body = null, IsInputActive isInputActive = null,
       Godot.Vector2? velocity = null, GravityType? gravity = null)
     {
       // @formatter:off
-      var input = inputFunc == null || (_inputs?.Compose (inputFunc) ?? true);
+      var input = isInputActive == null || (_inputs?.Compose (x => x.IsActive (isInputActive)) ?? true);
       var physicsBodyData = new PhysicsBodyData (velocity, gravity, _positioning);
-      var motion = !velocity.HasValue || (_motions?.ComposeFromRequired (input, ref physicsBodyData, (motion1, data) => motion1.IsActive (ref data)) ?? input);
+      var motion = !velocity.HasValue || (_motions?.ComposeFromRequired (input, x => x.IsActive (ref physicsBodyData)) ?? input);
       var positioning = body == null || !_positioning.HasValue || _positioning.Value.IsActive (body);
       var conditions = (_condition?.Invoke() ?? true) && (_and?.Invoke() ?? true) || (_or?.Invoke() ?? false);
       var result = input && motion && positioning && conditions;
@@ -317,9 +317,9 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
       new TransitionTrigger (input, inputs, motion, motions, positioning, condition, and, or, conditions, _log.CurrentLevel, _name));
   }
 
-  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
-    Godot.Vector2? velocity = null, float delta = 0.0f) =>
-    ExecuteTriggers (body, inputFunc, ExecuteFrameAction (velocity, delta));
+  public Godot.Vector2? Update (Godot.KinematicBody2D body = null, IsInputActive input = null, Godot.Vector2? velocity = null,
+    float delta = 0.0f) =>
+    ExecuteTriggers (body, input, ExecuteFrameAction (velocity, delta));
 
   public void Reset (IStateMachine <T>.ResetOption resetOption)
   {
@@ -523,7 +523,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
     !(to.Equals (AnyState) && !from.Equals (AnyState) && _fromExceptions.ContainsKey (from)) &&
     !(from.Equals (AnyState) && !to.Equals (AnyState) && _toExceptions.ContainsKey (to));
 
-  private Godot.Vector2? ExecuteTriggers (Godot.KinematicBody2D body = null, Func <string, bool> inputFunc = null,
+  private Godot.Vector2? ExecuteTriggers (Godot.KinematicBody2D body = null, IsInputActive input = null,
     Godot.Vector2? velocity = null)
   {
     if (!_triggers.ContainsKey (_currentState) && !_triggers.ContainsKey (AnyState)) return velocity;
@@ -541,7 +541,7 @@ public class StateMachine <T> : IStateMachine <T> where T : struct, Enum
 
     foreach (var from in Create (_currentState, AnyState).Where (x => _triggers.ContainsKey (x)))
     {
-      foreach (var to in _triggers[from].Keys.Where (x => _triggers[from][x].CanTransition (from, x, body, inputFunc, velocity, gravity)))
+      foreach (var to in _triggers[from].Keys.Where (x => _triggers[from][x].CanTransition (from, x, body, input, velocity, gravity)))
       {
         _triggeredFromStates.Add (from);
         _triggeredToStates.Add (to);
