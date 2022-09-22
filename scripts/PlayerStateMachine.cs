@@ -38,8 +38,8 @@ public class PlayerStateMachine : StateMachine <State>
     { State.ClimbingDown, new[] { State.ClimbingUp, State.CliffHanging, State.FreeFalling, State.Idle }},
     { State.CliffHanging, new[] { State.ClimbingUp, State.ClimbingDown, State.Traversing, State.FreeFalling }},
     { State.Traversing, new[] { State.CliffHanging, State.FreeFalling }},
-    { State.CliffArresting, new[] { State.CliffHanging, State.FreeFalling, State.Idle }},
-    { State.FreeFalling, new[] { State.CliffArresting, State.CliffHanging, State.Idle, State.Walking, State.Running, State.Jumping }},
+    { State.CliffArresting, new[] { State.CliffHanging, State.Traversing, State.FreeFalling, State.Idle }},
+    { State.FreeFalling, new[] { State.CliffArresting, State.CliffHanging, State.Traversing, State.Idle, State.Walking, State.Running, State.Jumping }},
     { State.ReadingSign, new[] { State.Idle, State.Walking, State.Running }}
   };
 

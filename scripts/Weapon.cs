@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using static Inputs;
 using static Tools;
 
 public class Weapon
@@ -55,19 +56,15 @@ public class Weapon
   public void OnUnequipAnimationStarted() => _isUnequipping = true;
   public void OnUnequipAnimationFinished() => _isUnequipping = false;
 
-  // @formatter:off
-
   private bool ShouldEquip() =>
-    WasItemKeyPressedOnce() && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
+    WasPressed (Inputs.Input.Item) && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
     _primaryPlayerAnimator.AssignedAnimation != "player_cliff_arresting" &&
     _primaryPlayerAnimator.AssignedAnimation != "player_cliff_hanging" &&
     _primaryPlayerAnimator.AssignedAnimation != "player_climbing_up" &&
     _primaryPlayerAnimator.AssignedAnimation != "player_free_falling";
 
-  // @formatter:on
-
   private bool ShouldUnequip() =>
-    WasItemKeyPressedOnce() && _backpackSprite.Visible && !_itemInBackpackSprite.Visible && !_isEquipping;
+    WasPressed (Inputs.Input.Item) && _backpackSprite.Visible && !_itemInBackpackSprite.Visible && !_isEquipping;
 
   private void StartEquipping()
   {

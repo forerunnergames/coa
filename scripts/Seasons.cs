@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Godot;
+using static Inputs;
 using static Tools;
+using Input = Inputs.Input;
 
 public class Seasons
 {
@@ -58,7 +60,7 @@ public class Seasons
 
   public void OnInput (InputEvent @event)
   {
-    if (IsReleased (Tools.Input.Season, @event) && !_seasonChangeInProgress) NextSeason();
+    if (WasPressed (Input.Season, @event) && !_seasonChangeInProgress) NextSeason();
   }
 
   public void ToggleMusic() => _isMusicPlaying = !_isMusicPlaying;

@@ -64,8 +64,8 @@ public static class Motions
     {
       GravityType.BeforeApplied => motion switch
       {
-        Motion.None => body.Positioning is Positioning.Ground && AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon) || body.Positioning is not Positioning.Ground && AreAlmostEqual (body.Velocity.Value, -GravityForce, VelocityEpsilon),
-        Motion.Any => body.Positioning is Positioning.Ground && !AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon) || body.Positioning is not Positioning.Ground && !AreAlmostEqual (body.Velocity.Value, -GravityForce, VelocityEpsilon),
+        Motion.None => body.Positioning is Positioning.Ground && AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon) || body.Positioning is Positioning.Air && AreAlmostEqual (body.Velocity.Value, -GravityForce, VelocityEpsilon),
+        Motion.Any => body.Positioning is Positioning.Ground && !AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon) || body.Positioning is Positioning.Air && !AreAlmostEqual (body.Velocity.Value, -GravityForce, VelocityEpsilon),
         Motion.Up => body.Velocity.Value.y + GravityForce.y < -VelocityEpsilon,
         Motion.Down => body.Positioning is Positioning.Ground && body.Velocity.Value.y > VelocityEpsilon || body.Positioning is not Positioning.Ground && body.Velocity.Value.y + GravityForce.y > VelocityEpsilon,
         Motion.Left => body.Velocity.Value.x < -VelocityEpsilon,
@@ -76,8 +76,8 @@ public static class Motions
       },
       GravityType.AfterApplied => motion switch
       {
-        Motion.None => body.Positioning is Positioning.Ground && AreAlmostEqual (body.Velocity.Value, GravityForce, VelocityEpsilon) || body.Positioning is not Positioning.Ground && AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon),
-        Motion.Any => body.Positioning is Positioning.Ground && !AreAlmostEqual (body.Velocity.Value, GravityForce, VelocityEpsilon) || body.Positioning is not Positioning.Ground && !AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon),
+        Motion.None => body.Positioning is Positioning.Ground && AreAlmostEqual (body.Velocity.Value, GravityForce, VelocityEpsilon) || body.Positioning is Positioning.Air && AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon),
+        Motion.Any => body.Positioning is Positioning.Ground && !AreAlmostEqual (body.Velocity.Value, GravityForce, VelocityEpsilon) || body.Positioning is Positioning.Air && !AreAlmostEqual (body.Velocity.Value, Godot.Vector2.Zero, VelocityEpsilon),
         Motion.Up => body.Velocity.Value.y < -VelocityEpsilon,
         Motion.Down => body.Positioning is Positioning.Ground && body.Velocity.Value.y > GravityForce.y + VelocityEpsilon || body.Positioning is not Positioning.Ground && body.Velocity.Value.y > VelocityEpsilon,
         Motion.Left => body.Velocity.Value.x < -VelocityEpsilon,

@@ -15,21 +15,21 @@ public class InputsTest : Test
   [Test]
   public void TestInputActiveWhenButtonPressed()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     Assert.IsTrue (Energy.IsActive (Pressed));
   }
 
   [Test]
   public void TestInputNotActiveWhenNotPressed()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
     Assert.IsFalse (Energy.IsActive (Unpressed));
   }
 
   [Test]
   public void TestOptionalRightUpPressed()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
 
     // @formatter:off
     TestInput (Optional, Pressed, new List <Inputs.Input> { Right, Up }, false, new List <Inputs.Input> { Right, Up, None },
@@ -41,7 +41,7 @@ public class InputsTest : Test
   [Test]
   public void TestOptionalMusicHorizontal()
   {
-    GD.Print ($"---\n{MethodBase.GetCurrentMethod().Name}:\n---");
+    GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
 
     // @formatter:off
     TestInput (Optional, Pressed, new List <Inputs.Input> { Music, Horizontal }, false,
@@ -86,7 +86,7 @@ public class InputsTest : Test
   // [Test]
   public void TestAll()
   {
-    var methodName = MethodBase.GetCurrentMethod().Name;
+    var methodName = MethodBase.GetCurrentMethod()?.Name;
     GD.Print ($"---\n{methodName}:\n---");
     var inputs = new HashSet <Inputs.Input>();
     var requiredInputs = new HashSet <Inputs.Input>();
@@ -121,16 +121,19 @@ public class InputsTest : Test
 
             var requiredWrapper = new CompositeInputWrapper (_ (Required (inputs.ToArray())));
             var requiredExpected = inputs.All (x => x.IsActive (Pressed)) && requiredWrapper.Disallowed().All (x => !x.IsActive (Unpressed));
-            var requiredActual = requiredWrapper.Compose (Pressed);
+            var requiredData = "";
+            var requiredActual = requiredWrapper.Compose (ref requiredData, Pressed);
 
             var optionalExpectedWrapper = new CompositeInputWrapper (_ (Optional (inputs.ToArray())));
             var optionalExpectedResult = inputs.Any (x => x.IsActive (Pressed)) && optionalExpectedWrapper.Disallowed().All (x => !x.IsActive (Unpressed));
             var optionalActualWrapper = new CompositeInputWrapper (_ (Optional (inputs.ToArray())));
-            var optionalActualResult = optionalActualWrapper.Compose (Pressed);
+            var optionalData = "";
+            var optionalActualResult = optionalActualWrapper.Compose (ref optionalData, Pressed);
 
             var mixedWrapper = new CompositeInputWrapper (_ (Required (requiredInputs.ToArray()), Optional (optionalInputs.ToArray())));
             var mixedExpected = requiredInputs.All (x => x.IsActive (Pressed)) && mixedWrapper.Disallowed().All (x => !x.IsActive (Unpressed));
-            var mixedActual = mixedWrapper.Compose (Pressed);
+            var mixedData = "";
+            var mixedActual = mixedWrapper.Compose (ref mixedData, Pressed);
 
             ++tests;
             if (requiredExpected == requiredActual) ++passed;
@@ -168,7 +171,7 @@ public class InputsTest : Test
                 $"{methodName} {tests}: Optional ({Tools.ToString (inputs)}), " +
                 $"expected allowed: ({Tools.ToString (optionalExpectedWrapper.Allowed())}), actual allowed: ({Tools.ToString (optionalActualWrapper.Allowed())}), " +
                 $"expected disallowed: ({Tools.ToString (optionalExpectedWrapper.Disallowed())}), actual disallowed: ({Tools.ToString (optionalActualWrapper.Disallowed())}), expected result: {optionalExpectedResult}, " +
-                $"actual result: {optionalActualResult}, test result: {(optionalExpectedResult == optionalActualResult ? "PASSED" : "FAILED")}");
+                $"actual result: {optionalActualResult}, test result: FAILED");
             }
 
             ++tests;

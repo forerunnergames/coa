@@ -6,7 +6,7 @@ public interface IRequiredOptionalWrapper <out T1, T2>
 {
   public bool ComposeFromRequired (bool requiredResult, ref T2 data, Func <T1, T2, bool> activeFunc);
   public bool ComposeFromOptional (bool optionalResult, ref T2 data, Func <T1, T2, bool> activeFunc);
-  public bool Compose (ref T2 data, Func <T1, T2, bool> activeFunc);
+  public bool Compose (Func <T1, T2, bool> activeFunc);
   public IEnumerable <T1> Allowed();
   public IEnumerable <T1> Disallowed();
   public IEnumerable <T1> GetItems();

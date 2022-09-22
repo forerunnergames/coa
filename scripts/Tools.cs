@@ -8,42 +8,6 @@ public static class Tools
 {
   private static readonly Log Log = new();
 
-  public enum Input
-  {
-    Horizontal,
-    Vertical,
-    Item,
-    Text,
-    Respawn,
-    Season,
-    Music,
-    Up,
-    Down,
-    Left,
-    Right,
-    Jump,
-    Energy,
-    Attack
-  }
-
-  private static readonly Dictionary <Input, string[]> Inputs = new()
-  {
-    { Input.Horizontal, new[] { "move_left", "move_right" } },
-    { Input.Vertical, new[] { "move_up", "move_down" } },
-    { Input.Item, new[] { "use_item" } },
-    { Input.Attack, new[] { "attack" } },
-    { Input.Text, new[] { "show_text" } },
-    { Input.Respawn, new[] { "respawn" } },
-    { Input.Season, new[] { "season" } },
-    { Input.Music, new[] { "music" } },
-    { Input.Up, new[] { "move_up", "read_sign" } },
-    { Input.Down, new[] { "move_down" } },
-    { Input.Left, new[] { "move_left" } },
-    { Input.Right, new[] { "move_right" } },
-    { Input.Jump, new[] { "jump" } },
-    { Input.Energy, new[] { "energy" } }
-  };
-
   // @formatter:off
   public delegate bool Condition();
   public delegate void DrawPrimitive (Vector2[] points, Color[] colors, Vector2[] uvs);
@@ -51,35 +15,6 @@ public static class Tools
   public delegate Transform GetLocalTransform();
   public delegate Vector2 Transform (Vector2 point);
   public delegate Vector2 GetGlobalScale();
-  public static bool IsReleased (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionReleased (x));
-  public static bool IsPressed (Input i, InputEvent e) => e is InputEventKey k && Inputs[i].Any (x => k.IsActionPressed (x));
-  public static bool IsOneActiveOf (Input i) => Inputs[i].Where (x => Godot.Input.IsActionPressed (x)).Take (2).Count() == 1;
-  public static bool IsAnyActiveOf (Input i) => Inputs[i].Any (x => Godot.Input.IsActionPressed (x));
-  public static bool WasMouseLeftClicked (InputEvent e) => e is InputEventMouseButton { ButtonIndex: (int)ButtonList.Left, Pressed: true };
-  public static bool IsLeftArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Left][0]);
-  public static bool WasLeftArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Left][0]);
-  public static bool IsRightArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Right][0]);
-  public static bool WasRightArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Right][0]);
-  public static bool IsUpArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Up][0]);
-  public static bool WasUpArrowReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Up][0]);
-  public static bool WasUpArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Up][0]);
-  public static bool IsDownArrowPressed() => Godot.Input.IsActionPressed (Inputs[Input.Down][0]);
-  public static bool WasDownArrowReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Down][0]);
-  public static bool WasDownArrowPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Down][0]);
-  public static bool IsAnyHorizontalArrowPressed() => IsLeftArrowPressed() || IsRightArrowPressed();
-  public static bool IsEveryHorizontalArrowPressed() => IsLeftArrowPressed() && IsRightArrowPressed();
-  public static bool IsAnyVerticalArrowPressed() => IsUpArrowPressed() || IsDownArrowPressed();
-  public static bool IsEveryVerticalArrowPressed() => IsUpArrowPressed() && IsDownArrowPressed();
-  public static bool IsAnyArrowKeyPressed() => IsAnyHorizontalArrowPressed() || IsAnyVerticalArrowPressed();
-  public static bool IsItemKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Item][0]);
-  public static bool WasAttackKeyPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Attack][0]);
-  public static bool IsAttackKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Attack][0]);
-  public static bool WasAttackKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Attack][0]);
-  public static bool WasItemKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Item][0]);
-  public static bool WasItemKeyPressedOnce() => Godot.Input.IsActionJustPressed (Inputs[Input.Item][0]);
-  public static bool IsEnergyKeyPressed() => Godot.Input.IsActionPressed (Inputs[Input.Energy][0]);
-  public static bool WasJumpKeyPressed() => Godot.Input.IsActionJustPressed (Inputs[Input.Jump][0]);
-  public static bool WasJumpKeyReleased() => Godot.Input.IsActionJustReleased (Inputs[Input.Jump][0]);
   public static float SafelyClampMin (float f, float min) => IsSafelyLessThan (f, min) ? min : f;
   public static float SafelyClampMax (float f, float max) => IsSafelyGreaterThan (f, max) ? max : f;
   public static float SafelyClamp (float f, float min, float max) => SafelyClampMin (SafelyClampMax (f, max), min);
@@ -230,73 +165,6 @@ public static class Tools
     var nodes = sceneTree.GetNodesInGroup (groups[0]).Cast <Node>().Where (x => x is T).Cast <T>();
 
     return groups.Length == 1 ? nodes.ToList() : nodes.Where (x => groups.Distinct().All (x.IsInGroup)).ToList();
-  }
-
-  public static bool IsAnyArrowKeyPressedExcept (Input arrow)
-  {
-    var up = IsUpArrowPressed();
-    var down = IsDownArrowPressed();
-    var left = IsLeftArrowPressed();
-    var right = IsRightArrowPressed();
-
-    return arrow switch
-    {
-      Input.Horizontal => up || down,
-      Input.Vertical => left || right,
-      Input.Up => left || right || down,
-      Input.Down => left || right || up,
-      Input.Left => right || up || down,
-      Input.Right => left || up || down,
-      _ => false
-    };
-  }
-
-  /// <summary>
-  /// Whether or not the specified input type is the only active input.
-  /// </summary>
-  /// <param name="input"></param>
-  /// <param name="disableExclusivity">if true, bypass exclusivity requirement for active input
-  /// <br/>
-  /// Useful when the desired action from the specified input is already being executed,
-  /// since ignoring exclusivity prevents said action from being canceled when
-  /// an excluded input becomes active.
-  /// <br/>
-  /// For example, holding the right arrow key down
-  /// and running, and you want to disable jumping (space bar) while running. If the
-  /// player is already running, and exclusivity of input is required, i.e., in order
-  /// to run, ONLY the right arrow key may be pressed, then pressing the space bar will
-  /// cancel the running because the input is no longer exclusive. In this case you would
-  /// want to IGNORE exclusivity, continuing to run even when the space bar is pressed in
-  /// addition to the right arrow key.
-  /// <br/>
-  /// Then as long as you implement the same thing for running as with jumping, then jumping
-  /// will not work when running for the same reason; i.e., the space bar requires exclusivity.
-  /// The exception for ignoring exclusions would be if already jumping; however, in this example
-  /// the player is running, so exclusions would NOT be ignored for jumping, therefore jumping
-  /// would be disabled while running because the right arrow key is already being pressed.
-  /// </param>
-  /// <returns></returns>
-  public static bool IsExclusivelyActiveUnless (Input input, bool disableExclusivity)
-  {
-    var activeInclusions = new List <string>();
-    var activeExclusions = new List <string>();
-
-    foreach (var (key, values) in Inputs)
-    {
-      foreach (var value in values)
-      {
-        var isActionPressed = Godot.Input.IsActionPressed (value);
-
-        if (key == input && isActionPressed) activeInclusions.Add (value);
-        else if (isActionPressed) activeExclusions.Add (value);
-      }
-    }
-
-    // If not ignoring exclusions, active exclusions must be unique; i.e., must not be an active inclusion.
-    //   E.g., InputType.Vertical & InputType.Up both contain "move_up", so if the specified input type is
-    //   Vertical and "move_up" is an active inclusion, then InputType.Up ["move_up"] will not count as an
-    //   active exclusion, since it isn't unique (even though it is active).
-    return activeInclusions.Any() && (disableExclusivity || !activeExclusions.Except (activeInclusions).Any());
   }
 
   public static void LoopAudio (AudioStream stream, float loopBeginSeconds, float loopEndSecondsWavOnly)

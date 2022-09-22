@@ -3,6 +3,7 @@ using System.Linq;
 using Godot;
 using static Seasons;
 using static Tools;
+using Input = Inputs.Input;
 
 public class Cliffs : Area2D
 {
@@ -50,7 +51,7 @@ public class Cliffs : Area2D
   public override void _UnhandledInput (InputEvent @event)
   {
     _seasons.OnInput (@event);
-    if (IsReleased (Tools.Input.Music, @event)) ToggleMusic();
+    if (Inputs.WasPressed (Input.Music, @event)) ToggleMusic();
   }
 
   // @formatter:off

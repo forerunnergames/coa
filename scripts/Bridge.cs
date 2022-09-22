@@ -35,7 +35,7 @@ public class Bridge : Node2D
   // TODO Remove. For debugging purposes only.
   public override void _UnhandledInput (InputEvent @event)
   {
-    if (!WasMouseLeftClicked (@event)) return;
+    if (!Inputs.WasMouseLeftClicked (@event)) return;
 
     var clickedPiece = _pieces.FirstOrDefault (piece => MouseInSprite (piece, GetMousePositionInSpriteSpace (piece)));
 

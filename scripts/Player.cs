@@ -2,13 +2,15 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Godot;
+using static BooleanOperators;
 using static Gravity;
+using static Inputs;
 using static Motions;
 using static PlayerStateMachine;
 using static Positionings;
 using static Seasons;
 using static Tools;
-using Input = Tools.Input;
+using Input = Inputs.Input;
 
 // TODO Stop polling and have event-based input state changes only.
 // TODO Check if item being used for cliff arresting is pickaxe. For now it's the default and only item.
@@ -32,19 +34,14 @@ public class Player : KinematicBody2D
   [Export] public int HorizontalFreeFallingSpeed = 10;
   [Export] public int CliffArrestingSpeed = 40;
   [Export] public int CliffArrestingActivationVelocity = 800;
-
   [Export] public int MaxEnergy = 20;
   [Export] public int EnergyMeterUnits = 20;
   [Export] public int EnergyMeterReplenishTimeSeconds = 10;
   [Export] public int EnergyMeterDepletionTimeSeconds = 3;
   [Export] public int JumpPower = 800;
-  [Export] public float HorizontalRunJumpFriction = 0.9f;
-  [Export] public float HorizontalRunJumpStoppingFriction = 0.6f;
-  [Export] public float TraverseFriction = 0.9f;
-  [Export] public float HorizontalClimbStoppingFriction = 0.6f;
+  [Export] public float HorizontalFriction = 0.9f;
+  [Export] public float HorizontalStoppingFriction = 0.6f;
   [Export] public float CameraSmoothingDeactivationVelocity = 800.0f;
-  [Export] public float VelocityEpsilon = 1.0f;
-  [Export] public float Gravity = 30.0f;
   [Export] public string IdleLeftAnimation = "player_idle_left";
   [Export] public string IdleBackAnimation = "player_idle_back";
   [Export] public string ClimbingPrepAnimation = "player_idle_back";
@@ -66,7 +63,8 @@ public class Player : KinematicBody2D
   [Export] public Log.Level LogLevel = Log.Level.Info;
   private readonly RandomNumberGenerator _rng = new();
   private Vector2 _velocity;
-  private RichTextLabel _label = null!;
+  private int _currentHorizontalSpeed;
+  private RichTextLabel _debuggingTextLabel = null!;
   private AnimationPlayer _primaryAnimator = null!;
   private Area2D _animationColliderParent = null!;
   private TextureProgress _energyMeter = null!;
@@ -122,8 +120,8 @@ public class Player : KinematicBody2D
     _cliffs = GetNode <Cliffs> ("../Cliffs");
     _audio = GetNode <AudioStreamPlayer> ("Audio Players/Sound Effects");
     _audio.Stream = ResourceLoader.Load <AudioStream> (CliffArrestingSoundFile);
-    _label = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
-    _label.Visible = false;
+    _debuggingTextLabel = GetNode <RichTextLabel> ("../UI/Control/Debugging Text");
+    _debuggingTextLabel.Visible = false;
     _animationColliderParent = GetNode <Area2D> ("Animations/Area Colliders");
     _energyMeter = GetNode <TextureProgress> ("../UI/Control/Energy Meter");
     _energyMeter.Value = MaxEnergy;
@@ -143,52 +141,21 @@ public class Player : KinematicBody2D
   {
     StateMachine (delta);
     Collisions();
+    Camera();
     _weapon.Update (delta);
-
-    // HorizontalVelocity();
-    // VerticalVelocity();
     Animations();
     SoundEffects();
-    // if (Mathf.Abs (_velocity.x) < VelocityEpsilon) _velocity.x = 0.0f;
-    // if (Mathf.Abs (_velocity.y) < VelocityEpsilon) _velocity.y = 0.0f;
-    // _velocity = MoveAndSlide (_velocity, Vector2.Up);
-    CalculateFallingStats();
-    PrintLineOnce (DumpState());
-    Print();
-
-    // @formatter:off
-
-    if (AreAlmostEqual (_camera.GetCameraScreenCenter().x, GlobalPosition.x, 1.0f)) StopCameraSmoothing();
-
-    if (Mathf.Abs (_velocity.x) >= CameraSmoothingDeactivationVelocity ||
-        Mathf.Abs (_velocity.y) >= CameraSmoothingDeactivationVelocity)
-    {
-      StopCameraSmoothing();
-    }
-
-    if ((_sm.Is (State.ClimbingUp) || _sm.Is (State.ClimbingDown)) && IsDepletingEnergy() &&
-        !Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterDepletionRatePerUnit))
-    {
-      _energyTimer.Start (_energyMeterDepletionRatePerUnit);
-    }
-
-    if ((_sm.Is (State.ClimbingUp) || _sm.Is (State.ClimbingDown)) && IsReplenishingEnergy() &&
-        !Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterReplenishRatePerUnit))
-    {
-      _energyTimer.Start (_energyMeterReplenishRatePerUnit);
-    }
-
-    // @formatter:on
+    Debugging();
   }
 
   public override async void _UnhandledInput (InputEvent @event)
   {
-    if (IsReleased (Input.Text, @event)) _label.Visible = !_label.Visible;
-    if (IsReleased (Input.Respawn, @event)) Respawn();
+    if (WasPressed (Input.Text, @event)) ToggleDebuggingText();
+    if (WasPressed (Input.Respawn, @event)) Respawn();
     if (WasMouseLeftClicked (@event)) _clothing.UpdateAll (_primaryAnimator.CurrentAnimation);
 
     // This async call must be the last line in this method.
-    if (IsDownArrowPressed() && !_sm.Is (State.ReadingSign)) await _dropdown.Drop();
+    if (WasPressed (Input.Down) && !_sm.Is (State.ReadingSign)) await _dropdown.Drop();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -263,6 +230,66 @@ public class Player : KinematicBody2D
     UpdateVelocity (_sm.ToIf (State.Idle, _sm.Is (State.ReadingSign)));
   }
 
+  // ReSharper disable once UnusedMember.Global
+  public void _OnAnimationStarted (string animationName)
+  {
+    _clothing.OnAnimation (animationName);
+
+    switch (animationName)
+    {
+      case "player_equipping_left":
+      case "player_equipping_back":
+      {
+        _weapon.OnEquipAnimationStarted();
+
+        break;
+      }
+      case "player_unequipping_left":
+      case "player_unequipping_back":
+      {
+        _weapon.OnUnequipAnimationStarted();
+
+        break;
+      }
+    }
+
+    _clothing.UpdateSecondary();
+  }
+
+  // ReSharper disable once UnusedMember.Global
+  public void _OnAnimationFinished (string animationName)
+  {
+    switch (animationName)
+    {
+      case "player_equipping_left":
+      case "player_equipping_back":
+      {
+        _weapon.OnEquipAnimationFinished();
+
+        break;
+      }
+      case "player_unequipping_left":
+      case "player_unequipping_back":
+      {
+        _weapon.OnUnequipAnimationFinished();
+
+        break;
+      }
+    }
+
+    _clothing.UpdateSecondary();
+  }
+
+  // ReSharper disable once UnusedMember.Global
+  public void _OnCameraSmoothingTimerTimeout()
+  {
+    var physicsBodyData = new PhysicsBodyData (_velocity, GravityType.None, null);
+
+    if (Motion.Any.IsActive (ref physicsBodyData)) return;
+
+    StartCameraSmoothing();
+  }
+
   private void Respawn()
   {
     _sm.Reset (IStateMachine <State>.ResetOption.ExecuteTransitionActions);
@@ -325,35 +352,36 @@ public class Player : KinematicBody2D
   }
 
   // @formatter:off
-  private void StateMachine (float delta) => UpdateVelocity (_sm.Update (this, Godot.Input.IsActionPressed, _velocity, delta));
+  private void StateMachine (float delta) => UpdateVelocity (_sm.Update (this, s => Godot.Input.IsActionPressed (s), _velocity, delta));
   private void Collisions() => UpdateVelocity (MoveAndSlide (_velocity, Vector2.Up));
   private void UpdateVelocity (Vector2? velocity) => _velocity = velocity ?? _velocity;
-  private bool IsInClimbableLocation() => IsInCliffs || _isInGround;
+  private Vector2 MoveHorizontally (Vector2 velocity, float delta) => MoveHorizontally (velocity, true);
+  private bool IsInClimbableLocation() => IsInCliffs() || _isInGround;
   private bool CanReadSign() => HasReadableSign() && _isInSign;
-  private bool CanClimbPrep() => !CanReadSign() && IsInCliffs;
-  private bool CanCliffArrest() => _velocity.y >= CliffArrestingActivationVelocity && IsInCliffs; // TODO Test InClimbingLocation()
+  private bool CanClimbPrep() => !CanReadSign() && IsInCliffs();
+  private bool CanCliffArrest() => _velocity.y >= CliffArrestingActivationVelocity && IsInCliffs(); // TODO Test InClimbingLocation()
   private bool HasReadableSign() => HasReadableSign (GetReadableSignName());
   private bool HasReadableSign (string name) => _signsTileMap?.HasNode ("../" + name) ?? false;
   private string GetReadableSignName() => GetReadableSignName (GetIntersectingTileCell (_animationColliderParent, _primaryAnimator.CurrentAnimation, _signsTileMap));
   private static string GetReadableSignName (Vector2 tileSignCell) => "Readable Sign (" + tileSignCell.x + ", " + tileSignCell.y + ")";
   private Sprite GetReadableSign (string name) => _signsTileMap?.GetNode <Sprite> ("../" + name);
-  private bool IsSpeedClimbing() => (_sm.Is (State.ClimbingUp) || _sm.Is (State.ClimbingDown)) && IsEnergyKeyPressed();
-  private static int GetClimbingSpeedBoost() => IsEnergyKeyPressed() ? 2 : 1;
-  private bool IsDepletingEnergy() => _energy > 0 && IsEnergyKeyPressed();
-  private bool JustDepletedAllEnergy() => _energy == 0 && IsEnergyKeyPressed();
-  private bool IsReplenishingEnergy() => _energy < MaxEnergy && !IsEnergyKeyPressed();
+  private bool IsSpeedClimbing() => (_sm.Is (State.ClimbingUp) || _sm.Is (State.ClimbingDown)) && IsPressed (Input.Energy);
+  private static int GetClimbingSpeedBoost() => IsPressed (Input.Energy) ? 2 : 1;
+  private bool IsDepletingEnergy() => _energy > 0 && IsPressed (Input.Energy);
+  private bool JustDepletedAllEnergy() => _energy == 0 && IsPressed (Input.Energy);
+  private bool IsReplenishingEnergy() => _energy < MaxEnergy && !IsPressed (Input.Energy);
   private float GetFallingTimeSeconds() => _elapsedFallingTimeMs > 0 ? _elapsedFallingTimeMs / 1000.0f : _lastTotalFallingTimeMs / 1000.0f;
   private void PrintLineOnce (string line) => _printLinesOnce.Add (line);
   private void PrintLineContinuously (string line) => _printLinesContinuously.Add (line);
   private void StopPrintingContinuousLine (string line) => _printLinesContinuously.Remove (line);
   private void ToggleDebuggingText() => _debuggingTextLabel.Visible = !_debuggingTextLabel.Visible;
   private bool IsInCliffs() => _cliffs.Encloses (GetCurrentAnimationColliderRect);
+  private bool IsTouchingWall() => _wallDetectors.Any (x => x.GetCollider() is StaticBody2D collider && collider.IsInGroup ("Walls") || x.GetCollider() is TileMap collider2 && collider2.IsInGroup ("Walls"));
+  private bool IsTouchingGround() => _groundDetectors.Any (x => x.GetCollider() is StaticBody2D collider && collider.IsInGroup ("Ground") || x.GetCollider() is TileMap collider2 && collider2.IsInGroup ("Ground"));
   private bool IsTouchingCliffIce() => _cliffs.IsTouchingIce (GetCurrentAnimationColliderRect);
   private Rect2 GetCurrentAnimationColliderRect => GetColliderRect (_animationColliderParent, GetCurrentAnimationCollider());
   private CollisionShape2D GetCurrentAnimationCollider() => _animationColliderParent.GetNode <CollisionShape2D> (_primaryAnimator.CurrentAnimation);
   // @formatter:on
-
-  private Vector2 MoveHorizontally (Vector2 velocity, float delta) => MoveHorizontally (velocity, true);
 
   private Vector2 MoveHorizontally (Vector2 velocity, bool flippable)
   {
@@ -369,11 +397,6 @@ public class Player : KinematicBody2D
     return velocity;
   }
 
-  private bool IsTouchingWall() =>
-    _wallDetectors.Any (x =>
-      x.GetCollider() is StaticBody2D collider && collider.IsInGroup ("Walls") ||
-      x.GetCollider() is TileMap collider2 && collider2.IsInGroup ("Walls"));
-
   private void FlipHorizontally (bool flip)
   {
     if (_isFlippedHorizontally == flip) return;
@@ -382,6 +405,27 @@ public class Player : KinematicBody2D
     var scale = Scale;
     scale.x = -scale.x;
     Scale = scale;
+  }
+
+  private void Camera()
+  {
+    if (!AreAlmostEqual (_camera.GetCameraScreenCenter().x, GlobalPosition.x, 1.0f) &&
+        !(Mathf.Abs (_velocity.x) >= CameraSmoothingDeactivationVelocity) &&
+        !(Mathf.Abs (_velocity.y) >= CameraSmoothingDeactivationVelocity)) return;
+
+    StopCameraSmoothing();
+  }
+
+  private void StartCameraSmoothing()
+  {
+    _camera.SmoothingEnabled = true;
+    _camera.DragMarginHEnabled = false;
+  }
+
+  private void StopCameraSmoothing()
+  {
+    _camera.SmoothingEnabled = false;
+    _camera.DragMarginHEnabled = true;
   }
 
   private async void Animations()
@@ -416,10 +460,21 @@ public class Player : KinematicBody2D
     // End workaround
   }
 
+  private void SoundEffects()
+  {
+    if (_sm.Is (State.CliffArresting))
+    {
+      _audio.PitchScale = CliffArrestingSoundMinPitchScale +
+                          _velocity.y / CliffArrestingActivationVelocity / CliffArrestingSoundVelocityPitchScaleModulation;
+    }
+  }
+
   private void Debugging()
   {
     CalculateDebuggingStats();
-    PrintDebuggingText (GetDebuggingText());
+    var physicsBodyData = new PhysicsBodyData (_velocity, GravityType.AfterApplied, GetPositioning (this));
+    PrintLineOnce (DumpState (ref physicsBodyData));
+    Print();
   }
 
   private void CalculateDebuggingStats()
@@ -448,26 +503,17 @@ public class Player : KinematicBody2D
 
   private void Print()
   {
-    _label.Text = "";
-    _label.BbcodeText = "";
-    _label.GetVScroll().Visible = false;
-    foreach (var line in _printLinesContinuously) _label.AddText (line + "\n");
-    foreach (var line in _printLinesOnce) _label.AddText (line + "\n");
+    _debuggingTextLabel.Text = "";
+    _debuggingTextLabel.BbcodeText = "";
+    _debuggingTextLabel.GetVScroll().Visible = false;
+    foreach (var line in _printLinesContinuously) _debuggingTextLabel.AddText (line + "\n");
+    foreach (var line in _printLinesOnce) _debuggingTextLabel.AddText (line + "\n");
     _printLinesOnce.Clear();
-  }
-
-  private void SoundEffects()
-  {
-    if (_sm.Is (State.CliffArresting))
-    {
-      _audio.PitchScale = CliffArrestingSoundMinPitchScale +
-                          _velocity.y / CliffArrestingActivationVelocity / CliffArrestingSoundVelocityPitchScaleModulation;
-    }
   }
 
   // @formatter:off
 
-  private string DumpState() =>
+  private string DumpState (ref PhysicsBodyData physicsBodyData) =>
     "\nState: " + _sm.GetState() +
     "\nWeapon state: " + _weapon.GetState() +
     "\nAnimation: " + _primaryAnimator.CurrentAnimation +
@@ -475,32 +521,39 @@ public class Player : KinematicBody2D
     "\nIdle: " + _sm.Is (State.Idle) +
     "\nWalking: " + _sm.Is (State.Walking) +
     "\nRunning: " + _sm.Is (State.Running) +
-    "\nEnergy: " + _energy +
-    "\nEnergy timer: " + _energyTimer.TimeLeft +
     "\nJumping: " + _sm.Is (State.Jumping) +
     "\nClimbing prep: " + _sm.Is (State.ClimbingPrep) +
-    "\nClimbing prep timer: " + _climbingPrepTimer.TimeLeft +
     "\nClimbing up: " + _sm.Is (State.ClimbingUp) +
     "\nClimbing down: " + _sm.Is (State.ClimbingDown) +
-    "\nIsSpeedClimbing: " + IsSpeedClimbing() +
-    "\nIsInWaterfall: " +  IsInWaterfall() +
-    "\nIsInFrozenWaterfall: " + IsInFrozenWaterfall() +
-    "\nIsTouchingCliffIce: " + IsTouchingCliffIce() +
+    "\nTraversing: " + _sm.Is (State.Traversing) +
     "\nCliff arresting: " + _sm.Is (State.CliffArresting) +
     "\nCliff hanging: " + _sm.Is (State.CliffHanging) +
-    "\nClimbing Traversing: " + _sm.Is (State.Traversing) +
     "\nFree falling: " + _sm.Is (State.FreeFalling) +
     "\nDropping down: " + _dropdown.IsDropping() +
-    "\nIsOnFloor(): " + IsOnFloor() +
-    "\nIsTouchingGround(): " + IsTouchingGround() +
-    "\nIsTouchingWall(): " + IsTouchingWall() +
-    "\nIsInCliffs: " + IsInCliffs() +
-    "\nIsInGround: " + _isInGround +
-    "\n_isInSign: " + _isInSign +
-    "\n_isResting: " + _isResting +
-    "\n_wasRunning: " + _wasRunning +
-    "\n_wasInCliffEdge: " + _wasInCliffEdge +
-    "\n_justRespawned: " + _justRespawned +
+    "\nEnergy: " + _energy +
+    "\nEnergy Timer: " + _energyTimer.TimeLeft +
+    "\nDepleting Energy: " + IsDepletingEnergy()  +
+    "\nReplenishing Energy: " + IsReplenishingEnergy() +
+    "\nClimbing Prep Timer: " + _climbingPrepTimer.TimeLeft +
+    "\nCan Climb Prep: " + CanClimbPrep() +
+    "\nSpeed Climbing: " + IsSpeedClimbing() +
+    "\nCan Cliff Arrest: " + CanCliffArrest() +
+    "\nIn Cliff Ice: " + IsTouchingCliffIce() +
+    "\nOn Floor: " + IsOnFloor() +
+    "\nTouching Ground: " + IsTouchingGround() +
+    "\nTouching Wall: " + IsTouchingWall() +
+    "\nIn Sign: " + _isInSign +
+    "\nIn Cliffs: " + IsInCliffs() +
+    "\nIn Ground: " + _isInGround +
+    "\nIn Waterfall: " +  IsInWaterfall() +
+    "\nIn FrozenWaterfall: " + IsInFrozenWaterfall() +
+    "\nIn Climbable Location: " + IsInClimbableLocation() +
+    "\nCan Read Sign: " + CanReadSign() +
+    "\nWas In Cliff Edge: " + _wasInCliffEdge +
+    "\nJust Respawned: " + _justRespawned +
+    "\nResting: " + _isResting +
+    "\nWas Running: " + _wasRunning +
+    "\nHorizontal Speed: " + _currentHorizontalSpeed +
     "\nMoving: " + Motion.Any.IsActive (ref physicsBodyData) +
     "\nMoving Left: " + Motion.Left.IsActive (ref physicsBodyData) +
     "\nMoving Right: " + Motion.Right.IsActive (ref physicsBodyData) +
@@ -515,7 +568,7 @@ public class Player : KinematicBody2D
     "\nAny Horizontal Arrow Pressed: " + IsPressed (Input.Horizontal) +
     "\nAny Vertical Arrow Pressed: " + IsPressed (Input.Vertical) +
     "\nJump Key Pressed: " + IsPressed (Input.Jump) +
-    "\nIsFlippedHorizontally: " + _isFlippedHorizontally +
+    "\nFlipped Horizontally: " + _isFlippedHorizontally +
     "\nScale: " + Scale +
     "\nVelocity: " + _velocity +
     "\nVertical velocity (mph): " + _velocity.y * 0.028334573333333 +
@@ -533,36 +586,27 @@ public class Player : KinematicBody2D
 
   private void InitializeStateMachine()
   {
-    // @formatter:off
     // ReSharper disable once ExplicitCallerInfoArgument
     _sm = new PlayerStateMachine (InitialState, LogLevel, Name);
     _sm.OnTransitionFrom (State.ReadingSign, StopReadingSign);
     _sm.OnTransitionTo (State.ReadingSign, ReadSign);
-    _sm.OnTransitionTo (State.Traversing, () => _primaryAnimator.Play (TraversingAnimation));
-    _sm.OnTransitionTo (State.FreeFalling, () => _primaryAnimator.Play (FreeFallingAnimation));
     _sm.OnTransitionFrom (State.ClimbingPrep, () => _climbingPrepTimer.Stop());
+    _sm.OnTransitionTo (State.FreeFalling, () => _primaryAnimator.Play (FreeFallingAnimation));
     _sm.OnTransition (State.ReadingSign, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
     _sm.OnTransition (State.CliffArresting, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
     _sm.OnTransition (State.ClimbingDown, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
     _sm.OnTransition (State.FreeFalling, State.Idle, () => _primaryAnimator.Play (IdleLeftAnimation));
-    // @formatter:on
+
+    _sm.OnTransitionTo (State.Traversing, () =>
+    {
+      _primaryAnimator.Play (TraversingAnimation);
+      _currentHorizontalSpeed = TraversingSpeed;
+    });
 
     _sm.OnTransitionFrom (State.Idle, () =>
     {
       if (IsInGroup ("Perchable Parent")) RemoveFromGroup ("Perchable Parent");
       _cameraSmoothingTimer.Stop();
-    });
-
-    _sm.OnTransition (State.Running, State.Idle, () =>
-    {
-      _primaryAnimator.Play (IdleLeftAnimation);
-      _cameraSmoothingTimer.Start();
-    });
-
-    _sm.OnTransition (State.Walking, State.Idle, () =>
-    {
-      _primaryAnimator.Play (IdleLeftAnimation);
-      _cameraSmoothingTimer.Start();
     });
 
     _sm.OnTransitionTo (State.Idle, () =>
@@ -587,6 +631,7 @@ public class Player : KinematicBody2D
     {
       _primaryAnimator.Play (WalkLeftAnimation);
       _wasRunning = false;
+      _currentHorizontalSpeed = WalkingSpeed;
     });
 
     _sm.OnTransitionTo (State.Jumping, () =>
@@ -635,7 +680,11 @@ public class Player : KinematicBody2D
     // TODO This eliminates transition repetition when an exception is needed (all transitions to a state, except from a specific state).
     // TODO Catch-all OnTransitionFrom (State.Running) replenishes the energy meter before the running => jumping transition has a chance to start depleting it.
     // TODO Running and jumping uses energy energy meter while jumping.
-    _sm.OnTransition (State.Running, State.Jumping, () => { _energyTimer.Start (_energyMeterDepletionRatePerUnit); });
+    _sm.OnTransition (State.Running, State.Jumping, () =>
+    {
+      _energyTimer.Start (_energyMeterDepletionRatePerUnit);
+      _currentHorizontalSpeed = RunningSpeed;
+    });
 
     _sm.OnTransitionFrom (State.Running, () =>
     {
@@ -646,6 +695,7 @@ public class Player : KinematicBody2D
     {
       _primaryAnimator.Play (RunLeftAnimation);
       _energyTimer.Start (_energyMeterDepletionRatePerUnit);
+      _currentHorizontalSpeed = RunningSpeed;
       _wasRunning = true;
     });
 
@@ -685,224 +735,152 @@ public class Player : KinematicBody2D
       _justRespawned = false;
     });
 
+    _sm.OnTransition (State.Running, State.Idle, () =>
+    {
+      _primaryAnimator.Play (IdleLeftAnimation);
+      _cameraSmoothingTimer.Start();
+    });
+
+    _sm.OnTransition (State.Walking, State.Idle, () =>
+    {
+      _primaryAnimator.Play (IdleLeftAnimation);
+      _cameraSmoothingTimer.Start();
+    });
+
+    _sm.AddFrameAction (State.Idle);
+    _sm.AddFrameAction (State.FreeFalling, velocityAction: MoveHorizontally);
+    _sm.AddFrameAction (State.Walking, velocityAction: MoveHorizontally);
+    _sm.AddFrameAction (State.Running, velocityAction: MoveHorizontally);
+    _sm.AddFrameAction (State.CliffHanging, GravityType.None);
+
+    _sm.AddFrameAction (State.ClimbingDown, GravityType.None, velocityAction: (velocity, _) =>
+    {
+      velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 6 * 0.2f, 0.1f) ||
+                   AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 1 * 0.2f, 0.1f)
+        ? VerticalClimbingSpeed * GetClimbingSpeedBoost()
+        : 0.0f;
+
+      return velocity;
+    });
+
+    _sm.AddFrameAction (State.Jumping, GravityType.AfterApplied, velocityAction: (velocity, delta) =>
+    {
+      MoveHorizontally (velocity, delta);
+      var physicsBodyData = new PhysicsBodyData (velocity, GravityType.AfterApplied, GetPositioning (this));
+      if (WasReleased (Input.Jump) && Motion.Up.IsActive (ref physicsBodyData)) velocity.y = 0;
+
+      return velocity;
+    });
+
+    _sm.AddFrameAction (State.Traversing, GravityType.None, velocityAction: (velocity, _) => MoveHorizontally (velocity, false));
+
+    _sm.AddFrameAction (State.ClimbingUp, GravityType.None, velocityAction: (velocity, _) =>
+    {
+      velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 4 * 0.2f, 0.1f) ||
+                   AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 9 * 0.2f, 0.1f)
+        ? -VerticalClimbingSpeed * GetClimbingSpeedBoost()
+        : 0.0f;
+
+      var isTimerDepleting = Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterDepletionRatePerUnit);
+      var isTimerReplenishing = Mathf.IsEqualApprox (_energyTimer.WaitTime, _energyMeterReplenishRatePerUnit);
+      if (IsDepletingEnergy() && !isTimerDepleting) _energyTimer.Start (_energyMeterDepletionRatePerUnit);
+      if (IsReplenishingEnergy() && !isTimerReplenishing) _energyTimer.Start (_energyMeterReplenishRatePerUnit);
+
+      return velocity;
+    });
+
+    _sm.AddFrameAction (State.CliffArresting, GravityType.BeforeApplied, velocityAction: (velocity, _) =>
+    {
+      velocity.y -= CliffArrestingSpeed;
+      velocity.y = SafelyClampMin (velocity.y, 0.0f);
+
+      _audio.PitchScale = CliffArrestingSoundMinPitchScale +
+                          velocity.y / CliffArrestingActivationVelocity / CliffArrestingSoundVelocityPitchScaleModulation;
+
+      return velocity;
+    });
+
     // @formatter:off
 
-    // TODO Move conditions into state machine conditions, leaving only input for triggers.
-    _sm.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() && IsOnFloor());
-    _sm.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsTouchingWall() && IsOnFloor());
-    _sm.AddTrigger (State.Idle, State.Jumping, () => WasJumpKeyPressed() && IsOnFloor());
-    _sm.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !_isResting);
-    _sm.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs() && !_dropdown.IsDropping() && !IsOneActiveOf (Input.Horizontal));
-    _sm.AddTrigger (State.Idle, State.FreeFalling, () => !IsDownArrowPressed() && IsMovingDown() && !IsOnFloor());
-    _sm.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !_isResting);
-    _sm.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally() && !(_isInSign && IsUpArrowPressed()));
-    _sm.AddTrigger (State.Walking, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsMovingHorizontally() && IsDepletingEnergy());
-    _sm.AddTrigger (State.Walking, State.Jumping, WasJumpKeyPressed);
-    _sm.AddTrigger (State.Walking, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
-    _sm.AddTrigger (State.Walking, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign);
-    _sm.AddTrigger (State.Walking, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
-    _sm.AddTrigger (State.Running, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
-    _sm.AddTrigger (State.Running, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() || JustDepletedAllEnergy());
-    _sm.AddTrigger (State.Running, State.Jumping, WasJumpKeyPressed);
-    _sm.AddTrigger (State.Running, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
-    _sm.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign);
-    _sm.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
-    _sm.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
-    _sm.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
-    _sm.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce() && !IsInFrozenWaterfall());
-    _sm.AddTrigger (State.ClimbingUp, State.FreeFalling, () => (WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall() || JustDepletedAllEnergy()) && !_isResting);
-    _sm.AddTrigger (State.ClimbingUp, State.Idle, () => _isResting);
-    _sm.AddTrigger (State.ClimbingUp, State.CliffHanging, () => WasUpArrowReleased() && !IsDownArrowPressed() && (IsInCliffs() || _isInGround));
-    _sm.AddTrigger (State.ClimbingUp, State.ClimbingDown, () => WasUpArrowReleased() && IsDownArrowPressed() && (IsInCliffs() || _isInGround));
-    _sm.AddTrigger (State.ClimbingDown, State.CliffHanging, () => WasDownArrowReleased() && !IsUpArrowPressed() && (IsInCliffs() || _isInGround));
-    _sm.AddTrigger (State.ClimbingDown, State.Idle, IsOnFloor);
-    _sm.AddTrigger (State.ClimbingDown, State.ClimbingUp, () => WasDownArrowReleased() && IsUpArrowPressed() && (IsInCliffs() || _isInGround));
-    _sm.AddTrigger (State.ClimbingDown, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall() || _isResting);
-    _sm.AddTrigger (State.FreeFalling, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsMovingHorizontally());
-    _sm.AddTrigger (State.FreeFalling, State.Walking, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && !IsDepletingEnergy() );
-    _sm.AddTrigger (State.FreeFalling, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsOnFloor() && IsDepletingEnergy());
-    _sm.AddTrigger (State.FreeFalling, State.CliffArresting, () => IsItemKeyPressed() && IsInCliffs() && _velocity.y >= CliffArrestingActivationVelocity);
-    _sm.AddTrigger (State.FreeFalling, State.CliffHanging, () => _wasInCliffEdge && _isInGround && !IsTouchingCliffIce() && !IsInFrozenWaterfall());
-    _sm.AddTrigger (State.CliffHanging, State.ClimbingUp, IsUpArrowPressed);
-    _sm.AddTrigger (State.CliffHanging, State.ClimbingDown, () => IsDownArrowPressed() && !IsOneActiveOf (Input.Horizontal));
-    _sm.AddTrigger (State.CliffHanging, State.FreeFalling, WasJumpKeyPressed);
-    _sm.AddTrigger (State.CliffHanging, State.Traversing, () => IsOneActiveOf (Input.Horizontal));
-    _sm.AddTrigger (State.Traversing, State.FreeFalling, () => WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall());
-    _sm.AddTrigger (State.Traversing, State.CliffHanging, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
-    _sm.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
-    _sm.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs());
-    _sm.AddTrigger (State.CliffArresting, State.Idle, IsOnFloor);
-    _sm.AddTrigger (State.ReadingSign, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
-    _sm.AddTrigger (State.ReadingSign, State.Walking, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && _isInSign);
-    _sm.AddTrigger (State.ReadingSign, State.Running, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsDepletingEnergy() && _isInSign);
+    // TODO Add a Not boolean operator, or try and combine conditions into a new method that doesn't require it.
+    // TODO Try to convert custom conditions into states, such as resting, dropping down.
+    // TODO Replace optionalMotion with motion: Optional (Motion.Horizontal)
+    // TODO Change InClimbingLocation, !IsInCliffIce, to Positioning.Climbable
+    // TODO If a trigger has no input condition, it should allow any input, no input should only be for Input.None. Same for motion.
 
+    _sm.AddTrigger (State.Idle, State.Walking, Input.Horizontal, positioning: Positioning.Ground, conditions: _ (And (() => !IsDepletingEnergy(), () => !_dropdown.IsDropping())));
+    _sm.AddTrigger (State.Idle, State.Running, inputs: _ (Required (Input.Horizontal, Input.Energy)), positioning: Positioning.Ground, conditions: _ (And (IsDepletingEnergy, () => !IsTouchingWall(), () => !_dropdown.IsDropping())));
+    _sm.AddTrigger (State.Idle, State.Jumping, inputs: _ (Required (Input.Jump), Optional (Input.Horizontal)), positioning: Positioning.Ground, and: () => !_dropdown.IsDropping());
+    _sm.AddTrigger (State.Idle, State.ClimbingPrep, Input.Up, positioning: Positioning.Ground, conditions: _ (And (CanClimbPrep, () => !IsDepletingEnergy(), () => !_dropdown.IsDropping(), () => !_isResting)));
+    _sm.AddTrigger (State.Idle, State.ClimbingDown, Input.Down, motion: Motion.Down, positioning: Positioning.Air, conditions: _ (And (IsInCliffs, () => !_dropdown.IsDropping())));
+
+    // TODO Try to eliminate custom input conditions.
+    _sm.AddTrigger (State.Idle, State.FreeFalling, motion: Motion.Down, positioning: Positioning.Air, conditions: _ (And (() => !IsPressed (Input.Down), () => !WasPressed (Input.Jump)), Or (() => _dropdown.IsDropping())));
+
+    _sm.AddTrigger (State.Idle, State.ReadingSign, Input.Up, positioning: Positioning.Ground, conditions: _ (And (CanReadSign, () => !_dropdown.IsDropping(), () => !_isResting)));
+    _sm.AddTrigger (State.Walking, State.Idle, motion: Motion.None, positioning: Positioning.Ground);
+    _sm.AddTrigger (State.Walking, State.Running, inputs: _ (Required (Input.Horizontal, Input.Energy)), motion: Motion.Horizontal, positioning: Positioning.Ground, and: IsDepletingEnergy);
+    _sm.AddTrigger (State.Walking, State.Jumping, inputs: _ (Required (Input.Jump), Optional (Input.Horizontal)), positioning: Positioning.Ground);
+
+    // TODO Try to eliminate custom input conditions.
+    _sm.AddTrigger (State.Walking, State.FreeFalling, motion: Motion.Down, positioning: Positioning.Air, conditions: _(And (() => !WasPressed (Input.Jump), () => !IsTouchingWall())));
+
+    _sm.AddTrigger (State.Walking, State.ClimbingPrep, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanClimbPrep);
+    _sm.AddTrigger (State.Walking, State.ReadingSign, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanReadSign);
+    _sm.AddTrigger (State.Running, State.Idle, Input.None, motion: Motion.None, positioning: Positioning.Ground);
+    _sm.AddTrigger (State.Running, State.Walking, Input.Horizontal, motion: Motion.Horizontal, positioning: Positioning.Ground, conditions: _ (And (() => !IsDepletingEnergy()), Or (JustDepletedAllEnergy)));
+
+    // TODO Testing
+    _sm.AddTrigger (State.Running, State.Jumping, inputs: _ (Required (Input.Jump, Input.Left)), positioning: Positioning.Ground, motion: Motion.Left);
+
+    _sm.AddTrigger (State.Running, State.FreeFalling, motion: Motion.Down, positioning: Positioning.Air, and: () => !IsTouchingWall());
+    _sm.AddTrigger (State.Running, State.ClimbingPrep, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanClimbPrep);
+    _sm.AddTrigger (State.Running, State.ReadingSign, Input.Up, motion: Motion.None, positioning: Positioning.Ground, and: CanReadSign);
+
+    // TODO Testing
+    _sm.AddTrigger (State.Jumping, State.FreeFalling, motions: _ (Required (Motion.Down), Optional (Motion.Horizontal)), positioning: Positioning.Air); // TODO Test with input condition.
+
+    _sm.AddTrigger (State.ClimbingPrep, State.Idle, Input.None, motion: Motion.None, positioning: Positioning.Ground);
+
+    // TODO Test with positioning.
+    _sm.AddTrigger (State.ClimbingPrep, State.ClimbingUp, Input.Up, conditions: _ (And (() => _climbingPrepTimer.TimeLeft == 0, () => !IsTouchingCliffIce())));
+    _sm.AddTrigger (State.ClimbingUp, State.Idle, condition: () => _isResting); // TODO Test more strict conditions.
+
+    _sm.AddTrigger (State.ClimbingUp, State.FreeFalling, Input.Jump, positioning: Positioning.Air, conditions: _ (Or (() => !IsInClimbableLocation(), IsTouchingCliffIce, JustDepletedAllEnergy), And (() => !_isResting)));
+
+    // TODO Testing.
+    _sm.AddTrigger (State.ClimbingUp, State.CliffHanging, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.ClimbingDown, State.CliffHanging, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    // _sm.AddTrigger (State.ClimbingUp, State.ClimbingDown, Input.Down, positioning: Positioning.Air, and: IsInClimbableLocation);
+
+    _sm.AddTrigger (State.ClimbingDown, State.Idle, positioning: Positioning.Ground); // TODO Test more strict conditions.
+    _sm.AddTrigger (State.ClimbingDown, State.ClimbingUp, Input.Up, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.ClimbingDown, State.FreeFalling, Input.Jump, positioning: Positioning.Air, conditions: _ (Or (() => !IsInClimbableLocation(), IsTouchingCliffIce, () => _isResting)));
+    _sm.AddTrigger (State.FreeFalling, State.Idle, Input.None, motion: Motion.None, positioning: Positioning.Ground);
+    _sm.AddTrigger (State.FreeFalling, State.Walking, Input.Horizontal, motion: Motion.Horizontal, positioning: Positioning.Ground, and: () => !IsDepletingEnergy());
+    _sm.AddTrigger (State.FreeFalling, State.Running, Input.Horizontal, motion: Motion.Horizontal, positioning: Positioning.Ground, and: IsDepletingEnergy);
+    _sm.AddTrigger (State.FreeFalling, State.CliffArresting, Input.Item, positioning: Positioning.Air, and: CanCliffArrest);
+    _sm.AddTrigger (State.FreeFalling, State.CliffHanging, motion: Motion.Down, positioning: Positioning.Air, conditions: _ (And (() => _wasInCliffEdge, IsInClimbableLocation)));
+    _sm.AddTrigger (State.FreeFalling, State.Traversing, motion: Motion.Horizontal, positioning: Positioning.Air, conditions: _ (And (() => _wasInCliffEdge, IsInClimbableLocation)));
+
+    // TODO Testing.
+    _sm.AddTrigger (State.CliffHanging, State.ClimbingUp, Input.Up, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+
+    _sm.AddTrigger (State.CliffHanging, State.ClimbingDown, Input.Down, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.CliffHanging, State.FreeFalling, Input.Jump, positioning: Positioning.Air); // TODO Test more strict conditions.
+    _sm.AddTrigger (State.CliffHanging, State.Traversing, Input.Horizontal, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.Traversing, State.FreeFalling, inputs: _ (Required (Input.Jump), Optional (Input.Horizontal)), positioning: Positioning.Air, conditions: _ (And (() => !IsInClimbableLocation()), Or (IsTouchingCliffIce)));
+    _sm.AddTrigger (State.Traversing, State.CliffHanging, inputs: _ (Optional (Required (Input.Left, Input.Right))), motion: Motion.None, positioning: Positioning.Air, conditions: _ (And (IsInClimbableLocation, () => !IsTouchingCliffIce())));
+
+    _sm.AddTrigger (State.CliffArresting, State.FreeFalling, Input.None, motions: _ (Required (Motion.Down), Optional (Motion.Horizontal)), positioning: Positioning.Air);
+
+    _sm.AddTrigger (State.CliffArresting, State.CliffHanging, Input.Item, motion: Motion.None, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.CliffArresting, State.Traversing, inputs: _ (Required (Input.Item), Optional (Input.Horizontal)), motion: Motion.Horizontal, positioning: Positioning.Air, and: IsInClimbableLocation);
+    _sm.AddTrigger (State.CliffArresting, State.Idle, positioning: Positioning.Ground); // TODO Test more strict conditions.
+    _sm.AddTrigger (State.ReadingSign, State.Idle, Input.Down, motion: Motion.None, positioning: Positioning.Ground);
+    _sm.AddTrigger (State.ReadingSign, State.Walking, Input.Horizontal, motion: Motion.Horizontal, positioning: Positioning.Ground);
+    _sm.AddTrigger (State.ReadingSign, State.Running, Input.Horizontal, motion: Motion.Horizontal, positioning: Positioning.Ground, and: IsDepletingEnergy);
   }
 
   // @formatter:on
-
-  private void HorizontalVelocity()
-  {
-    if (_sm.Is (State.Walking) && IsExclusivelyActiveUnless (Input.Left, _sm.Is (State.Walking)))
-    {
-      _velocity.x -= WalkingSpeed;
-      FlipHorizontally (false);
-    }
-
-    if (_sm.Is (State.Running) && IsExclusivelyActiveUnless (Input.Left, _sm.Is (State.Running)))
-    {
-      _velocity.x -= RunningSpeed;
-      FlipHorizontally (false);
-    }
-
-    if (_sm.Is (State.Walking) && IsExclusivelyActiveUnless (Input.Right, _sm.Is (State.Walking)))
-    {
-      _velocity.x += WalkingSpeed;
-      FlipHorizontally (true);
-    }
-
-    if (_sm.Is (State.Running) && IsExclusivelyActiveUnless (Input.Right, _sm.Is (State.Running)))
-    {
-      _velocity.x += RunningSpeed;
-      FlipHorizontally (true);
-    }
-
-    if (_sm.Is (State.Traversing))
-    {
-      var left = IsLeftArrowPressed();
-      var right = IsRightArrowPressed();
-      var leftOnly = left && !right;
-      var rightOnly = right && !left;
-      _velocity.x += TraversingSpeed * (leftOnly ? -1 : rightOnly ? 1 : 0.0f);
-      _velocity.x = SafelyClamp (_velocity.x, -TraversingSpeed, TraversingSpeed);
-    }
-
-    if (_sm.Is (State.Jumping) && IsExclusivelyActiveUnless (Input.Left, _sm.Is (State.Jumping)))
-    {
-      _velocity.x -= _wasRunning ? RunningSpeed : WalkingSpeed;
-      FlipHorizontally (false);
-    }
-
-    if (_sm.Is (State.Jumping) && IsExclusivelyActiveUnless (Input.Right, _sm.Is (State.Jumping)))
-    {
-      _velocity.x += _wasRunning ? RunningSpeed : WalkingSpeed;
-      FlipHorizontally (true);
-    }
-
-    if (_sm.Is (State.FreeFalling) && IsExclusivelyActiveUnless (Input.Left, _sm.Is (State.FreeFalling)))
-    {
-      _velocity.x -= _wasRunning ? RunningSpeed : WalkingSpeed;
-      FlipHorizontally (false);
-    }
-
-    if (_sm.Is (State.FreeFalling) && IsExclusivelyActiveUnless (Input.Right, _sm.Is (State.FreeFalling)))
-    {
-      _velocity.x += _wasRunning ? RunningSpeed : WalkingSpeed;
-      FlipHorizontally (true);
-    }
-
-    // TODO Check if walking/running or jumping
-    // TODO Get rid of else if
-    // Friction
-    if (!IsAnyHorizontalArrowPressed()) _velocity.x *= HorizontalRunJumpStoppingFriction;
-    else if (_sm.Is (State.Traversing)) _velocity.x *= TraverseFriction;
-    else _velocity.x *= HorizontalRunJumpFriction;
-  }
-
-  private void VerticalVelocity()
-  {
-    _velocity.y += Gravity;
-
-    // TODO For jumping, traversing, and cliffhanging, subtract gravity and round to 0.
-    // Makes jumps less high when releasing jump button early.
-    // (Holding down jump continuously allows gravity to take over.)
-    // @formatter:off
-    if (_sm.Is (State.Jumping) && WasJumpKeyReleased() && IsMovingUp()) _velocity.y = 0.0f;
-    if (_sm.Is (State.ClimbingUp)) _velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 4 * 0.2f, 0.1f) || AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 9 * 0.2f, 0.1f) ? -VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
-    if (_sm.Is (State.ClimbingDown)) _velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 6 * 0.2f, 0.1f) || AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 1 * 0.2f, 0.1f) ? VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
-    if (_sm.Is (State.Traversing)) _velocity.y = 0.0f;
-    if (_sm.Is (State.CliffHanging)) _velocity.y = 0.0f;
-    // @formatter:on
-
-    // ReSharper disable once InvertIf
-    if (_sm.Is (State.CliffArresting))
-    {
-      _velocity.y -= CliffArrestingSpeed;
-      _velocity.y = SafelyClampMin (_velocity.y, 0.0f);
-    }
-  }
-
-  private bool IsTouchingGround() =>
-    _groundDetectors.Any (x =>
-      x.GetCollider() is StaticBody2D collider && collider.IsInGroup ("Ground") ||
-      x.GetCollider() is TileMap collider2 && collider2.IsInGroup ("Ground"));
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnAnimationStarted (string animationName)
-  {
-    _clothing.OnAnimation (animationName);
-
-    switch (animationName)
-    {
-      case "player_equipping_left":
-      case "player_equipping_back":
-      {
-        _weapon.OnEquipAnimationStarted();
-
-        break;
-      }
-      case "player_unequipping_left":
-      case "player_unequipping_back":
-      {
-        _weapon.OnUnequipAnimationStarted();
-
-        break;
-      }
-    }
-
-    _clothing.UpdateSecondary();
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnAnimationFinished (string animationName)
-  {
-    switch (animationName)
-    {
-      case "player_equipping_left":
-      case "player_equipping_back":
-      {
-        _weapon.OnEquipAnimationFinished();
-
-        break;
-      }
-      case "player_unequipping_left":
-      case "player_unequipping_back":
-      {
-        _weapon.OnUnequipAnimationFinished();
-
-        break;
-      }
-    }
-
-    _clothing.UpdateSecondary();
-  }
-
-  // ReSharper disable once UnusedMember.Global
-  public void _OnCameraSmoothingTimerTimeout()
-  {
-    if (IsMoving()) return;
-
-    StartCameraSmoothing();
-  }
-
-  private void StartCameraSmoothing()
-  {
-    _camera.SmoothingEnabled = true;
-    _camera.DragMarginHEnabled = false;
-  }
-
-  private void StopCameraSmoothing()
-  {
-    _camera.SmoothingEnabled = false;
-    _camera.DragMarginHEnabled = true;
-  }
 }

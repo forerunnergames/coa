@@ -69,13 +69,13 @@ public static class Inputs
 
     foreach (var action in Mapping[i])
     {
-      Godot.GD.Print ("action: ", action, ", inputFunc: ", inputFunc.Invoke (action), ", is pressed (should match inputFunc): ",
+      Godot.GD.Print ("action: ", action, ", inputFunc: ", inputFunc.Invoke (i, action), ", is pressed (should match inputFunc): ",
         Godot.Input.IsActionPressed (action));
     }
 
-    if (i == Input.None) return Mapping.Values.All (x => !x.Any (inputFunc));
+    if (i == Input.None) return Mapping.All (x => !x.Value.Any (y => inputFunc.Invoke (x.Key, y)));
 
-    var count = Mapping[i].Count (inputFunc);
+    var count = Mapping[i].Count (x => inputFunc.Invoke (i, x));
     var max = MaxActiveActions.GetValueOrDefault (i, 1);
 
     return count >= Math.Min (max, 1) && count <= max;
@@ -87,6 +87,7 @@ public static class Inputs
   public static bool WasPressed (Input i, Godot.InputEvent e) => e is Godot.InputEventKey k && Mapping[i].Any (x => k.IsActionPressed (x));
   public static bool WasReleased (Input i, Godot.InputEvent e) => e is Godot.InputEventKey k && Mapping[i].Any (x => k.IsActionReleased (x));
   public static bool WasReleased (Input i) => Mapping[i].Any (x => Godot.Input.IsActionJustReleased (x));
+  public static bool WasMouseLeftClicked (Godot.InputEvent e) => e is Godot.InputEventMouseButton { ButtonIndex: (int)Godot.ButtonList.Left, Pressed: true };
   // @formatter:on
 }
 
