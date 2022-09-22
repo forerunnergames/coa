@@ -357,7 +357,7 @@ public class Player : KinematicBody2D
   private void UpdateVelocity (Vector2? velocity) => _velocity = velocity ?? _velocity;
   private Vector2 MoveHorizontally (Vector2 velocity, float delta) => MoveHorizontally (velocity, true);
   private bool IsInClimbableLocation() => IsInCliffs() || _isInGround;
-  private bool CanReadSign() => HasReadableSign() && _isInSign;
+  private bool CanReadSign() => _isInSign && HasReadableSign();
   private bool CanClimbPrep() => !CanReadSign() && IsInCliffs();
   private bool CanCliffArrest() => _velocity.y >= CliffArrestingActivationVelocity && IsInCliffs(); // TODO Test InClimbingLocation()
   private bool HasReadableSign() => HasReadableSign (GetReadableSignName());

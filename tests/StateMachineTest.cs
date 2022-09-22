@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Godot;
-using WAT;
 
 [Pre (nameof (RunBeforeTestMethod))]
 // ReSharper disable UnusedMember.Local
 // ReSharper disable ObjectCreationAsStatement
-public class StateMachineTest : Test
+public class StateMachineTest : WAT.Test
 {
   private enum State
   {

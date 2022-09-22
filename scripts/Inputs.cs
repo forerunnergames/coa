@@ -66,16 +66,6 @@ public static class Inputs
 
   public static bool IsActive (this Input i, IsInputActive isInputActive)
   {
-    // TODO Remove.
-    Godot.GD.Print ("IsActive: Input: ", i);
-
-    // TODO Remove.
-    foreach (var action in Mapping[i])
-    {
-      Godot.GD.Print ("action: ", action, ", isInputActive: ", isInputActive (action), ", is pressed (should match isInputActive): ",
-        Godot.Input.IsActionPressed (action));
-    }
-
     if (i == Input.None) return Mapping.All (x => x.Value.All (y => !isInputActive (y)));
 
     var count = Mapping[i].Count (x => isInputActive (x));

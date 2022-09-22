@@ -4,12 +4,11 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using Godot;
-using WAT;
 using static Gravity;
 using static Motions;
 using static Positionings;
 
-public class MotionsTest : Test
+public class MotionsTest : WAT.Test
 {
   private static readonly IEnumerable <Motion> Values = Enum.GetValues (typeof (Motion)).Cast <Motion>();
   // private static readonly Func <Motion, bool> ActiveFunc = motion => motion.IsActive ();

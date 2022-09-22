@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Godot;
-using WAT;
 using static Inputs;
 using static Inputs.Input;
 
-public class InputsTest : Test
+public class InputsTest : WAT.Test
 {
   private static readonly IsInputActive Active = _ => true;
   private static readonly IsInputActive Inactive = _ => false;
