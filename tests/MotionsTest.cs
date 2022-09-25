@@ -90,12 +90,12 @@ public class MotionsTest : WAT.Test
     // @formatter:on
   }
 
+  // TestAll 23612: Optional (Any, Right, Up), velocity: (0, 0), allowed: (None, Any, Up, Down, Left, Right), disallowed: (), expected: True, actual: False, result: FAILED
   [Test]
   public void TestOptionalAnyRightUp()
   {
     GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
 
-    // TestAll 23612: Optional (Any, Right, Up), velocity: (0, 0), allowed: (None, Any, Up, Down, Left, Right), disallowed: (), expected: True, actual: False, result: FAILED
     var physicsBodyData = new PhysicsBodyData (Vector2.Zero, GravityType.AfterApplied, Positioning.Air);
     var physicsBodyData1 = physicsBodyData;
 
@@ -105,7 +105,23 @@ public class MotionsTest : WAT.Test
     // @formatter:on
   }
 
-  // Last updated 3/28/2022: Ran 110,592 tests. 110,592 passed, 0 failed. True: 35,809, False: 74,783
+  // // TestAll 15797: Optional (Any), velocity: (-2, -2), disallowed: (), expected: False, actual: True, result: FAILED
+  // [Test]
+  // public void TestOptionalAny()
+  // {
+  //   GD.Print ($"---\n{MethodBase.GetCurrentMethod()?.Name}:\n---");
+  //
+  //   var physicsBodyData = new PhysicsBodyData (Vector2.Zero, GravityType.AfterApplied, Positioning.Air);
+  //   var physicsBodyData1 = physicsBodyData;
+  //
+  //   // @formatter:off
+  //   TestMotion (Optional, new List <Motion> { Motion.Any, Motion.Right, Motion.Up }, ref physicsBodyData, x => x.IsActive (ref physicsBodyData1),
+  //     true, new List <Motion> { Motion.Any, Motion.None, Motion.Up, Motion.Down, Motion.Left, Motion.Right }, new List <Motion>(), "optional");
+  //   // @formatter:on
+  // }
+
+  // 3/28/2022: Ran 110,592 tests. 110,592 passed, 0 failed. True: 35,809, False: 74,783
+  // 9/22/2022: Ran 110,592 tests. 91,384 passed, 19,208 failed. True: 37,449, False: 73,143
   [Test]
   public void TestAll()
   {
@@ -177,7 +193,7 @@ public class MotionsTest : WAT.Test
 
                 // if (tests == 18847)
                 // {
-                //   GD.Print ( $"{methodName} {tests}: Required ({Tools.ToString (motions)}), velocity: {velocity}, " +
+
                 //     $"allowed: ({Tools.ToString (requiredWrapper.Allowed())}), disallowed: ({Tools.ToString (requiredWrapper.Disallowed())}), expected: {requiredExpected}, " +
                 //     $"actual: {requiredActual}, result: {(requiredExpected == requiredActual ? "PASSED" : "FAILED")}");
                 // }
