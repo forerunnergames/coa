@@ -161,6 +161,10 @@ attack={
 2d_physics/layer_5="Projectiles"
 2d_physics/layer_6="Environment Background"
 
+[mono]
+
+project/assembly_name="coa"
+
 [rendering]
 
 quality/intended_usage/framebuffer_allocation=1
