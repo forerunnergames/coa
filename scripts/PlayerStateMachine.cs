@@ -13,6 +13,7 @@ public class PlayerStateMachine : StateMachine <State>
   {
     Idle,
     ReadingSign,
+    OpeningDoor,
     Walking,
     Running,
     Jumping,
@@ -29,9 +30,9 @@ public class PlayerStateMachine : StateMachine <State>
 
   private static readonly Dictionary <State, State[]> TransitionTable = new()
   {
-    { State.Idle, new[] { State.Walking, State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.ClimbingDown, State.FreeFalling, State.ReadingSign }},
-    { State.Walking, new[] { State.Idle, State.Running, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign }},
-    { State.Running, new[] { State.Idle, State.Walking, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign }},
+    { State.Idle, new[] { State.Walking, State.Running, State.Jumping, State.ClimbingPrep, State.ClimbingUp, State.ClimbingDown, State.FreeFalling, State.ReadingSign, State.OpeningDoor }},
+    { State.Walking, new[] { State.Idle, State.Running, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign, State.OpeningDoor }},
+    { State.Running, new[] { State.Idle, State.Walking, State.Jumping, State.FreeFalling, State.ClimbingPrep, State.ReadingSign, State.OpeningDoor }},
     { State.Jumping, new[] { State.Idle, State.FreeFalling, State.Walking }},
     { State.ClimbingPrep, new[] { State.ClimbingUp, State.Idle, State.Walking, State.Jumping }},
     { State.ClimbingUp, new[] { State.ClimbingDown, State.CliffHanging, State.FreeFalling, State.Idle }},
@@ -40,7 +41,8 @@ public class PlayerStateMachine : StateMachine <State>
     { State.Traversing, new[] { State.CliffHanging, State.FreeFalling }},
     { State.CliffArresting, new[] { State.CliffHanging, State.FreeFalling, State.Idle }},
     { State.FreeFalling, new[] { State.CliffArresting, State.CliffHanging, State.Idle, State.Walking, State.Running, State.Jumping }},
-    { State.ReadingSign, new[] { State.Idle, State.Walking, State.Running }}
+    { State.ReadingSign, new[] { State.Idle, State.Walking, State.Running }},
+    { State.OpeningDoor, new[] { State.Idle, State.Walking, State.Running }}
   };
 
   // ReSharper disable once ExplicitCallerInfoArgument

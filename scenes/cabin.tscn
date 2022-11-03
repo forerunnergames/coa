@@ -1,0 +1,188 @@
+[gd_scene load_steps=22 format=2]
+
+[ext_resource path="res://assets/textures/cabin.png" type="Texture" id=1]
+[ext_resource path="res://scripts/Cabin.cs" type="Script" id=2]
+[ext_resource path="res://assets/sounds/door_open.wav" type="AudioStream" id=3]
+[ext_resource path="res://assets/textures/cabin-fence.png" type="Texture" id=4]
+[ext_resource path="res://assets/textures/cabin-door.png" type="Texture" id=5]
+
+[sub_resource type="RectangleShape2D" id=223]
+extents = Vector2( 216, 160 )
+
+[sub_resource type="RectangleShape2D" id=215]
+extents = Vector2( 12.5, 13 )
+
+[sub_resource type="AtlasTexture" id=230]
+atlas = ExtResource( 5 )
+region = Rect2( 0, 0, 15, 20 )
+
+[sub_resource type="AtlasTexture" id=231]
+atlas = ExtResource( 5 )
+region = Rect2( 15, 0, 15, 20 )
+
+[sub_resource type="AtlasTexture" id=232]
+atlas = ExtResource( 5 )
+region = Rect2( 30, 0, 15, 20 )
+
+[sub_resource type="AtlasTexture" id=233]
+atlas = ExtResource( 5 )
+region = Rect2( 45, 0, 15, 20 )
+
+[sub_resource type="SpriteFrames" id=214]
+animations = [ {
+"frames": [ SubResource( 230 ), SubResource( 231 ), SubResource( 232 ), SubResource( 233 ) ],
+"loop": false,
+"name": "open_door",
+"speed": 5.0
+} ]
+
+[sub_resource type="RectangleShape2D" id=229]
+extents = Vector2( 112, 8 )
+
+[sub_resource type="RectangleShape2D" id=234]
+extents = Vector2( 4, 8 )
+
+[sub_resource type="RectangleShape2D" id=227]
+extents = Vector2( 15, 4.5 )
+
+[sub_resource type="RectangleShape2D" id=228]
+extents = Vector2( 1.5, 4.5 )
+
+[sub_resource type="RectangleShape2D" id=224]
+extents = Vector2( 52, 8 )
+
+[sub_resource type="RectangleShape2D" id=225]
+extents = Vector2( 44, 8 )
+
+[sub_resource type="RectangleShape2D" id=235]
+extents = Vector2( 4, 16 )
+
+[sub_resource type="RectangleShape2D" id=236]
+extents = Vector2( 4, 16 )
+
+[sub_resource type="RectangleShape2D" id=226]
+extents = Vector2( 68, 8 )
+
+[node name="Cabin" type="Area2D" groups=["OpenableDoor"]]
+collision_layer = 34
+collision_mask = 5
+script = ExtResource( 2 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
+position = Vector2( 0, 96 )
+z_index = 1
+shape = SubResource( 223 )
+
+[node name="Sprite" type="Sprite" parent="."]
+modulate = Color( 0.796078, 0.796078, 0.796078, 1 )
+scale = Vector2( 8, 8 )
+texture = ExtResource( 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Door" type="Area2D" parent="."]
+scale = Vector2( 8, 8 )
+collision_layer = 34
+collision_mask = 5
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Door"]
+visible = false
+position = Vector2( 14.5, 22 )
+shape = SubResource( 215 )
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="Door"]
+modulate = Color( 0.796078, 0.796078, 0.796078, 1 )
+position = Vector2( 15, 19 )
+frames = SubResource( 214 )
+animation = "open_door"
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Porch" type="StaticBody2D" parent="."]
+visible = false
+
+[node name="Left" type="CollisionShape2D" parent="Porch"]
+position = Vector2( -56, 216 )
+shape = SubResource( 229 )
+one_way_collision = true
+
+[node name="Right" type="CollisionShape2D" parent="Porch"]
+position = Vector2( 164, 216 )
+shape = SubResource( 234 )
+one_way_collision = true
+
+[node name="Cabin Fence" type="StaticBody2D" parent="." groups=["Dropdownable"]]
+scale = Vector2( 8, 8 )
+collision_layer = 34
+collision_mask = 5
+__meta__ = {
+"_edit_group_": true,
+"_edit_lock_": true
+}
+
+[node name="Left" type="CollisionShape2D" parent="Cabin Fence"]
+visible = false
+position = Vector2( -7, 23.5 )
+z_index = 24
+shape = SubResource( 227 )
+one_way_collision = true
+
+[node name="Right" type="CollisionShape2D" parent="Cabin Fence"]
+visible = false
+position = Vector2( 20.5, 23.5 )
+z_index = 24
+shape = SubResource( 228 )
+one_way_collision = true
+
+[node name="Sprite" type="Sprite" parent="Cabin Fence"]
+modulate = Color( 0.796078, 0.796078, 0.796078, 1 )
+z_index = 23
+texture = ExtResource( 4 )
+
+[node name="Cabin Stairs Top" type="StaticBody2D" parent="." groups=["Dropdownable", "Ground"]]
+visible = false
+collision_layer = 2
+collision_mask = 29
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Top" groups=["Dropdownable", "Ground"]]
+position = Vector2( 108, 216 )
+shape = SubResource( 224 )
+one_way_collision = true
+
+[node name="Cabin Stairs Middle" type="StaticBody2D" parent="." groups=["Dropdownable", "Ground"]]
+visible = false
+collision_layer = 2
+collision_mask = 29
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Middle" groups=["Dropdownable", "Ground"]]
+position = Vector2( 108, 232 )
+shape = SubResource( 225 )
+one_way_collision = true
+
+[node name="CollisionShape2D 2" type="CollisionShape2D" parent="Cabin Stairs Middle"]
+position = Vector2( 60, 224 )
+shape = SubResource( 235 )
+
+[node name="CollisionShape2D 3" type="CollisionShape2D" parent="Cabin Stairs Middle"]
+position = Vector2( 156, 224 )
+shape = SubResource( 236 )
+
+[node name="Cabin Stairs Bottom" type="StaticBody2D" parent="." groups=["Dropdownable", "Ground"]]
+visible = false
+collision_layer = 2
+collision_mask = 29
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Bottom" groups=["Dropdownable", "Ground"]]
+position = Vector2( 108, 248 )
+shape = SubResource( 226 )
+one_way_collision = true
+
+[node name="DoorSoundEffects" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 3 )
+
+[connection signal="area_entered" from="." to="." method="_OnCabinEntered"]
+[connection signal="area_exited" from="." to="." method="_OnCabinExited"]
+[connection signal="animation_finished" from="Door/AnimatedSprite" to="." method="_OnOpenCloseDoorAnimationFinished"]

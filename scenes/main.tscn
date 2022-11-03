@@ -1,4 +1,4 @@
-[gd_scene load_steps=174 format=2]
+[gd_scene load_steps=175 format=2]
 
 [ext_resource path="res://scripts/Player.cs" type="Script" id=1]
 [ext_resource path="res://assets/textures/klas/hand-left.png" type="Texture" id=2]
@@ -43,6 +43,7 @@
 [ext_resource path="res://assets/textures/klas/shirt-sleeve-left.png" type="Texture" id=41]
 [ext_resource path="res://assets/textures/klas/shirt-sleeve-right.png" type="Texture" id=42]
 [ext_resource path="res://assets/textures/klas/arm-right.png" type="Texture" id=43]
+[ext_resource path="res://scenes/cabin.tscn" type="PackedScene" id=44]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 28, 56 )
@@ -4551,7 +4552,7 @@ __meta__ = {
 mouse_filter = 2
 
 [node name="Player" type="KinematicBody2D" parent="." groups=["Perchable Parent", "Player"]]
-position = Vector2( 384, -208 )
+position = Vector2( 346, -192 )
 collision_mask = 6
 collision/safe_margin = 0.6
 script = ExtResource( 1 )
@@ -4765,7 +4766,6 @@ __meta__ = {
 [node name="hand-right" type="Sprite" parent="Player/Animations/Sprites"]
 texture = ExtResource( 36 )
 hframes = 42
-frame = 39
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -4775,7 +4775,6 @@ __meta__ = {
 visible = false
 texture = SubResource( 25 )
 hframes = 42
-frame = 39
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -4787,6 +4786,7 @@ position = Vector2( 1, 2 )
 rotation = -0.349066
 texture = ExtResource( 31 )
 hframes = 42
+frame = 7
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -4840,7 +4840,6 @@ __meta__ = {
 visible = false
 texture = ExtResource( 43 )
 hframes = 42
-frame = 39
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -4849,7 +4848,6 @@ __meta__ = {
 [node name="shirt-sleeve-right" type="Sprite" parent="Player/Animations/Sprites"]
 texture = ExtResource( 42 )
 hframes = 42
-frame = 39
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -4965,21 +4963,21 @@ __meta__ = {
 }
 
 [node name="Ground Detector - Feet 1" type="RayCast2D" parent="Player/Raycasts" groups=["Ground Detectors", "Player"]]
-position = Vector2( -40, 48 )
+position = Vector2( -40, 62 )
 enabled = true
-cast_to = Vector2( 0, 18 )
+cast_to = Vector2( 0, 4 )
 collision_mask = 6
 
 [node name="Ground Detector - Feet 2" type="RayCast2D" parent="Player/Raycasts" groups=["Ground Detectors", "Player"]]
-position = Vector2( 16, 48 )
+position = Vector2( 16, 62 )
 enabled = true
-cast_to = Vector2( 0, 18 )
+cast_to = Vector2( 0, 4 )
 collision_mask = 6
 
 [node name="Ground Detector - Feet 3" type="RayCast2D" parent="Player/Raycasts" groups=["Ground Detectors", "Player"]]
-position = Vector2( -12, 48 )
+position = Vector2( -12, 62 )
 enabled = true
-cast_to = Vector2( 0, 18 )
+cast_to = Vector2( 0, 4 )
 collision_mask = 6
 
 [node name="Wall Detector - Chest" type="RayCast2D" parent="Player/Raycasts" groups=["Player", "Wall Detectors"]]
@@ -5257,7 +5255,7 @@ cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 32
 collision_mask = 4
 format = 1
-tile_data = PoolIntArray( -458718, 56, 0, 31785549, 58, 0, 31916634, 58, 0, 31982082, 58, 0, 31982150, 58, 0, 31982158, 57, 0, 31982174, 58, 0, 31982186, 57, 0, 32047154, 58, 0, 32047218, 58, 0, 32047583, 58, 0, 32047659, 56, 0, 32113176, 58, 0, 32113238, 58, 0, 32113251, 58, 0, 32113267, 58, 0, 32113279, 56, 0, 32113297, 58, 0, 32178474, 56, 0, 32178723, 57, 0, 32178767, 57, 0, 32178797, 57, 0, 32178807, 58, 0, 32178826, 57, 0, 32244366, 58, 0, 32834121, 58, 0, 32834127, 58, 0, 32899667, 58, 0, 32899673, 58, 0, 32899684, 56, 0, 32899723, 58, 0, 32964961, 58, 0, 32965032, 58, 0, 32965173, 58, 0, 32965190, 58, 0, 32965236, 57, 0, 32965255, 58, 0, 33030501, 58, 0, 33030651, 57, 0, 33030661, 57, 0, 33030750, 58, 0, 33030785, 58, 0, 33095685, 58, 0, 33095746, 56, 0, 33095762, 58, 0, 33095906, 58, 0 )
+tile_data = PoolIntArray( -524182, 56, 0, 31785549, 58, 0, 31916634, 58, 0, 31982082, 58, 0, 31982150, 58, 0, 31982158, 57, 0, 31982174, 58, 0, 31982186, 57, 0, 32047154, 58, 0, 32047218, 58, 0, 32047583, 58, 0, 32047659, 56, 0, 32113176, 58, 0, 32113238, 58, 0, 32113251, 58, 0, 32113267, 58, 0, 32113279, 56, 0, 32113297, 58, 0, 32178474, 56, 0, 32178723, 57, 0, 32178767, 57, 0, 32178797, 57, 0, 32178807, 58, 0, 32178826, 57, 0, 32244366, 58, 0, 32834121, 58, 0, 32834127, 58, 0, 32899667, 58, 0, 32899673, 58, 0, 32899684, 56, 0, 32899723, 58, 0, 32964961, 58, 0, 32965032, 58, 0, 32965173, 58, 0, 32965190, 58, 0, 32965236, 57, 0, 32965255, 58, 0, 33030501, 58, 0, 33030651, 57, 0, 33030661, 57, 0, 33030750, 58, 0, 33030785, 58, 0, 33095685, 58, 0, 33095746, 56, 0, 33095762, 58, 0, 33095906, 58, 0 )
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -5582,7 +5580,7 @@ cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 2
 collision_mask = 28
 format = 1
-tile_data = PoolIntArray( -32309037, 42, 0, -589816, 45, 0, -458631, 42, 0, -458360, 46, 0, 31850786, 45, 0, 31916056, 46, 0, 31982200, 42, 0 )
+tile_data = PoolIntArray( -32309037, 42, 0, -458631, 42, 0, -458360, 46, 0, 31850786, 45, 0, 31916056, 46, 0, 31982200, 42, 0 )
 __meta__ = {
 "_edit_group_": true,
 "_edit_lock_": true
@@ -5594,7 +5592,7 @@ tile_set = ExtResource( 3 )
 cell_size = Vector2( 1, 1 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 format = 1
-tile_data = PoolIntArray( -32309037, 47, 0, -589816, 48, 0, -458631, 47, 0, -458360, 49, 0, 131072, 2, 0, 131073, 0, 0, 131074, 0, 0, 131075, 0, 0, 131076, 0, 0, 131077, 0, 0, 131078, 0, 0, 131079, 0, 0, 131080, 0, 0, 131081, 0, 0, 131082, 0, 0, 131083, 0, 0, 131084, 0, 0, 131085, 0, 0, 131086, 1, 0, 31850786, 48, 0, 31916056, 49, 0, 31982200, 47, 0 )
+tile_data = PoolIntArray( -32309037, 47, 0, -458631, 47, 0, -458360, 49, 0, 131072, 2, 0, 131073, 0, 0, 131074, 0, 0, 131075, 0, 0, 131076, 0, 0, 131077, 0, 0, 131078, 0, 0, 131079, 0, 0, 131080, 0, 0, 131081, 0, 0, 131082, 0, 0, 131083, 0, 0, 131084, 0, 0, 131085, 0, 0, 131086, 1, 0, 31850786, 48, 0, 31916056, 49, 0, 31982200, 47, 0 )
 
 [node name="Readable Sign (211, -493)" type="Sprite" parent="Cliffs" groups=["Cliffs"]]
 visible = false
@@ -5619,7 +5617,7 @@ collision_mask = 0
 format = 1
 tile_data = PoolIntArray( -258275705, 19, 0, -258275696, 7, 0, -258275686, 4, 0, -258275670, 2, 0, -258275662, 11, 0, -258275654, 8, 0, -258275646, 5, 0, -258275637, 5, 0, -258275628, 18, 0, -256833905, 14, 0, -256833895, 5, 0, -256833878, 0, 0, -256833869, 10, 0, -256833860, 0, 0, -256833851, 8, 0, -256833843, 0, 0 )
 
-[node name="Readable Sign (8, -9)" type="Sprite" parent="Cliffs" groups=["Cliffs"]]
+[node name="Readable Sign (, )" type="Sprite" parent="Cliffs" groups=["Cliffs"]]
 visible = false
 position = Vector2( 120, -28 )
 scale = Vector2( 0.8, 1.2 )
@@ -5630,7 +5628,7 @@ __meta__ = {
 "_edit_lock_": true
 }
 
-[node name="Text" type="TileMap" parent="Cliffs/Readable Sign (8, -9)"]
+[node name="Text" type="TileMap" parent="Cliffs/Readable Sign (, )"]
 position = Vector2( -5, 0 )
 tile_set = SubResource( 56 )
 cell_size = Vector2( 1, 1 )
@@ -6024,6 +6022,7 @@ shape = SubResource( 203 )
 one_way_collision = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Cliffs/Waterfall - Lower" groups=["Waterfall"]]
+visible = false
 position = Vector2( -4, 1763.59 )
 shape = SubResource( 204 )
 
@@ -6195,6 +6194,9 @@ position = Vector2( 186, 3432 )
 scale = Vector2( 8, 8 )
 z_index = 1
 frames = SubResource( 70 )
+
+[node name="Cabin" parent="Cliffs" instance=ExtResource( 44 )]
+position = Vector2( 224, -192 )
 
 [node name="Extents 1" type="CollisionShape2D" parent="Cliffs" groups=["Cliffs", "Extents"]]
 visible = false

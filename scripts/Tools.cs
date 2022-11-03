@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Godot;
+using Object = Godot.Object;
 
 // ReSharper disable MemberCanBePrivate.Global
 public static class Tools
@@ -201,27 +203,53 @@ public static class Tools
   public static List <T> GetNodesInGroup <T> (SceneTree sceneTree, string group) where T : Node =>
     GetNodesInGroups <T> (sceneTree, group);
 
+  public static List <T> GetINodesInGroup <T> (SceneTree sceneTree, string group) where T : INode =>
+    GetINodesInGroups <T> (sceneTree, group);
+
   public static List <T> GetNodesInGroupWithParent <T> (string parent, SceneTree sceneTree, string group) where T : Node =>
     GetNodesInGroupsWithParent <T> (parent, sceneTree, group);
 
+  public static List <T> GetINodesInGroupWithParent <T> (string parent, SceneTree sceneTree, string group) where T : INode =>
+    GetINodesInGroupsWithParent <T> (parent, sceneTree, group);
+
   public static List <T> GetNodesInGroupsWithParent <T> (string parent, SceneTree sceneTree, params string[] groups) where T : Node =>
     GetNodesInGroups <T> (sceneTree, groups).Where (x => x.GetParent()?.Name == parent).ToList();
+
+  public static List <T> GetINodesInGroupsWithParent <T> (string parent, SceneTree sceneTree, params string[] groups)
+    where T : INode =>
+    GetINodesInGroups <T> (sceneTree, groups).Where (x => x.AsNode().GetParent()?.Name == parent).ToList();
 
   public static List <T> GetNodesInGroupsWithAnyOfParents <T> (string[] parents, SceneTree sceneTree, params string[] groups)
     where T : Node =>
     GetNodesInGroups <T> (sceneTree, groups).Where (x => parents.ToList().Any (y => x.GetParent()?.Name == y)).ToList();
 
+  public static List <T> GetINodesInGroupsWithAnyOfParents <T> (string[] parents, SceneTree sceneTree, params string[] groups)
+    where T : INode =>
+    GetINodesInGroups <T> (sceneTree, groups).Where (x => parents.ToList().Any (y => x.AsNode().GetParent()?.Name == y)).ToList();
+
   public static List <T> GetNodesInGroupWithGrandparent <T> (string grandparent, SceneTree sceneTree, string group) where T : Node =>
     GetNodesInGroupsWithGrandparent <T> (grandparent, sceneTree, group);
+
+  public static List <T> GetINodesInGroupWithGrandparent <T> (string grandparent, SceneTree sceneTree, string group) where T : INode =>
+    GetINodesInGroupsWithGrandparent <T> (grandparent, sceneTree, group);
 
   public static List <T> GetNodesInGroupsWithGrandparent <T> (string grandparent, SceneTree sceneTree, params string[] groups)
     where T : Node =>
     GetNodesInGroups <T> (sceneTree, groups).Where (x => x.GetParent()?.GetParent()?.Name == grandparent).ToList();
 
+  public static List <T> GetINodesInGroupsWithGrandparent <T> (string grandparent, SceneTree sceneTree, params string[] groups)
+    where T : INode =>
+    GetINodesInGroups <T> (sceneTree, groups).Where (x => x.AsNode().GetParent()?.GetParent()?.Name == grandparent).ToList();
+
   public static List <T> GetNodesInGroupsWithAnyOfGrandparents <T> (string[] grandparents, SceneTree sceneTree, params string[] groups)
     where T : Node =>
     GetNodesInGroups <T> (sceneTree, groups).Where (x => grandparents.ToList().Any (y => x.GetParent()?.GetParent()?.Name == y))
       .ToList();
+
+  public static List <T>
+    GetINodesInGroupsWithAnyOfGrandparents <T> (string[] grandparents, SceneTree sceneTree, params string[] groups) where T : INode =>
+    GetINodesInGroups <T> (sceneTree, groups)
+      .Where (x => grandparents.ToList().Any (y => x.AsNode().GetParent()?.GetParent()?.Name == y)).ToList();
 
   public static List <T> GetNodesInGroups <T> (SceneTree sceneTree, params string[] groups) where T : Node
   {
@@ -231,6 +259,20 @@ public static class Tools
 
     return groups.Length == 1 ? nodes.ToList() : nodes.Where (x => groups.Distinct().All (x.IsInGroup)).ToList();
   }
+
+  public static List <T> GetINodesInGroups <T> (SceneTree sceneTree, params string[] groups) where T : INode
+  {
+    if (groups == null || groups.Length == 0) return new List <T>();
+
+    var nodes = sceneTree.GetNodesInGroup (groups[0]).Cast <Node>().Where (x => x is T).Cast <T>();
+
+    return groups.Length == 1 ? nodes.ToList() : nodes.Where (x => groups.Distinct().All (x.AsNode().IsInGroup)).ToList();
+  }
+
+  // ReSharper disable once EntityNameCapturedOnly.Global
+  public static void NotifyGroup <T1, T2> (string group, T2 signal, Action callback) where T1 : ISignallingNode <T2> where T2 : Enum =>
+    GetINodesInGroup <T1> ((callback.Target as Node)?.GetTree(), group).ForEach (x =>
+      x.AsNode().Connect (x.NameOf (signal), callback.Target as Object, callback.GetMethodInfo().Name));
 
   public static bool IsAnyArrowKeyPressedExcept (Input arrow)
   {

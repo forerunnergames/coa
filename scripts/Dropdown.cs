@@ -15,7 +15,8 @@ public class Dropdown : AbstractDropdownable
   private readonly string _name;
 
   // ReSharper disable once ExplicitCallerInfoArgument
-  public Dropdown (CollisionObject2D droppingNode, List <RayCast2D> groundDetectors, [CallerFilePath] string name = "") : base (name)
+  public Dropdown (CollisionObject2D droppingNode, List <RayCast2D> groundDetectors, [CallerFilePath] string name = "") : base (
+    new Dictionary <string, int>(), name)
   {
     _droppingNode = droppingNode;
     _groundDetectors = groundDetectors;
