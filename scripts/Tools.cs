@@ -211,6 +211,18 @@ public static class Tools
     where T : Node =>
     GetNodesInGroups <T> (sceneTree, groups).Where (x => parents.ToList().Any (y => x.GetParent()?.Name == y)).ToList();
 
+  public static List <T> GetNodesInGroupWithGrandparent <T> (string grandparent, SceneTree sceneTree, string group) where T : Node =>
+    GetNodesInGroupsWithGrandparent <T> (grandparent, sceneTree, group);
+
+  public static List <T> GetNodesInGroupsWithGrandparent <T> (string grandparent, SceneTree sceneTree, params string[] groups)
+    where T : Node =>
+    GetNodesInGroups <T> (sceneTree, groups).Where (x => x.GetParent()?.GetParent()?.Name == grandparent).ToList();
+
+  public static List <T> GetNodesInGroupsWithAnyOfGrandparents <T> (string[] grandparents, SceneTree sceneTree, params string[] groups)
+    where T : Node =>
+    GetNodesInGroups <T> (sceneTree, groups).Where (x => grandparents.ToList().Any (y => x.GetParent()?.GetParent()?.Name == y))
+      .ToList();
+
   public static List <T> GetNodesInGroups <T> (SceneTree sceneTree, params string[] groups) where T : Node
   {
     if (groups == null || groups.Length == 0) return new List <T>();
