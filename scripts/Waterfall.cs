@@ -33,10 +33,10 @@ public class Waterfall : Area2D
     _animations = GetNodesInGroupWithParent <AnimatedSprite> (Name, GetTree(), "Waterfall");
     _innerMists = GetNodesInGroupsWithParent <Node2D> (Name, GetTree(), "Waterfall", "Inner Mist");
     _outerMists = GetNodesInGroupsWithParent <Node2D> (Name, GetTree(), "Waterfall", "Outer Mist");
-    _audioPlayers = GetNodesInGroupsWithParent <AudioStreamPlayer2D> (Name, GetTree(), "Waterfall", "Audio");
+    _audioPlayers = GetNodesInGroupsWithGrandparent <AudioStreamPlayer2D> (Name, GetTree(), "Waterfall", "Audio");
     _winterGrounds = GetNodesInGroupsWithAnyOfParents <CollisionObject2D> (new[] { Name, "Cliffs" }, GetTree(), "Waterfall", "Ground", "Winter");
     _summerGrounds = GetNodesInGroupsWithAnyOfParents <CollisionObject2D> (new[] { Name, "Cliffs" }, GetTree(), "Waterfall", "Ground", "Summer");
-    _attenuateables = GetNodesInGroupsWithParent <AudioStreamPlayer2D> (Name, GetTree(), "Waterfall", "Audio", "Attenuateable");
+    _attenuateables = GetNodesInGroupsWithGrandparent <AudioStreamPlayer2D> (Name, GetTree(), "Waterfall", "Audio", "Attenuateable");
     _pool = GetNode <Node2D> ("Pool");
     _waves = GetNode <Node2D> ("Waves");
     _zIndex.Add (Season.Summer, 33);
