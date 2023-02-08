@@ -59,6 +59,7 @@ public class Weapon
 
   private bool ShouldEquip() =>
     WasItemKeyPressedOnce() && _backpackSprite.Visible && _itemInBackpackSprite.Visible && !_isUnequipping &&
+    _primaryPlayerAnimator.AssignedAnimation != "player_opening_door" &&
     _primaryPlayerAnimator.AssignedAnimation != "player_cliff_arresting" &&
     _primaryPlayerAnimator.AssignedAnimation != "player_cliff_hanging" &&
     _primaryPlayerAnimator.AssignedAnimation != "player_climbing_up" &&
@@ -83,6 +84,7 @@ public class Weapon
         break;
       }
       case "player_idle_back":
+      case "player_opening_door":
       case "player_cliff_arresting":
       case "player_cliff_hanging":
       {
@@ -107,6 +109,7 @@ public class Weapon
         break;
       }
       case "player_idle_back":
+      case "player_opening_door":
       case "player_cliff_arresting":
       case "player_cliff_hanging":
       {

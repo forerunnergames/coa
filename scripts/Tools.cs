@@ -131,11 +131,11 @@ public static class Tools
     Func <T, string> f = null) =>
     e.Select (f ?? (s => prepend + s + append)).DefaultIfEmpty (string.Empty).Aggregate ((a, b) => a + sep + b);
 
-  public static Rect2 GetColliderRect (Area2D area, CollisionShape2D collider)
+  public static Rect2 GetColliderRect (CollisionObject2D collisionObject, CollisionShape2D collider)
   {
-    if (!area.HasNode (collider.Name) || collider.Shape is not RectangleShape2D rect) return new Rect2();
+    if (!collisionObject.HasNode (collider.Name) || collider.Shape is not RectangleShape2D rect) return new Rect2();
 
-    var extents = rect.Extents * area.GlobalScale.Abs();
+    var extents = rect.Extents * collisionObject.GlobalScale.Abs();
 
     return new Rect2 (collider.GlobalPosition - extents, extents * 2);
   }

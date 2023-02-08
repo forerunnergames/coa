@@ -1,13 +1,11 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://assets/textures/cabin.png" type="Texture" id=1]
 [ext_resource path="res://scripts/Cabin.cs" type="Script" id=2]
 [ext_resource path="res://assets/sounds/door_open.wav" type="AudioStream" id=3]
 [ext_resource path="res://assets/textures/cabin-fence.png" type="Texture" id=4]
 [ext_resource path="res://assets/textures/cabin-door.png" type="Texture" id=5]
-
-[sub_resource type="RectangleShape2D" id=223]
-extents = Vector2( 216, 160 )
+[ext_resource path="res://scripts/AscendableStair.cs" type="Script" id=6]
 
 [sub_resource type="RectangleShape2D" id=215]
 extents = Vector2( 12.5, 13 )
@@ -37,10 +35,13 @@ animations = [ {
 } ]
 
 [sub_resource type="RectangleShape2D" id=229]
-extents = Vector2( 112, 8 )
+extents = Vector2( 116, 8 )
 
-[sub_resource type="RectangleShape2D" id=234]
-extents = Vector2( 4, 8 )
+[sub_resource type="RectangleShape2D" id=237]
+extents = Vector2( 44, 8 )
+
+[sub_resource type="RectangleShape2D" id=238]
+extents = Vector2( 8, 8 )
 
 [sub_resource type="RectangleShape2D" id=227]
 extents = Vector2( 15, 4.5 )
@@ -49,10 +50,10 @@ extents = Vector2( 15, 4.5 )
 extents = Vector2( 1.5, 4.5 )
 
 [sub_resource type="RectangleShape2D" id=224]
-extents = Vector2( 52, 8 )
+extents = Vector2( 20, 7.5 )
 
 [sub_resource type="RectangleShape2D" id=225]
-extents = Vector2( 44, 8 )
+extents = Vector2( 20, 8 )
 
 [sub_resource type="RectangleShape2D" id=235]
 extents = Vector2( 4, 16 )
@@ -61,18 +62,17 @@ extents = Vector2( 4, 16 )
 extents = Vector2( 4, 16 )
 
 [sub_resource type="RectangleShape2D" id=226]
-extents = Vector2( 68, 8 )
+extents = Vector2( 20, 8 )
 
 [node name="Cabin" type="Area2D" groups=["OpenableDoor"]]
 collision_layer = 34
 collision_mask = 5
 script = ExtResource( 2 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
 visible = false
-position = Vector2( 0, 96 )
 z_index = 1
-shape = SubResource( 223 )
+polygon = PoolVector2Array( -256, -16, -256, -32, -40, -248, -24, -256, 32, -256, 256, -32, 256, -16, 224, -16, 224, -8, 216, -8, 216, 256, -216, 256, -216, -8, -224, -8, -224, -16 )
 
 [node name="Sprite" type="Sprite" parent="."]
 modulate = Color( 0.796078, 0.796078, 0.796078, 1 )
@@ -101,17 +101,35 @@ __meta__ = {
 "_edit_lock_": true
 }
 
-[node name="Porch" type="StaticBody2D" parent="."]
-visible = false
+[node name="Porch Left" type="StaticBody2D" parent="."]
+collision_layer = 34
+collision_mask = 5
 
-[node name="Left" type="CollisionShape2D" parent="Porch"]
-position = Vector2( -56, 216 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Porch Left"]
+position = Vector2( -52, 216 )
+z_index = 24
 shape = SubResource( 229 )
 one_way_collision = true
 
-[node name="Right" type="CollisionShape2D" parent="Porch"]
-position = Vector2( 164, 216 )
-shape = SubResource( 234 )
+[node name="Porch Middle" type="StaticBody2D" parent="." groups=["Dropdownable"]]
+visible = false
+collision_layer = 34
+collision_mask = 5
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Porch Middle"]
+position = Vector2( 108, 216 )
+z_index = 24
+shape = SubResource( 237 )
+one_way_collision = true
+
+[node name="Porch Right" type="StaticBody2D" parent="."]
+collision_layer = 34
+collision_mask = 5
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Porch Right"]
+position = Vector2( 160, 216 )
+z_index = 24
+shape = SubResource( 238 )
 one_way_collision = true
 
 [node name="Cabin Fence" type="StaticBody2D" parent="." groups=["Dropdownable"]]
@@ -142,22 +160,22 @@ modulate = Color( 0.796078, 0.796078, 0.796078, 1 )
 z_index = 23
 texture = ExtResource( 4 )
 
-[node name="Cabin Stairs Top" type="StaticBody2D" parent="." groups=["Dropdownable", "Ground"]]
-visible = false
+[node name="Cabin Stairs Top" type="StaticBody2D" parent="." groups=["AscendableStair"]]
 collision_layer = 2
 collision_mask = 29
+script = ExtResource( 6 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Top" groups=["Dropdownable", "Ground"]]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Top"]
 position = Vector2( 108, 216 )
 shape = SubResource( 224 )
 one_way_collision = true
 
-[node name="Cabin Stairs Middle" type="StaticBody2D" parent="." groups=["Dropdownable", "Ground"]]
-visible = false
+[node name="Cabin Stairs Middle" type="StaticBody2D" parent="." groups=["AscendableStair"]]
 collision_layer = 2
 collision_mask = 29
+script = ExtResource( 6 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Middle" groups=["Dropdownable", "Ground"]]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Middle"]
 position = Vector2( 108, 232 )
 shape = SubResource( 225 )
 one_way_collision = true
@@ -165,17 +183,19 @@ one_way_collision = true
 [node name="CollisionShape2D 2" type="CollisionShape2D" parent="Cabin Stairs Middle"]
 position = Vector2( 60, 224 )
 shape = SubResource( 235 )
+disabled = true
 
 [node name="CollisionShape2D 3" type="CollisionShape2D" parent="Cabin Stairs Middle"]
 position = Vector2( 156, 224 )
 shape = SubResource( 236 )
+disabled = true
 
-[node name="Cabin Stairs Bottom" type="StaticBody2D" parent="." groups=["Dropdownable", "Ground"]]
-visible = false
+[node name="Cabin Stairs Bottom" type="StaticBody2D" parent="." groups=["AscendableStair"]]
 collision_layer = 2
 collision_mask = 29
+script = ExtResource( 6 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Bottom" groups=["Dropdownable", "Ground"]]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Cabin Stairs Bottom"]
 position = Vector2( 108, 248 )
 shape = SubResource( 226 )
 one_way_collision = true

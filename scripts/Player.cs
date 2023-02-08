@@ -25,6 +25,8 @@ public class Player : KinematicBody2D
   [Export] public float HorizontalWalkingSpeed = 20.0f;
   [Export] public float HorizontalRunningSpeed = 40.0f;
   [Export] public float TraverseSpeed = 200.0f;
+  [Export] public float AscendingStairsSpeed = 100.0f;
+  [Export] public float DescendingStairsSpeed = 100.0f;
   [Export] public float VerticalClimbingSpeed = 200.0f;
   [Export] public float HorizontalRunJumpFriction = 0.9f;
   [Export] public float HorizontalRunJumpStoppingFriction = 0.6f;
@@ -40,8 +42,10 @@ public class Player : KinematicBody2D
   [Export] public int MaxEnergy = 20;
   [Export] public string IdleLeftAnimation = "player_idle_left";
   [Export] public string IdleBackAnimation = "player_idle_back";
+  [Export] public string AscendingStairsAnimation = "player_idle_back";
+  [Export] public string DescendingStairsAnimation = "player_idle_back";
   [Export] public string ClimbingPrepAnimation = "player_idle_back";
-  [Export] public string OpeningDoorAnimation = "player_idle_back";
+  [Export] public string OpeningDoorAnimation = "player_opening_door";
   [Export] public string FreeFallingAnimation = "player_free_falling";
   [Export] public string ClimbingUpAnimation = "player_climbing_up";
   [Export] public string CliffHangingAnimation = "player_cliff_hanging";
@@ -103,6 +107,7 @@ public class Player : KinematicBody2D
   private List <RayCast2D> _wallDetectors;
   private List <Waterfall> _waterfalls;
   private List <IOpenableDoor> _openableDoors;
+  private List <IAscendableStair> _ascendableStairs;
   private Log _log;
 
   [SuppressMessage ("ReSharper", "ExplicitCallerInfoArgument")]
@@ -117,6 +122,7 @@ public class Player : KinematicBody2D
     _wallDetectors = GetNodesInGroups <RayCast2D> (GetTree(), "Wall Detectors", "Player");
     _waterfalls = GetNodesInGroups <Waterfall> (GetTree(), "Waterfall", "Parent");
     _openableDoors = GetINodesInGroups <IOpenableDoor> (GetTree(), "OpenableDoor");
+    _ascendableStairs = GetINodesInGroup <IAscendableStair> (GetTree(), "AscendableStair");
     _groundAreas = GetNodesInGroup <Area2D> (GetTree(), "Ground");
     _dropdown = new Dropdown (this, _groundDetectors, Name);
     _cliffs = GetNode <Cliffs> ("../Cliffs");
@@ -192,7 +198,7 @@ public class Player : KinematicBody2D
     if (WasMouseLeftClicked (@event)) _clothing.UpdateAll (_primaryAnimator.CurrentAnimation);
 
     // This async call must be the last line in this method.
-    if (IsDownArrowPressed() && CanDropDown()) await _dropdown.Drop();
+    if (WasDownArrowPressedOnce() && IsDownArrowPressed() && CanDropDown()) await _dropdown.Drop();
   }
 
   // ReSharper disable once UnusedMember.Global
@@ -377,7 +383,8 @@ public class Player : KinematicBody2D
 
   private void OpenDoor()
   {
-    _primaryAnimator.Play (OpeningDoorAnimation);
+    _primaryAnimator.AssignedAnimation = OpeningDoorAnimation;
+    _primaryAnimator.Play();
     _weapon.Unequip();
     _wasFlippedHorizontally = _isFlippedHorizontally;
     FlipHorizontally (false);
@@ -422,8 +429,11 @@ public class Player : KinematicBody2D
   private bool IsTouchingCliffIce() => _cliffs.IsTouchingIce (GetCurrentAnimationColliderRect);
   private bool IsInDoor (IOpenableDoor door) => door.Encloses (GetCurrentAnimationColliderRect);
   private bool IsInDoor() => _openableDoors.Any (x => x.Encloses (GetCurrentAnimationColliderRect));
+  private bool IsInStair (IAscendableStair stair) => stair.IsHorizontalCenterPointTouching (GetCurrentAnimationColliderRect);
+  private bool IsInStairs() => _ascendableStairs.Any (x => x.IsHorizontalCenterPointTouching (GetCurrentAnimationColliderRect));
   private bool CanDropDown() => !_stateMachine.Is (State.ReadingSign) && !_stateMachine.Is (State.OpeningDoor);
   private Rect2 GetCurrentAnimationColliderRect => GetColliderRect (_animationColliderParent, GetCurrentAnimationCollider());
+  private Rect2 GetCurrentAnimationColliderRectCenter => GetColliderRect (_animationColliderParent, GetCurrentAnimationCollider());
   private CollisionShape2D GetCurrentAnimationCollider() => _animationColliderParent.GetNode <CollisionShape2D> (_primaryAnimator.CurrentAnimation);
   private bool HasReadableSign() => HasReadableSign (GetReadableSignName());
   private bool HasReadableSign (string name) => _signsTileMap?.HasNode ("../" + name) ?? false;
@@ -523,6 +533,8 @@ public class Player : KinematicBody2D
     // (Holding down jump continuously allows gravity to take over.)
     // @formatter:off
     if (_stateMachine.Is (State.Jumping) && WasJumpKeyReleased() && IsMovingUp()) _velocity.y = 0.0f;
+    if (_stateMachine.Is (State.AscendingStairs)) _velocity.y = -AscendingStairsSpeed;
+    if (_stateMachine.Is (State.DescendingStairs)) _velocity.y = DescendingStairsSpeed;
     if (_stateMachine.Is (State.ClimbingUp)) _velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 4 * 0.2f, 0.1f) || AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 9 * 0.2f, 0.1f) ? -VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
     if (_stateMachine.Is (State.ClimbingDown)) _velocity.y = AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 6 * 0.2f, 0.1f) || AreAlmostEqual (_primaryAnimator.CurrentAnimationPosition, 1 * 0.2f, 0.1f) ? VerticalClimbingSpeed * GetClimbingSpeedBoost() : 0.0f;
     if (_stateMachine.Is (State.Traversing)) _velocity.y = 0.0f;
@@ -661,6 +673,7 @@ public class Player : KinematicBody2D
     "\nIsInGround: " + _isInGround +
     "\nIsInSign: " + _isInSign +
     "\nIsInDoor(): " + IsInDoor() +
+    "\nIsInStairs(): " + IsInStairs() +
     "\nIsInCabin: " + IsInCabin() +
     "\nIsResting: " + _isResting +
     "\nWasRunning: " + _wasRunning +
@@ -780,6 +793,20 @@ public class Player : KinematicBody2D
       PrintLineContinuously ("Sound effects: Playing cliff arresting sound.");
     });
 
+    _stateMachine.OnTransition (State.AscendingStairs, State.Idle, () =>
+    {
+      _ascendableStairs.ForEach (x => x.SetMode (IAscendableStair.Mode.Idle));
+      _primaryAnimator.Play (IdleLeftAnimation);
+      FlipHorizontally (_wasFlippedHorizontally);
+    });
+
+    _stateMachine.OnTransition (State.DescendingStairs, State.Idle, () =>
+    {
+      _ascendableStairs.ForEach (x => x.SetMode (IAscendableStair.Mode.Idle));
+      _primaryAnimator.Play (IdleLeftAnimation);
+      FlipHorizontally (_wasFlippedHorizontally);
+    });
+
     _stateMachine.OnTransition (State.ClimbingPrep, State.Idle, () =>
     {
       _primaryAnimator.Play (IdleLeftAnimation);
@@ -817,6 +844,22 @@ public class Player : KinematicBody2D
       _primaryAnimator.Play (RunLeftAnimation);
       _energyTimer.Start (_energyMeterDepletionRatePerUnit);
       _wasRunning = true;
+    });
+
+    _stateMachine.OnTransitionTo (State.AscendingStairs, () =>
+    {
+      _ascendableStairs.ForEach (x => x.SetMode (IAscendableStair.Mode.Ascending));
+      _primaryAnimator.Play (AscendingStairsAnimation);
+      _wasFlippedHorizontally = _isFlippedHorizontally;
+      FlipHorizontally (false);
+    });
+
+    _stateMachine.OnTransitionTo (State.DescendingStairs, () =>
+    {
+      _ascendableStairs.ToList().ForEach (x => x.SetMode (IAscendableStair.Mode.Descending));
+      _primaryAnimator.Play (DescendingStairsAnimation);
+      _wasFlippedHorizontally = _isFlippedHorizontally;
+      FlipHorizontally (false);
     });
 
     _stateMachine.OnTransitionFrom (State.ClimbingUp, () =>
@@ -861,26 +904,36 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.Idle, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() && IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsDepletingEnergy() && !IsTouchingWall() && IsOnFloor());
     _stateMachine.AddTrigger (State.Idle, State.Jumping, () => WasJumpKeyPressed() && IsOnFloor());
-    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !IsInDoor() && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.AscendingStairs, () => WasUpArrowPressedOnce() && IsUpArrowPressed() && IsInStairs() && !_isInSign && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.DescendingStairs, () => IsDownArrowPressed() && IsInStairs() && !IsTouchingGround() && !_isInSign && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.ClimbingPrep, () => WasUpArrowPressedOnce() && IsUpArrowPressed() && IsInCliffs() && !_isInSign && !IsInStairs() && !_isResting);
     _stateMachine.AddTrigger (State.Idle, State.ClimbingDown, () => IsDownArrowPressed() && IsMovingDown() && !IsOnFloor() && IsInCliffs() && !_dropdown.IsDropping() && !IsOneActiveOf (Input.Horizontal));
     _stateMachine.AddTrigger (State.Idle, State.FreeFalling, () => !IsDownArrowPressed() && IsMovingDown() && !IsOnFloor());
-    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !_isResting);
-    _stateMachine.AddTrigger (State.Idle, State.OpeningDoor, ()=> IsUpArrowPressed() && IsInDoor() && IsTouchingGround() && !_isResting);
-    _stateMachine.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally() && !(_isInSign && IsUpArrowPressed())&& !(IsInDoor() && IsUpArrowPressed()));
+    _stateMachine.AddTrigger (State.Idle, State.ReadingSign, () => IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !IsInStairs() && !_isResting);
+    _stateMachine.AddTrigger (State.Idle, State.OpeningDoor, () => WasItemKeyPressedOnce() && IsInDoor() && !_isResting);
+    _stateMachine.AddTrigger (State.Walking, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally() && !(_isInSign && IsUpArrowPressed()) && !(IsInStairs() && IsUpArrowPressed()));
     _stateMachine.AddTrigger (State.Walking, State.Running, () => IsOneActiveOf (Input.Horizontal) && IsMovingHorizontally() && IsDepletingEnergy());
     _stateMachine.AddTrigger (State.Walking, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Walking, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
-    _stateMachine.AddTrigger (State.Walking, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !IsInDoor());
-    _stateMachine.AddTrigger (State.Walking, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
-    _stateMachine.AddTrigger (State.Walking, State.OpeningDoor, ()=> IsUpArrowPressed() && IsInDoor() && IsTouchingGround());
+    _stateMachine.AddTrigger (State.Walking, State.AscendingStairs, () => IsUpArrowPressed() && IsInStairs() && !_isInSign);
+    _stateMachine.AddTrigger (State.Walking, State.DescendingStairs, () => IsDownArrowPressed() && IsInStairs() && !_isInSign);
+    _stateMachine.AddTrigger (State.Walking, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !IsInStairs());
+    _stateMachine.AddTrigger (State.Walking, State.ReadingSign, () => IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !IsInStairs());
+    _stateMachine.AddTrigger (State.Walking, State.OpeningDoor, () => WasItemKeyPressedOnce() && IsInDoor());
     _stateMachine.AddTrigger (State.Running, State.Idle, () => !IsOneActiveOf (Input.Horizontal) && !IsMovingHorizontally());
     _stateMachine.AddTrigger (State.Running, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsDepletingEnergy() || JustDepletedAllEnergy());
     _stateMachine.AddTrigger (State.Running, State.Jumping, WasJumpKeyPressed);
     _stateMachine.AddTrigger (State.Running, State.FreeFalling, () => IsMovingDown() && !IsOnFloor() && !IsTouchingWall());
-    _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !IsInDoor());
-    _stateMachine.AddTrigger (State.Running, State.ReadingSign, ()=> IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign());
-    _stateMachine.AddTrigger (State.Running, State.OpeningDoor, ()=> IsUpArrowPressed() && IsInDoor() && IsTouchingGround());
+    _stateMachine.AddTrigger (State.Walking, State.AscendingStairs, () => IsUpArrowPressed() && IsInStairs() && !_isInSign);
+    _stateMachine.AddTrigger (State.Walking, State.DescendingStairs, () => IsDownArrowPressed() && IsInStairs() && !_isInSign);
+    _stateMachine.AddTrigger (State.Running, State.ClimbingPrep, () => IsUpArrowPressed() && IsInCliffs() && !_isInSign && !IsInStairs());
+    _stateMachine.AddTrigger (State.Running, State.ReadingSign, () => IsUpArrowPressed() && _isInSign && IsTouchingGround() && HasReadableSign() && !IsInStairs());
+    _stateMachine.AddTrigger (State.Running, State.OpeningDoor, () => WasItemKeyPressedOnce() && IsInDoor());
     _stateMachine.AddTrigger (State.Jumping, State.FreeFalling, () => IsMovingDown() && !IsOnFloor());
+    _stateMachine.AddTrigger (State.AscendingStairs, State.Idle, () => WasUpArrowReleased() || !IsInStairs() || IsTouchingGround());
+    _stateMachine.AddTrigger (State.AscendingStairs, State.DescendingStairs, () => WasUpArrowReleased() && IsDownArrowPressed() && IsInStairs());
+    _stateMachine.AddTrigger (State.DescendingStairs, State.Idle, () => WasDownArrowReleased() || !IsInStairs() || IsTouchingGround());
+    _stateMachine.AddTrigger (State.DescendingStairs, State.AscendingStairs, () => WasDownArrowReleased() && IsUpArrowPressed() && IsInStairs());
     _stateMachine.AddTrigger (State.ClimbingPrep, State.Idle, WasUpArrowReleased);
     _stateMachine.AddTrigger (State.ClimbingPrep, State.ClimbingUp, () => IsUpArrowPressed() && _climbingPrepTimer.TimeLeft == 0 && !IsTouchingCliffIce() && !IsInFrozenWaterfall());
     _stateMachine.AddTrigger (State.ClimbingUp, State.FreeFalling, () => (WasJumpKeyPressed() || !IsInCliffs() && !_isInGround || IsTouchingCliffIce() || IsInFrozenWaterfall() || JustDepletedAllEnergy()) && !_isResting);
@@ -905,12 +958,12 @@ public class Player : KinematicBody2D
     _stateMachine.AddTrigger (State.CliffArresting, State.FreeFalling, WasItemKeyReleased);
     _stateMachine.AddTrigger (State.CliffArresting, State.CliffHanging, () => !IsOnFloor() && !IsMoving() && IsInCliffs());
     _stateMachine.AddTrigger (State.CliffArresting, State.Idle, IsOnFloor);
-    _stateMachine.AddTrigger (State.ReadingSign, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
-    _stateMachine.AddTrigger (State.ReadingSign, State.Walking, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && _isInSign);
-    _stateMachine.AddTrigger (State.ReadingSign, State.Running, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsDepletingEnergy() && _isInSign);
-    _stateMachine.AddTrigger (State.OpeningDoor, State.Idle, ()=> IsDownArrowPressed() && !IsUpArrowPressed() && IsInDoor());
-    _stateMachine.AddTrigger (State.OpeningDoor, State.Walking, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && IsInDoor());
-    _stateMachine.AddTrigger (State.OpeningDoor, State.Running, ()=> IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsDepletingEnergy() && IsInDoor());
+    _stateMachine.AddTrigger (State.ReadingSign, State.Idle, () => IsDownArrowPressed() && !IsUpArrowPressed() && _isInSign);
+    _stateMachine.AddTrigger (State.ReadingSign, State.Walking, () => IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && _isInSign);
+    _stateMachine.AddTrigger (State.ReadingSign, State.Running, () => IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsDepletingEnergy() && _isInSign);
+    _stateMachine.AddTrigger (State.OpeningDoor, State.Idle, () => WasItemKeyPressedOnce() && IsInDoor());
+    _stateMachine.AddTrigger (State.OpeningDoor, State.Walking, () => WasItemKeyPressedOnce() && IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && !IsDepletingEnergy() && IsInDoor());
+    _stateMachine.AddTrigger (State.OpeningDoor, State.Running, () => WasItemKeyPressedOnce() && IsOneActiveOf (Input.Horizontal) && !IsAnyActiveOf (Input.Vertical) && IsDepletingEnergy() && IsInDoor());
   }
 
   // @formatter:on
